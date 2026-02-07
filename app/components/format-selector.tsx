@@ -2,7 +2,7 @@
 
 import { Square, Smartphone, Monitor, Image, MessageCircle } from "lucide-react";
 import type { OutputFormat } from "@/lib/types";
-import { FORMAT_CONFIGS, AI_GENERATION_FORMATS } from "@/lib/constants";
+import { FORMAT_CONFIGS, POSTER_GENERATION_FORMATS } from "@/lib/constants";
 
 interface FormatSelectorProps {
   selected: OutputFormat[];
@@ -34,8 +34,8 @@ export function FormatSelector({ selected, onChange }: FormatSelectorProps) {
       <label className="block text-sm font-semibold mb-3 text-foreground/80">
         اختر حجم المنشور
       </label>
-      <div className="grid grid-cols-3 gap-4">
-        {AI_GENERATION_FORMATS.map((format) => {
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {POSTER_GENERATION_FORMATS.map((format) => {
           const config = FORMAT_CONFIGS[format];
           const Icon = formatIcons[format];
           const isSelected = selected.includes(format);

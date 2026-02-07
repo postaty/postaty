@@ -12,11 +12,15 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.25",
+    "@sparticuz/chromium": "^143.0.4",
     "ai": "^6.0.67",
     "convex": "^1.31.7",
+    "framer-motion": "^12.33.0",
+    "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
+    "puppeteer-core": "^24.37.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-dropzone": "^14.4.0",
@@ -33,6 +37,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jest": "^30.2.0",
+    "puppeteer": "^24.37.2",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"

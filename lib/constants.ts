@@ -56,6 +56,16 @@ export const AI_GENERATION_FORMATS: OutputFormat[] = [
   "facebook-post",
 ];
 
+// All formats available for poster (HTML-to-image) generation
+export const POSTER_GENERATION_FORMATS: OutputFormat[] = [
+  "instagram-square",
+  "instagram-story",
+  "facebook-post",
+  "facebook-cover",
+  "twitter-post",
+  "whatsapp-status",
+];
+
 // ── Category Labels ────────────────────────────────────────────────
 
 export const CATEGORY_LABELS: Record<Category, string> = {

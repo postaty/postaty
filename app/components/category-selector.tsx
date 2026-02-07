@@ -1,53 +1,92 @@
 "use client";
 
-import { UtensilsCrossed, ShoppingCart, Package } from "lucide-react";
+import { UtensilsCrossed, ShoppingCart, Package, ArrowRight } from "lucide-react";
 import type { Category } from "@/lib/types";
 
 interface CategorySelectorProps {
   onSelect: (category: Category) => void;
 }
 
-const categories: { id: Category; label: string; icon: typeof UtensilsCrossed; description: string }[] = [
+const categories: {
+  id: Category;
+  label: string;
+  icon: typeof UtensilsCrossed;
+  description: string;
+  gradient: string;
+  shadow: string;
+  color: string;
+}[] = [
   {
     id: "restaurant",
-    label: "مطاعم",
+    label: "مطاعم وكافيهات",
     icon: UtensilsCrossed,
-    description: "أنشئ بوستر لعروض المطاعم والوجبات",
+    description: "صمم بوسترات لوجباتك وعروضك المميزة بلمسة شهية.",
+    gradient: "from-orange-500 to-red-500",
+    shadow: "shadow-orange-500/20",
+    color: "text-orange-600",
   },
   {
     id: "supermarket",
     label: "سوبر ماركت",
     icon: ShoppingCart,
-    description: "أنشئ بوستر لعروض السوبر ماركت والمنتجات",
+    description: "عروض المنتجات والخصومات الأسبوعية بتصاميم ملفتة.",
+    gradient: "from-blue-500 to-cyan-500",
+    shadow: "shadow-blue-500/20",
+    color: "text-blue-600",
   },
   {
     id: "online",
     label: "منتجات أونلاين",
     icon: Package,
-    description: "أنشئ بوستر لمنتجاتك على الإنترنت",
+    description: "روج لمنتجات متجرك الإلكتروني وزد مبيعاتك.",
+    gradient: "from-purple-500 to-indigo-500",
+    shadow: "shadow-purple-500/20",
+    color: "text-purple-600",
   },
 ];
 
 export function CategorySelector({ onSelect }: CategorySelectorProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
       {categories.map((cat) => {
         const Icon = cat.icon;
         return (
           <button
             key={cat.id}
             onClick={() => onSelect(cat.id)}
-            className="group relative bg-white border border-card-border rounded-3xl p-8 text-center hover:border-primary/50 hover:shadow-glow transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+            className={`group relative bg-white/60 backdrop-blur-xl border border-white/50 rounded-[2rem] p-8 text-right hover:-translate-y-2 transition-all duration-500 hover:shadow-2xl ${cat.shadow} overflow-hidden`}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Hover Gradient Overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
             
-            <div className="relative z-10">
-              <div className="w-20 h-20 mx-auto mb-6 bg-primary/5 rounded-2xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-md group-hover:scale-110">
-                <Icon size={36} className="text-primary group-hover:text-white transition-colors" />
+            {/* Top Shine Effect */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            <div className="relative z-10 flex flex-col h-full">
+              {/* Icon Container */}
+              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${cat.gradient} p-0.5 mb-6 shadow-lg transform group-hover:scale-110 transition-transform duration-500`}>
+                <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+                  <Icon size={28} className={cat.color} />
+                </div>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground group-hover:text-primary transition-colors">{cat.label}</h3>
-              <p className="text-base text-muted leading-relaxed">{cat.description}</p>
+
+              {/* Text Content */}
+              <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-primary transition-colors">
+                {cat.label}
+              </h3>
+              <p className="text-muted text-sm leading-relaxed mb-8 flex-grow">
+                {cat.description}
+              </p>
+
+              {/* CTA Indicator */}
+              <div className="flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                <span>ابدأ التصميم</span>
+                <ArrowRight size={16} className="mr-2 animate-pulse" />
+              </div>
             </div>
+
+            {/* Decorative Circle */}
+            <div className={`absolute -bottom-8 -left-8 w-32 h-32 bg-gradient-to-tr ${cat.gradient} opacity-10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700`} />
           </button>
         );
       })}

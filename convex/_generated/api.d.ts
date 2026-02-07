@@ -13,6 +13,8 @@ import type * as brandKits from "../brandKits.js";
 import type * as credits from "../credits.js";
 import type * as generations from "../generations.js";
 import type * as organizations from "../organizations.js";
+import type * as posterJobs from "../posterJobs.js";
+import type * as posterTemplates from "../posterTemplates.js";
 import type * as seed from "../seed.js";
 import type * as seedTemplates from "../seedTemplates.js";
 import type * as templates from "../templates.js";
@@ -30,6 +32,8 @@ declare const fullApi: ApiFromModules<{
   credits: typeof credits;
   generations: typeof generations;
   organizations: typeof organizations;
+  posterJobs: typeof posterJobs;
+  posterTemplates: typeof posterTemplates;
   seed: typeof seed;
   seedTemplates: typeof seedTemplates;
   templates: typeof templates;

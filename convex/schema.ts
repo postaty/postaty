@@ -169,6 +169,72 @@ export default defineSchema(
       .index("by_orgId", ["orgId"])
       .index("by_generationId", ["generationId"]),
 
+    // ── Poster Templates (AI-generated designs for reuse) ────────────
+    poster_templates: defineTable({
+      orgId: v.id("organizations"),
+      userId: v.id("users"),
+      name: v.string(),
+      nameAr: v.string(),
+      description: v.string(),
+      category: v.union(
+        v.literal("restaurant"),
+        v.literal("supermarket"),
+        v.literal("online")
+      ),
+      style: v.string(),
+      designJson: v.string(),
+      previewStorageId: v.optional(v.id("_storage")),
+      isPublic: v.boolean(),
+      usageCount: v.number(),
+      createdAt: v.number(),
+    })
+      .index("by_orgId", ["orgId"])
+      .index("by_category", ["category"])
+      .index("by_isPublic", ["isPublic"]),
+
+    // ── Poster Jobs (real-time generation tracking) ─────────────────
+    poster_jobs: defineTable({
+      orgId: v.id("organizations"),
+      userId: v.id("users"),
+      generationId: v.optional(v.id("generations")),
+      category: v.union(
+        v.literal("restaurant"),
+        v.literal("supermarket"),
+        v.literal("online")
+      ),
+      formDataJson: v.string(),
+      status: v.union(
+        v.literal("pending"),
+        v.literal("generating-designs"),
+        v.literal("rendering"),
+        v.literal("complete"),
+        v.literal("error")
+      ),
+      designsJson: v.optional(v.string()),
+      results: v.array(
+        v.object({
+          designIndex: v.number(),
+          format: v.string(),
+          status: v.union(
+            v.literal("pending"),
+            v.literal("rendering"),
+            v.literal("complete"),
+            v.literal("error")
+          ),
+          storageId: v.optional(v.id("_storage")),
+          error: v.optional(v.string()),
+        })
+      ),
+      totalDesigns: v.number(),
+      completedDesigns: v.number(),
+      error: v.optional(v.string()),
+      startedAt: v.number(),
+      completedAt: v.optional(v.number()),
+    })
+      .index("by_orgId", ["orgId"])
+      .index("by_userId", ["userId"])
+      .index("by_status", ["status"]),
+
     // ── Audit Logs ───────────────────────────────────────────────────
     audit_logs: defineTable({
       orgId: v.id("organizations"),

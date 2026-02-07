@@ -213,6 +213,24 @@ export interface TemplateLayer {
   props: LayerProps;
 }
 
+// ── Poster V2 (HTML-to-Image) ─────────────────────────────────────
+export type PosterGenStep =
+  | "idle"
+  | "generating-designs"
+  | "complete"
+  | "error";
+
+export interface PosterResult {
+  designIndex: number;
+  format: OutputFormat;
+  html: string;
+  imageBase64?: string;
+  status: "complete" | "error";
+  error?: string;
+  designName: string;
+  designNameAr: string;
+}
+
 // ── Credits ────────────────────────────────────────────────────────
 export type CreditReason =
   | "generation"

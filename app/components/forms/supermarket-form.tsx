@@ -42,84 +42,98 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">اسم السوبر ماركت</label>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">اسم السوبر ماركت</label>
             <input
               name="supermarketName"
               required
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+              className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted/50"
               placeholder="مثال: كارفور"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">اسم المنتج</label>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">اسم المنتج</label>
             <input
               name="productName"
               required
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+              className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted/50"
               placeholder="مثال: شيبسي ليز"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">الوزن أو الحجم (اختياري)</label>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">الوزن أو الحجم (اختياري)</label>
             <input
               name="weight"
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+              className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted/50"
               placeholder="مثال: 200 جرام"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">مدة العرض (اختياري)</label>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">مدة العرض (اختياري)</label>
             <input
               name="offerDuration"
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+              className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted/50"
               placeholder="مثال: من 1 إلى 7 فبراير"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">رقم الواتساب</label>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">رقم الواتساب</label>
             <input
               name="whatsapp"
               required
               type="tel"
               dir="ltr"
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors text-left"
+              className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all placeholder:text-muted/50 text-left"
               placeholder="+966xxxxxxxxx"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">نص العرض</label>
-            <select
-              name="headline"
-              required
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-            >
-              {SUPERMARKET_HEADLINE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">نص العرض</label>
+            <div className="relative">
+              <select
+                name="headline"
+                required
+                className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all appearance-none"
+              >
+                {SUPERMARKET_HEADLINE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">نص الزر (CTA)</label>
-            <select
-              name="cta"
-              required
-              className="w-full px-4 py-3 rounded-xl border border-card-border bg-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
-            >
-              {SUPERMARKET_CTA_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium mb-1.5 text-foreground/80">نص الزر (CTA)</label>
+            <div className="relative">
+              <select
+                name="cta"
+                required
+                className="w-full px-5 py-3.5 rounded-xl border border-card-border bg-slate-50 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all appearance-none"
+              >
+                {SUPERMARKET_CTA_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <ImageUpload label="لوجو السوبر ماركت" value={logo} onChange={setLogo} />
           <MultiImageUpload
             label="صور المنتج (يمكن رفع أكثر من صورة)"
@@ -132,9 +146,14 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
       <button
         type="submit"
         disabled={isLoading || !logo || productImages.length === 0}
-        className="w-full py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg"
+        className="w-full py-4 bg-gradient-to-r from-primary to-primary-hover text-white font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-lg"
       >
-        {isLoading ? "جاري الإنشاء..." : "إنشاء البوستر"}
+        {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
+                جاري الإنشاء...
+            </span>
+        ) : "إنشاء البوستر"}
       </button>
     </form>
   );
