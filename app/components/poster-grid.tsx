@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import {
   Download,
   Share2,
@@ -116,13 +117,13 @@ const LOADING_LOGS = [
 
 // ── Phase 1: Wireframe / Blueprint Construction
 function SkeletonLayoutPhase() {
-  const draw = {
+  const draw: Variants = {
     hidden: { pathLength: 0, opacity: 0 },
     visible: (i: number) => ({
       pathLength: 1,
       opacity: 1,
       transition: {
-        pathLength: { delay: i * 0.2, type: "spring", duration: 1.5, bounce: 0 },
+        pathLength: { delay: i * 0.2, type: "spring" as const, duration: 1.5, bounce: 0 },
         opacity: { delay: i * 0.2, duration: 0.01 },
       },
     }),
