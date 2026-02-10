@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Download, Share2, Loader2, AlertCircle } from "lucide-react";
 import type { GenerationResult } from "@/lib/types";
 import { FORMAT_CONFIGS } from "@/lib/constants";
@@ -10,6 +11,7 @@ interface PosterPreviewProps {
 
 export function PosterPreview({ result }: PosterPreviewProps) {
   const config = FORMAT_CONFIGS[result.format];
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // Support both base64 (immediate preview) and Convex storage URL (from history)
   const imageSrc = result.imageBase64
@@ -19,19 +21,28 @@ export function PosterPreview({ result }: PosterPreviewProps) {
   const handleDownload = async () => {
     if (!imageSrc) return;
 
-    if (result.storageUrl && !result.imageBase64) {
-      const response = await fetch(result.storageUrl);
-      const blob = await response.blob();
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `poster-${result.format}.png`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    } else {
-      const link = document.createElement("a");
-      link.href = imageSrc;
-      link.download = `poster-${result.format}.png`;
-      link.click();
+    setIsDownloading(true);
+    try {
+      if (result.storageUrl && !result.imageBase64) {
+        const response = await fetch(result.storageUrl);
+        if (!response.ok) throw new Error("Failed to fetch image");
+        const blob = await response.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `poster-${result.format}.png`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      } else {
+        const link = document.createElement("a");
+        link.href = imageSrc;
+        link.download = `poster-${result.format}.png`;
+        link.click();
+      }
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("حدث خطأ أثناء تحميل الصورة. يرجى المحاولة مرة أخرى.");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -39,18 +50,30 @@ export function PosterPreview({ result }: PosterPreviewProps) {
     if (!imageSrc || !navigator.share) return;
 
     try {
-      const response = await fetch(imageSrc);
-      const blob = await response.blob();
+      let blob: Blob;
+      if (imageSrc.startsWith("data:")) {
+        const [header, base64] = imageSrc.split(",");
+        const mime = header.match(/:(.*?);/)?.[1] || "image/png";
+        const binary = atob(base64);
+        const array = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+        blob = new Blob([array], { type: mime });
+      } else {
+        const response = await fetch(imageSrc);
+        if (!response.ok) throw new Error("Failed to fetch image");
+        blob = await response.blob();
+      }
+
       const file = new File([blob], `poster-${result.format}.png`, {
-        type: "image/png",
+        type: blob.type || "image/png",
       });
 
       await navigator.share({
         files: [file],
         title: "بوستر العرض",
       });
-    } catch {
-      // User cancelled or share not supported
+    } catch (err) {
+      console.error("Share failed:", err);
     }
   };
 
@@ -87,10 +110,11 @@ export function PosterPreview({ result }: PosterPreviewProps) {
         <div className="p-4 border-t border-card-border/50 bg-white grid grid-cols-2 gap-3">
           <button
             onClick={handleDownload}
-            className="flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all text-sm font-bold"
+            disabled={isDownloading}
+            className="flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download size={16} />
-            تحميل
+            {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            {isDownloading ? "جاري..." : "تحميل"}
           </button>
           {typeof navigator !== "undefined" && "share" in navigator && (
             <button

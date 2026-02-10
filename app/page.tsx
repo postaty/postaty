@@ -1,20 +1,30 @@
 "use client";
 
 import { HeroVisual } from "./components/hero-visual";
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvex, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Category, PostFormData, PosterResult, PosterGenStep } from "@/lib/types";
 import type { BrandKitPromptData } from "@/lib/prompts";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
 import { CategorySelector } from "./components/category-selector";
-import { RestaurantForm } from "./components/forms/restaurant-form";
-import { SupermarketForm } from "./components/forms/supermarket-form";
-import { OnlineForm } from "./components/forms/online-form";
-import { PosterGrid } from "./components/poster-grid";
 import { generatePosters } from "./actions-v2";
 import { useDevIdentity } from "@/hooks/use-dev-identity";
 import { ArrowRight, Sparkles, Palette, ArrowDown } from "lucide-react";
+
+const RestaurantForm = dynamic(
+  () => import("./components/forms/restaurant-form").then((mod) => mod.RestaurantForm)
+);
+const SupermarketForm = dynamic(
+  () => import("./components/forms/supermarket-form").then((mod) => mod.SupermarketForm)
+);
+const OnlineForm = dynamic(
+  () => import("./components/forms/online-form").then((mod) => mod.OnlineForm)
+);
+const PosterGrid = dynamic(
+  () => import("./components/poster-grid").then((mod) => mod.PosterGrid)
+);
 
 type AppStep =
   | "select-category"
@@ -31,6 +41,34 @@ function getBusinessName(data: PostFormData): string {
     case "online":
       return data.shopName;
   }
+}
+
+function extractBase64Images(data: PostFormData): string[] {
+  // Only product images — logo is composited via sharp after generation
+  switch (data.category) {
+    case "restaurant":
+      return [data.mealImage].filter(Boolean);
+    case "supermarket":
+      return [...data.productImages].filter(Boolean);
+    case "online":
+      return [data.productImage].filter(Boolean);
+  }
+}
+
+function base64ToBlob(dataUrl: string): Blob {
+  const base64Data = dataUrl.includes(",")
+    ? dataUrl.split(",")[1]
+    : dataUrl;
+  const mimeType = dataUrl.includes(",")
+    ? dataUrl.split(",")[0].split(":")[1].split(";")[0]
+    : "image/png";
+
+  const binaryStr = atob(base64Data);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mimeType });
 }
 
 function getProductName(data: PostFormData): string {
@@ -58,6 +96,7 @@ export default function Home() {
   }, [step]);
 
   const { orgId, userId } = useDevIdentity();
+  const convex = useConvex();
 
   const scrollToCategories = () => {
     document.getElementById("categories-section")?.scrollIntoView({ behavior: "smooth" });
@@ -102,6 +141,25 @@ export default function Home() {
     }
   };
 
+  const uploadImagesToConvex = async (dataUrls: string[]): Promise<string[]> => {
+    const urls: string[] = [];
+    for (const dataUrl of dataUrls) {
+      if (!dataUrl) continue;
+      const blob = base64ToBlob(dataUrl);
+      const uploadUrl = await generateUploadUrl();
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": blob.type || "image/png" },
+        body: blob,
+      });
+      const { storageId } = await uploadRes.json();
+      // Get the public URL for this stored file
+      const publicUrl = await convex.query(api.generations.getStorageUrl, { storageId });
+      if (publicUrl) urls.push(publicUrl);
+    }
+    return urls;
+  };
+
   const runGeneration = (data: PostFormData) => {
     setLastSubmission(data);
     setGenStep("generating-designs");
@@ -112,16 +170,26 @@ export default function Home() {
 
     const startTime = Date.now();
 
-    generatePosters(data, brandKitPromptData)
-      .then((posterResults) => {
-        setResults(posterResults);
+    // Upload product/logo images to Convex → get public URLs → pass to NanoBanana
+    const base64Images = extractBase64Images(data);
+    const imageUrlsPromise = base64Images.length > 0
+      ? uploadImagesToConvex(base64Images).catch((err) => {
+          console.warn("Image upload failed, proceeding without images:", err);
+          return [] as string[];
+        })
+      : Promise.resolve([] as string[]);
+
+    imageUrlsPromise.then((imageUrls) =>
+      generatePosters(data, brandKitPromptData, imageUrls.length > 0 ? imageUrls : undefined)
+    )
+      .then((posterResult) => {
+        setResults([posterResult]);
         setGenStep("complete");
         setStep("results");
         setIsGenerating(false);
 
-        // Save successful results to Convex in background
-        const successResults = posterResults.filter((r) => r.status === "complete");
-        if (successResults.length > 0) {
+        // Save successful result to Convex in background
+        if (posterResult.status === "complete" && posterResult.imageBase64) {
           void (async () => {
             try {
               const generationId = await createGeneration({
@@ -142,32 +210,39 @@ export default function Home() {
                 creditsCharged: 1,
               });
 
-              // Upload each successful image to Convex storage
-              for (const result of successResults) {
-                if (result.imageBase64) {
-                  const format = data.formats[0];
-                  const formatConfig = FORMAT_CONFIGS[format];
+              const format = data.formats[0];
+              const formatConfig = FORMAT_CONFIGS[format];
 
-                  const res = await fetch(result.imageBase64);
-                  const blob = await res.blob();
-
-                  const uploadUrl = await generateUploadUrl();
-                  const uploadRes = await fetch(uploadUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": blob.type || "image/png" },
-                    body: blob,
-                  });
-                  const { storageId } = await uploadRes.json();
-
-                  await updateOutput({
-                    generationId,
-                    format,
-                    storageId,
-                    width: formatConfig.width,
-                    height: formatConfig.height,
-                  });
-                }
+              // Convert base64 to Blob without fetch to avoid CSP issues
+              const base64Data = posterResult.imageBase64!.includes(",")
+                ? posterResult.imageBase64!.split(",")[1]
+                : posterResult.imageBase64!;
+              const mimeType = posterResult.imageBase64!.includes(",")
+                ? posterResult.imageBase64!.split(",")[0].split(":")[1].split(";")[0]
+                : "image/png";
+              
+              const binaryStr = atob(base64Data);
+              const bytes = new Uint8Array(binaryStr.length);
+              for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
               }
+              const blob = new Blob([bytes], { type: mimeType });
+
+              const uploadUrl = await generateUploadUrl();
+              const uploadRes = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": blob.type || "image/png" },
+                body: blob,
+              });
+              const { storageId } = await uploadRes.json();
+
+              await updateOutput({
+                generationId,
+                format,
+                storageId,
+                width: formatConfig.width,
+                height: formatConfig.height,
+              });
 
               await updateStatus({
                 generationId,
@@ -185,7 +260,6 @@ export default function Home() {
           designIndex: 0,
           format: data.formats[0],
           html: "",
-          tier: "premium",
           status: "error",
           error: err instanceof Error ? err.message : "Generation failed",
           designName: "Design",
@@ -224,7 +298,6 @@ export default function Home() {
           name: result.designName,
           nameAr: result.designNameAr,
           imageBase64: result.imageBase64,
-          tier: result.tier,
         }),
       });
     } catch (err) {
@@ -235,8 +308,8 @@ export default function Home() {
   return (
     <main className="min-h-screen py-12 px-4 relative overflow-hidden bg-grid-pattern">
       {/* Background Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
+      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-primary/20 rounded-full blur-[72px] md:blur-[120px] pointer-events-none mix-blend-screen" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-accent/20 rounded-full blur-[72px] md:blur-[120px] pointer-events-none mix-blend-screen" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Hero Section - Show only on main selection step */}
@@ -244,14 +317,14 @@ export default function Home() {
           <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-12 mb-20 mt-8">
             {/* Text Content */}
             <div className="flex-1 text-center lg:text-right space-y-8">
-              <div className="inline-flex items-center gap-2 bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 shadow-[0_0_15px_rgba(99,102,241,0.3)] animate-fade-in-up">
-                <Sparkles size={16} className="text-accent animate-pulse" />
+              <div className="inline-flex items-center gap-2 bg-slate-800/50 backdrop-blur-sm md:backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 shadow-[0_0_15px_rgba(99,102,241,0.3)] motion-safe:animate-fade-in-up">
+                <Sparkles size={16} className="text-accent motion-safe:animate-pulse" />
                 <span className="text-sm font-semibold text-white/90">الجيل الجديد من التصميم</span>
               </div>
               
               <h1 className="text-5xl lg:text-7xl font-black leading-tight tracking-tight text-white">
                 <span className="block mb-2">صمم إعلاناتك</span>
-                <span className="text-gradient bg-[length:200%_auto] animate-gradient-flow">
+                <span className="text-gradient bg-[length:200%_auto] motion-safe:animate-gradient-flow">
                   بالذكاء الاصطناعي
                 </span>
               </h1>
@@ -270,7 +343,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                   <span className="relative flex items-center gap-3">
                     ابدأ التصميم مجاناً
-                    <ArrowDown className="animate-bounce" size={20} />
+                    <ArrowDown className="motion-safe:animate-bounce" size={20} />
                   </span>
                 </button>
               </div>
@@ -294,7 +367,7 @@ export default function Home() {
           </div>
         ) : (
           /* Compact Header for inner pages */
-          <div className="text-center mb-8 animate-fade-in">
+          <div className="text-center mb-8 motion-safe:animate-fade-in">
              <h2 className="text-3xl font-bold text-white mb-2">
               {step === "fill-form" && "أدخل تفاصيل الإعلان"}
               {step === "generating" && "جاري التصميم..."}
@@ -367,7 +440,7 @@ export default function Home() {
               results={results}
               genStep={genStep}
               error={error}
-              totalExpected={2}
+              totalExpected={1}
               onSaveAsTemplate={handleSaveAsTemplate}
             />
           )}

@@ -76,20 +76,6 @@ export function PosterGallery({ orgId }: PosterGalleryProps) {
     return () => observer.disconnect();
   }, [status, loadMore]);
 
-  const handleDownload = async (url: string, fileName: string) => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `${fileName}.png`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    } catch (error) {
-      console.error("Download failed:", error);
-    }
-  };
-
   const formatDate = (timestamp: number) => {
     return new Intl.DateTimeFormat("ar-SA", {
       dateStyle: "medium",
@@ -165,18 +151,11 @@ export function PosterGallery({ orgId }: PosterGalleryProps) {
                         </span>
                       </div>
 
-                      <button
-                        onClick={() =>
-                          handleDownload(
-                            image.url,
-                            `${image.businessName}-${image.format}`
-                          )
-                        }
-                        className="w-full flex items-center justify-center gap-2 py-2 bg-primary/5 hover:bg-primary hover:text-white text-primary rounded-lg text-xs font-bold transition-all"
-                      >
-                        <Download size={14} />
-                        تحميل
-                      </button>
+                      <DownloadBtn 
+                        url={image.url} 
+                        fileName={`${image.businessName}-${image.format}`}
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-primary/5 hover:bg-primary hover:text-white text-primary rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
                     </div>
                   </div>
                 </div>
@@ -203,19 +182,12 @@ export function PosterGallery({ orgId }: PosterGalleryProps) {
         >
           <div className="relative max-w-5xl max-h-[90vh] w-full">
             <div className="absolute -top-12 left-0 right-0 flex items-center justify-between">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(
-                    selectedImage.url,
-                    `${selectedImage.businessName}-${selectedImage.format}`
-                  );
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all backdrop-blur-sm"
-              >
-                <Download size={16} />
-                تحميل
-              </button>
+              <DownloadBtn 
+                url={selectedImage.url} 
+                fileName={`${selectedImage.businessName}-${selectedImage.format}`}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all backdrop-blur-sm disabled:opacity-50"
+                onClick={(e) => e.stopPropagation()}
+              />
               <button
                 onClick={() => setSelectedImage(null)}
                 className="text-white hover:text-slate-300 text-sm font-bold px-4 py-2"
@@ -237,5 +209,51 @@ export function PosterGallery({ orgId }: PosterGalleryProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function DownloadBtn({ 
+  url, 
+  fileName, 
+  className,
+  onClick
+}: { 
+  url: string; 
+  fileName: string; 
+  className?: string;
+  onClick?: (e: React.MouseEvent) => void;
+}) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    if (onClick) onClick(e);
+    
+    setIsDownloading(true);
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${fileName}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error("Download failed:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={isDownloading}
+      className={className}
+    >
+      {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+      {isDownloading ? "جاري التحميل..." : "تحميل"}
+    </button>
   );
 }

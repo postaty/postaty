@@ -11,7 +11,24 @@ const nextConfig: NextConfig = {
       {
         // Convex file storage URLs
         protocol: "https",
-        hostname: "*.convex.cloud",
+        hostname: "**.convex.cloud",
+      },
+      {
+        // Convex file storage URLs (newer convex.site domain)
+        protocol: "https",
+        hostname: "**.convex.site",
+      },
+      {
+        // Local Convex dev
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "3210",
+      },
+      {
+        // Local Convex dev
+        protocol: "http",
+        hostname: "localhost",
+        port: "3210",
       },
     ],
   },
@@ -20,9 +37,9 @@ const nextConfig: NextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://*.convex.cloud https://*.convex.site http://127.0.0.1:* http://localhost:*",
       "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.convex.cloud wss://*.convex.cloud https://fonts.googleapis.com https://fonts.gstatic.com",
+      "connect-src 'self' data: https://*.convex.cloud wss://*.convex.cloud https://*.convex.site wss://*.convex.site http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:* https://fonts.googleapis.com https://fonts.gstatic.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

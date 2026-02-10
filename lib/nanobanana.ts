@@ -51,9 +51,9 @@ async function submitTask(req: GenerateProRequest): Promise<string> {
     },
     body: JSON.stringify({
       prompt: req.prompt,
-      type: "TEXTTOIAMGE",
+      type: req.imageUrls && req.imageUrls.length > 0 ? "IMAGETOIAMGE" : "TEXTTOIAMGE",
       numImages: 1,
-      ...(req.imageUrls && { imageUrls: req.imageUrls }),
+      ...(req.imageUrls && req.imageUrls.length > 0 && { imageUrls: req.imageUrls }),
       ...(req.resolution && { resolution: req.resolution }),
       ...(req.aspectRatio && { aspectRatio: req.aspectRatio }),
     }),
@@ -128,13 +128,14 @@ async function imageUrlToBase64(url: string): Promise<string> {
 /** Generate an image using NanoBanana Pro and return base64 data URL */
 export async function generateNanoBananaImage(
   prompt: string,
-  options?: { resolution?: "1K" | "2K" | "4K"; aspectRatio?: string }
+  options?: { resolution?: "1K" | "2K" | "4K"; aspectRatio?: string; imageUrls?: string[] }
 ): Promise<string> {
   console.info("[nanobanana] submitting task");
   const taskId = await submitTask({
     prompt,
-    resolution: options?.resolution ?? "1K",
+    resolution: options?.resolution ?? "2K",
     aspectRatio: options?.aspectRatio ?? "1:1",
+    imageUrls: options?.imageUrls,
   });
 
   console.info("[nanobanana] polling task", { taskId });

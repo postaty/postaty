@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+  useReducedMotion,
+} from "framer-motion";
 import type { Variants } from "framer-motion";
 import {
   Download,
@@ -12,10 +18,7 @@ import {
   Save,
   DownloadCloud,
   Sparkles,
-  Crown,
-  LayoutGrid,
   Palette,
-  Wand2,
   Brain,
 } from "lucide-react";
 import type { PosterResult, PosterGenStep } from "@/lib/types";
@@ -40,62 +43,54 @@ const AI_MESSAGES = [
   "مراجعة جودة التصاميم...",
 ];
 
-function AiStateIndicator() {
+function AiStateIndicator({ lowMotion }: { lowMotion: boolean }) {
   const [text, setText] = useState("");
   const [messageIndex, setMessageIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [delta, setDelta] = useState(100);
 
   useEffect(() => {
-    const ticker = setInterval(() => {
-      tick();
-    }, delta);
+    if (lowMotion) return;
 
-    return () => clearInterval(ticker);
-  });
+    const currentMessage = AI_MESSAGES[messageIndex % AI_MESSAGES.length];
+    const nextText = isDeleting
+      ? currentMessage.substring(0, text.length - 1)
+      : currentMessage.substring(0, text.length + 1);
 
-  const tick = () => {
-    const i = messageIndex % AI_MESSAGES.length;
-    const fullText = AI_MESSAGES[i];
-    const updatedText = isDeleting
-      ? fullText.substring(0, text.length - 1)
-      : fullText.substring(0, text.length + 1);
+    const delay = isDeleting ? 50 : nextText === currentMessage ? 2000 : 100;
+    const timer = window.setTimeout(() => {
+      setText(nextText);
+      if (!isDeleting && nextText === currentMessage) {
+        setIsDeleting(true);
+        return;
+      }
+      if (isDeleting && nextText === "") {
+        setIsDeleting(false);
+        setMessageIndex((prev) => prev + 1);
+      }
+    }, delay);
 
-    setText(updatedText);
+    return () => window.clearTimeout(timer);
+  }, [isDeleting, lowMotion, messageIndex, text]);
 
-    if (isDeleting) {
-      setDelta((prev) => prev / 2);
-    }
-
-    if (!isDeleting && updatedText === fullText) {
-      setIsDeleting(true);
-      setDelta(2000);
-    } else if (isDeleting && updatedText === "") {
-      setIsDeleting(false);
-      setMessageIndex((prev) => prev + 1);
-      setDelta(100);
-    } else {
-      if (!isDeleting && delta === 2000) setDelta(100);
-    }
-  };
+  const displayedText = lowMotion ? AI_MESSAGES[0] : text;
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 py-6">
       <motion.div
         className="relative"
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        animate={lowMotion ? { rotate: 0 } : { rotate: [0, 360] }}
+        transition={lowMotion ? { duration: 0 } : { duration: 8, repeat: Infinity, ease: "linear" }}
       >
         <div className="absolute -inset-1 bg-gradient-to-r from-primary via-accent to-primary rounded-full blur opacity-30" />
         <div className="relative bg-white rounded-full p-4 ring-1 ring-slate-200 shadow-sm">
-          <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+          <Sparkles className={`w-8 h-8 text-primary ${lowMotion ? "" : "animate-pulse"}`} />
         </div>
       </motion.div>
 
       <div className="h-8 flex items-center">
         <p className="text-lg md:text-xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-          {text}
-          <span className="w-0.5 h-6 mr-1 bg-primary inline-block animate-blink align-middle" />
+          {displayedText}
+          {!lowMotion && <span className="w-0.5 h-6 mr-1 bg-primary inline-block animate-blink align-middle" />}
         </p>
       </div>
     </div>
@@ -269,29 +264,63 @@ function SkeletonProcessingPhase() {
   );
 }
 
-function PosterSkeleton({ index, tier }: { index: number; tier: "premium" | "standard" }) {
+function PosterSkeleton({ index, lowMotion }: { index: number; lowMotion: boolean }) {
   const [phase, setPhase] = useState(0);
   const [logIndex, setLogIndex] = useState(0);
 
-  // Cycle phases
   useEffect(() => {
-    const delayStart = setTimeout(() => {
-        const interval = setInterval(() => {
-          setPhase((prev) => (prev + 1) % 3);
-        }, 3000); // 3 seconds per phase
-        return () => clearInterval(interval);
-    }, index * 800); // Stagger start time
-    
-    return () => clearTimeout(delayStart);
-  }, [index]);
+    if (lowMotion) return;
 
-  // Cycle logs rapidly
+    let phaseInterval: number | undefined;
+    const delayStart = window.setTimeout(() => {
+      phaseInterval = window.setInterval(() => {
+        setPhase((prev) => (prev + 1) % 3);
+      }, 3000);
+    }, index * 800);
+
+    return () => {
+      window.clearTimeout(delayStart);
+      if (phaseInterval) {
+        window.clearInterval(phaseInterval);
+      }
+    };
+  }, [index, lowMotion]);
+
   useEffect(() => {
+    if (lowMotion) return;
+
     const interval = setInterval(() => {
       setLogIndex((prev) => (prev + 1) % LOADING_LOGS.length);
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [lowMotion]);
+
+  if (lowMotion) {
+    return (
+      <div className="relative rounded-3xl overflow-hidden w-full h-full bg-white border border-slate-200 shadow-lg">
+        <div className="h-8 bg-slate-50 border-b border-slate-100 flex items-center px-3 justify-between">
+          <div className="flex gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-red-400/50" />
+            <div className="w-2 h-2 rounded-full bg-amber-400/50" />
+            <div className="w-2 h-2 rounded-full bg-green-400/50" />
+          </div>
+          <div className="text-[10px] font-mono text-slate-400">PROCESSING_NODE_{index + 1}</div>
+        </div>
+        <div className="aspect-square bg-slate-50 p-6">
+          <div className="h-full w-full border-2 border-dashed border-primary/30 rounded-2xl" />
+        </div>
+        <div className="p-3 bg-slate-900 border-t border-slate-800">
+          <div className="font-mono text-xs text-green-400/80 truncate">
+            <span className="mr-2 text-green-600">$</span>
+            {LOADING_LOGS[0]}
+          </div>
+          <div className="mt-2 h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-green-500 to-primary w-2/3" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -379,14 +408,20 @@ function PosterSkeleton({ index, tier }: { index: number; tier: "premium" | "sta
 function Card3DHover({
   children,
   className,
+  disabled = false,
 }: {
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-0.5, 0.5], [8, -8]);
   const rotateY = useTransform(x, [-0.5, 0.5], [-8, 8]);
+
+  if (disabled) {
+    return <div className={className}>{children}</div>;
+  }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -422,8 +457,23 @@ export function PosterGrid({
   totalExpected = results.length || 3,
   onSaveAsTemplate,
 }: PosterGridProps) {
+  const shouldReduceMotion = useReducedMotion();
   const isLoading = genStep === "generating-designs";
   const [exportingAll, setExportingAll] = useState(false);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(max-width: 768px), (hover: none) and (pointer: coarse)"
+    );
+    const onMediaChange = () => setIsCoarsePointer(mediaQuery.matches);
+
+    onMediaChange();
+    mediaQuery.addEventListener("change", onMediaChange);
+    return () => mediaQuery.removeEventListener("change", onMediaChange);
+  }, []);
+
+  const lowMotionMode = Boolean(shouldReduceMotion) || isCoarsePointer;
 
   const successResults = results.filter((r) => r.status === "complete");
 
@@ -439,10 +489,7 @@ export function PosterGrid({
   };
 
   // Create grid items for all expected indices
-  const gridItems = Array.from({ length: totalExpected }, (_, i) => ({
-    index: i,
-    tier: (i === 0 ? "premium" : "standard") as "premium" | "standard",
-  }));
+  const gridItems = Array.from({ length: totalExpected }, (_, i) => i);
 
   // Animation variants
   const containerVariants = {
@@ -454,9 +501,9 @@ export function PosterGrid({
   };
 
   return (
-    <div className="space-y-8">
-      {/* AI Status Indicator */}
-      {isLoading && <AiStateIndicator />}
+      <div className="space-y-8">
+        {/* AI Status Indicator */}
+      {isLoading && <AiStateIndicator lowMotion={lowMotionMode} />}
 
       {genStep === "complete" && (
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-6 px-6 bg-success/5 border border-success/20 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -469,7 +516,7 @@ export function PosterGrid({
                 تم اكتمال التصميم!
               </h3>
               <p className="text-muted text-sm">
-                تم إنشاء {successResults.length} من {totalExpected} تصاميم بنجاح
+                تم إنشاء التصميم بنجاح
               </p>
             </div>
           </div>
@@ -486,7 +533,7 @@ export function PosterGrid({
               ) : (
                 <DownloadCloud size={18} />
               )}
-              تصدير جميع التصاميم
+              تصدير التصميم
             </button>
           )}
         </div>
@@ -506,15 +553,15 @@ export function PosterGrid({
         </div>
       )}
 
-      {/* Results Grid - Grid layout with 3 columns */}
+      {/* Result — single centered poster */}
       {(results.length > 0 || isLoading) && (
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto"
+          variants={lowMotionMode ? undefined : containerVariants}
+          initial={lowMotionMode ? false : "hidden"}
+          animate={lowMotionMode ? undefined : "show"}
+          className="flex justify-center max-w-lg mx-auto"
         >
-          {gridItems.map(({ index, tier }) => {
+          {gridItems.map((index) => {
             const result = results.find((r) => r.designIndex === index);
             if (result) {
               return (
@@ -522,6 +569,7 @@ export function PosterGrid({
                   <PosterCard
                     result={result}
                     onSaveAsTemplate={onSaveAsTemplate}
+                    lowMotion={lowMotionMode}
                   />
                 </div>
               );
@@ -532,7 +580,7 @@ export function PosterGrid({
                 <div key={`skeleton-${index}`} className="w-full">
                   <PosterSkeleton
                     index={index}
-                    tier={tier}
+                    lowMotion={lowMotionMode}
                   />
                 </div>
               );
@@ -549,8 +597,22 @@ export function PosterGrid({
 
 async function exportPoster(result: PosterResult): Promise<void> {
   if (!result.imageBase64) return;
-  const res = await fetch(result.imageBase64);
-  const blob = await res.blob();
+  
+  // Convert base64 to Blob without fetch
+  const base64Data = result.imageBase64.includes(",")
+    ? result.imageBase64.split(",")[1]
+    : result.imageBase64;
+  const mimeType = result.imageBase64.includes(",")
+    ? result.imageBase64.split(",")[0].split(":")[1].split(";")[0]
+    : "image/png";
+  
+  const binaryStr = atob(base64Data);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: mimeType });
+  
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -568,12 +630,13 @@ async function exportPoster(result: PosterResult): Promise<void> {
 function PosterCard({
   result,
   onSaveAsTemplate,
+  lowMotion,
 }: {
   result: PosterResult;
   onSaveAsTemplate?: (designIndex: number) => void;
+  lowMotion: boolean;
 }) {
   const [isExporting, setIsExporting] = useState(false);
-  const isPremium = result.tier === "premium";
 
   const handleExport = useCallback(async () => {
     setIsExporting(true);
@@ -590,8 +653,22 @@ function PosterCard({
     if (!("share" in navigator)) return;
     try {
       if (!result.imageBase64) return;
-      const res = await fetch(result.imageBase64);
-      const blob = await res.blob();
+      
+      // Convert base64 to Blob without fetch
+      const base64Data = result.imageBase64.includes(",")
+        ? result.imageBase64.split(",")[1]
+        : result.imageBase64;
+      const mimeType = result.imageBase64.includes(",")
+        ? result.imageBase64.split(",")[0].split(":")[1].split(";")[0]
+        : "image/png";
+      
+      const binaryStr = atob(base64Data);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: mimeType });
+      
       const file = new File([blob], `poster-${result.format}.png`, {
         type: "image/png",
       });
@@ -620,31 +697,22 @@ function PosterCard({
 
   return (
     <Card3DHover
-      className={`${isPremium ? "md:scale-110 md:-mt-4 z-10" : ""} w-full`}
+      className="w-full"
+      disabled={lowMotion}
     >
       <motion.div
-        initial={{
-          opacity: 0,
-          y: isPremium ? 50 : 40,
-          scale: isPremium ? 0.85 : 0.9,
-          filter: isPremium ? "blur(15px)" : "blur(10px)",
-        }}
-        animate={{
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          filter: "blur(0px)",
-        }}
+        initial={
+          lowMotion
+            ? false
+            : { opacity: 0, y: 40, scale: 0.9 }
+        }
+        animate={lowMotion ? undefined : { opacity: 1, y: 0, scale: 1 }}
         transition={
-          isPremium
-            ? { type: "spring" as const, damping: 12, stiffness: 80, delay: 0.1 }
+          lowMotion
+            ? undefined
             : { type: "spring" as const, damping: 15, stiffness: 100 }
         }
-        className={`rounded-3xl overflow-hidden transition-shadow ${
-          isPremium
-            ? "border-2 border-amber-400/50 shadow-2xl shadow-amber-500/20 bg-gradient-to-b from-amber-50 to-white"
-            : "border border-slate-200 shadow-lg bg-white"
-        }`}
+        className="rounded-3xl overflow-hidden transition-shadow border border-slate-200 shadow-lg bg-white"
       >
         {/* Image */}
         <div className="relative aspect-square overflow-hidden">
@@ -656,26 +724,11 @@ function PosterCard({
             />
           )}
 
-          {/* Premium badge */}
-          {isPremium && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, type: "spring" }}
-              className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-bold shadow-lg shadow-amber-500/30"
-            >
-              <Crown size={12} />
-              Premium
-            </motion.div>
-          )}
-
-          {/* Standard badge */}
-          {!isPremium && (
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-xs font-bold">
-              <Sparkles size={12} />
-              AI
-            </div>
-          )}
+          {/* AI badge */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-white text-xs font-bold">
+            <Sparkles size={12} />
+            AI
+          </div>
 
           {/* Hover overlay */}
           <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-all duration-200 z-[5]" />
