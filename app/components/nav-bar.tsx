@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Palette, Clock, Zap, Plus, Loader2 } from "lucide-react";
+import { Palette, Clock, Zap, Plus, Loader2, Settings } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
@@ -15,6 +15,7 @@ const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 const NAV_ITEMS = [
   { href: "/brand-kit", label: "هوية العلامة", icon: Palette },
   { href: "/history", label: "السجل", icon: Clock },
+  { href: "/settings", label: "الإعدادات", icon: Settings },
 ] as const;
 
 export function NavBar() {
@@ -54,7 +55,7 @@ function NavBarWithAuth() {
     if (!isClerkLoaded) return;
 
     if (!isClerkSignedIn) {
-      openSignIn({ afterSignInUrl: "/" });
+      openSignIn({ afterSignInUrl: "/create" });
     } else {
       router.push("/create");
     }
@@ -110,7 +111,7 @@ function NavBarWithAuth() {
           <div className="flex items-center gap-3">
 
             {/* Theme Toggle */}
-            <ThemeToggle className="hidden sm:flex" />
+            <ThemeToggle className="flex" />
 
             {/* Desktop Generate Button */}
             <button

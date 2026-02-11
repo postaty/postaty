@@ -171,12 +171,12 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               {!isAuthenticated ? (
                 AUTH_ENABLED ? (
-                  <SignInButton mode="modal">
+                  <SignInButton mode="modal" forceRedirectUrl="/create">
                     <motion.button
                       whileTap={TAP_SCALE}
                       className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-lg"
                     >
-                      جرّب مجاناً — 10 تصاميم هدية
+                      ابدأ مجاناً
                     </motion.button>
                   </SignInButton>
                 ) : (
@@ -379,25 +379,33 @@ export default function Home() {
           SECTION 6: PRICING PREVIEW
       ═══════════════════════════════════════════════════════ */}
       <section className="py-16 md:py-24 px-4 border-t border-card-border">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <AnimateOnScroll className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black mb-4">
-              ابدأ مجاناً — <span className="text-gradient">بدون بطاقة ائتمان</span>
+              اختر خطتك — <span className="text-gradient">الشهر الأول مخفض</span>
             </h2>
-            <p className="text-muted text-lg">جرّب بدون التزام</p>
+            <p className="text-muted text-lg">جميع الخطط مع ضمان استرجاع الأموال 30 يوم</p>
           </AnimateOnScroll>
 
-          <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Free Plan */}
+          <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Starter Plan */}
             <motion.div
               variants={STAGGER_ITEM}
               className="bg-surface-1 border border-card-border rounded-2xl p-8"
             >
-              <div className="text-sm font-bold text-muted mb-2">مجاني</div>
-              <div className="text-4xl font-black mb-1">0 <span className="text-lg text-muted font-medium">ر.س/شهر</span></div>
-              <p className="text-muted text-sm mb-6">10 تصاميم مجانية — جرّب بدون التزام</p>
+              <div className="text-sm font-bold text-muted mb-2">مبتدي</div>
+              <div className="text-4xl font-black mb-1">$7 <span className="text-lg text-muted font-medium">/شهر</span></div>
+              <p className="text-muted text-sm mb-1">الشهر الأول: $5</p>
+              <p className="text-muted text-xs mb-6 opacity-75">ثم $7 شهرياً</p>
               <ul className="space-y-3 mb-8">
-                {["10 تصاميم شهرياً", "حجمين للتصدير", "هوية علامة واحدة", "حفظ 7 أيام"].map((item, i) => (
+                {[
+                  "10 تصاميم ذكية شهرياً",
+                  "1–2 محتوى أسبوعياً",
+                  "حجم تصدير واحد",
+                  "نصوص تسويقية أساسية",
+                  "تنزيل HD",
+                  "معرض بسيط"
+                ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <Check size={14} className="text-success" />
                     <span>{item}</span>
@@ -406,24 +414,24 @@ export default function Home() {
               </ul>
               {!isAuthenticated ? (
                 AUTH_ENABLED ? (
-                  <SignInButton mode="modal">
+                  <SignInButton mode="modal" forceRedirectUrl="/create">
                     <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                      ابدأ مجاناً
+                      ابدأ الآن
                     </button>
                   </SignInButton>
                 ) : (
                   <Link href="/create" className="block w-full py-3 border border-card-border rounded-xl font-bold text-foreground text-center hover:bg-surface-2 transition-colors">
-                    ابدأ مجاناً
+                    ابدأ الآن
                   </Link>
                 )
               ) : (
                 <button onClick={() => router.push("/create")} className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                  ابدأ التصميم
+                  ابدأ الآن
                 </button>
               )}
             </motion.div>
 
-            {/* Pro Plan */}
+            {/* Growth Plan - Most Popular */}
             <motion.div
               variants={STAGGER_ITEM}
               className="bg-surface-1 border-2 border-primary/30 rounded-2xl p-8 relative"
@@ -431,11 +439,20 @@ export default function Home() {
               <div className="absolute -top-3 right-6 bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
                 الأكثر شعبية
               </div>
-              <div className="text-sm font-bold text-primary mb-2">احترافي</div>
-              <div className="text-4xl font-black mb-1">99 <span className="text-lg text-muted font-medium">ر.س/شهر</span></div>
-              <p className="text-muted text-sm mb-6">100 تصميم شهرياً — لكل الأحجام</p>
+              <div className="text-sm font-bold text-primary mb-2">نمو</div>
+              <div className="text-4xl font-black mb-1">$14 <span className="text-lg text-muted font-medium">/شهر</span></div>
+              <p className="text-muted text-sm mb-1">الشهر الأول: $10</p>
+              <p className="text-muted text-xs mb-6 opacity-75">ثم $14 شهرياً</p>
               <ul className="space-y-3 mb-8">
-                {["100 تصميم شهرياً", "جميع الأحجام (6 أحجام)", "3 هويات تجارية", "بدون علامة مائية", "حفظ 30 يوم"].map((item, i) => (
+                {[
+                  "25 تصميماً ذكياً شهرياً",
+                  "3–4 محتوى أسبوعياً",
+                  "3 أحجام تصدير (بوست، ستوري، واتس)",
+                  "نصوص تسويقية قوية",
+                  "الهوية التجارية محفوظة",
+                  "تنزيل حزمة كاملة",
+                  "معرض منظم"
+                ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <Check size={14} className="text-primary" />
                     <span>{item}</span>
@@ -446,7 +463,73 @@ export default function Home() {
                 اشترك الآن
               </button>
             </motion.div>
+
+            {/* Dominant Plan */}
+            <motion.div
+              variants={STAGGER_ITEM}
+              className="bg-surface-1 border border-card-border rounded-2xl p-8"
+            >
+              <div className="text-sm font-bold text-muted mb-2">هيمنة</div>
+              <div className="text-4xl font-black mb-1">$27 <span className="text-lg text-muted font-medium">/شهر</span></div>
+              <p className="text-muted text-sm mb-1">الشهر الأول: $19</p>
+              <p className="text-muted text-xs mb-6 opacity-75">ثم $27 شهرياً</p>
+              <ul className="space-y-3 mb-8">
+                {[
+                  "50 تصميماً ذكياً شهرياً",
+                  "محتوى يومي تقريباً",
+                  "توليد موجه بالأهداف",
+                  "عبارات تحويل ذكية",
+                  "جميع الأحجام مُصَدَّرة تلقائياً",
+                  "أرشيف متقدم",
+                  "توليد بأولوية",
+                  "مرشحات محتوى ذكية"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm">
+                    <Check size={14} className="text-accent" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {!isAuthenticated ? (
+                AUTH_ENABLED ? (
+                  <SignInButton mode="modal" forceRedirectUrl="/create">
+                    <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
+                      ابدأ الآن
+                    </button>
+                  </SignInButton>
+                ) : (
+                  <Link href="/create" className="block w-full py-3 border border-card-border rounded-xl font-bold text-foreground text-center hover:bg-surface-2 transition-colors">
+                    ابدأ الآن
+                  </Link>
+                )
+              ) : (
+                <button onClick={() => router.push("/create")} className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
+                  ابدأ الآن
+                </button>
+              )}
+            </motion.div>
           </StaggerOnScroll>
+
+          {/* Add-ons Section */}
+          <AnimateOnScroll className="mt-16 text-center">
+            <h3 className="text-2xl font-bold mb-8">هل تحتاج أرصدة إضافية؟</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <div className="bg-surface-1 border border-card-border rounded-xl p-6">
+                <div className="text-2xl font-black text-primary mb-2">5 تصاميم</div>
+                <p className="text-lg text-muted mb-4">$3</p>
+                <button className="w-full py-2 border border-card-border rounded-lg font-bold text-foreground hover:bg-surface-2 transition-colors text-sm">
+                  أضف الآن
+                </button>
+              </div>
+              <div className="bg-surface-1 border border-card-border rounded-xl p-6">
+                <div className="text-2xl font-black text-accent mb-2">10 تصاميم</div>
+                <p className="text-lg text-muted mb-4">$7</p>
+                <button className="w-full py-2 border border-card-border rounded-lg font-bold text-foreground hover:bg-surface-2 transition-colors text-sm">
+                  أضف الآن
+                </button>
+              </div>
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -464,12 +547,12 @@ export default function Home() {
             <span className="text-gradient">الباقي علينا</span>
           </h2>
           <p className="text-muted text-lg mb-8">
-            10 تصاميم مجانية تنتظرك. ابدأ الآن وشوف الفرق.
+            ابدأ الآن وشوف الفرق بنفسك.
           </p>
 
           {!isAuthenticated ? (
             AUTH_ENABLED ? (
-              <SignInButton mode="modal">
+              <SignInButton mode="modal" forceRedirectUrl="/create">
                 <motion.button
                   whileTap={TAP_SCALE}
                   className="px-10 py-5 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold text-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 transition-all"

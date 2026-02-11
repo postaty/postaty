@@ -261,6 +261,115 @@ input::placeholder, textarea::placeholder {
   animation: fadeIn 0.5s ease-out forwards;
 }
 
+@keyframes hero-orbit {
+  0% { transform: rotate(0deg) scale(1); opacity: 0.45; }
+  50% { opacity: 0.75; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.45; }
+}
+.animate-hero-orbit {
+  animation: hero-orbit 18s linear infinite;
+}
+
+@keyframes hero-orbit-reverse {
+  0% { transform: rotate(0deg) scale(1); opacity: 0.35; }
+  50% { opacity: 0.65; }
+  100% { transform: rotate(-360deg) scale(1); opacity: 0.35; }
+}
+.animate-hero-orbit-reverse {
+  animation: hero-orbit-reverse 14s linear infinite;
+}
+
+@keyframes hero-float {
+  0%, 100% { transform: translateY(0px) rotate(-0.6deg); }
+  50% { transform: translateY(-10px) rotate(0.6deg); }
+}
+.animate-hero-float {
+  animation: hero-float 7.2s ease-in-out infinite;
+}
+
+@keyframes hero-pan {
+  0% { transform: translateX(-4%) translateY(2%) scale(1); }
+  50% { transform: translateX(4%) translateY(-2%) scale(1.06); }
+  100% { transform: translateX(-4%) translateY(2%) scale(1); }
+}
+.animate-hero-pan {
+  animation: hero-pan 12s ease-in-out infinite;
+}
+
+@keyframes hero-poster-a {
+  0%, 30%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+  34%, 96% { opacity: 0; transform: translateY(-12px) scale(0.96); }
+}
+.animate-hero-poster-a {
+  animation: hero-poster-a 9s ease-in-out infinite;
+}
+
+@keyframes hero-poster-b {
+  0%, 28% { opacity: 0; transform: translateY(12px) scale(0.96); }
+  34%, 62% { opacity: 1; transform: translateY(0) scale(1); }
+  66%, 100% { opacity: 0; transform: translateY(-12px) scale(0.96); }
+}
+.animate-hero-poster-b {
+  animation: hero-poster-b 9s ease-in-out infinite;
+}
+
+@keyframes hero-poster-c {
+  0%, 60% { opacity: 0; transform: translateY(12px) scale(0.96); }
+  66%, 96% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.96); }
+}
+.animate-hero-poster-c {
+  animation: hero-poster-c 9s ease-in-out infinite;
+}
+
+@keyframes hero-chip {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.animate-hero-chip {
+  animation: hero-chip 5.2s ease-in-out infinite;
+}
+
+@keyframes hero-chip-reverse {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(8px); }
+}
+.animate-hero-chip-reverse {
+  animation: hero-chip-reverse 6.2s ease-in-out infinite;
+}
+
+@keyframes hero-symbol-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-5px) scale(1.03); }
+}
+.animate-hero-symbol-float {
+  animation: hero-symbol-float 4.4s ease-in-out infinite;
+}
+
+@keyframes hero-symbol-float-delayed {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(5px) scale(1.03); }
+}
+.animate-hero-symbol-float-delayed {
+  animation: hero-symbol-float-delayed 4.9s ease-in-out infinite;
+}
+
+@keyframes hero-beam {
+  0%, 100% { opacity: 0.35; transform: translateY(0px); }
+  50% { opacity: 0.9; transform: translateY(-8px); }
+}
+.animate-hero-beam {
+  animation: hero-beam 5.2s ease-in-out infinite;
+}
+
+@keyframes hero-beam-reverse {
+  0%, 100% { opacity: 0.35; transform: translateY(0px); }
+  50% { opacity: 0.9; transform: translateY(8px); }
+}
+.animate-hero-beam-reverse {
+  animation: hero-beam-reverse 5.8s ease-in-out infinite;
+}
+
 /* Grid Background Pattern */
 .bg-grid-pattern {
   background-size: 40px 40px;
@@ -290,7 +399,20 @@ input::placeholder, textarea::placeholder {
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-fade-in-up,
-  .animate-fade-in {
+  .animate-fade-in,
+  .animate-hero-orbit,
+  .animate-hero-orbit-reverse,
+  .animate-hero-float,
+  .animate-hero-pan,
+  .animate-hero-poster-a,
+  .animate-hero-poster-b,
+  .animate-hero-poster-c,
+  .animate-hero-chip,
+  .animate-hero-chip-reverse,
+  .animate-hero-symbol-float,
+  .animate-hero-symbol-float-delayed,
+  .animate-hero-beam,
+  .animate-hero-beam-reverse {
     animation: none !important;
   }
 }

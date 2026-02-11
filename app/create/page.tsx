@@ -6,7 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { useDevIdentity } from "@/hooks/use-dev-identity";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Sparkles, LayoutGrid } from "lucide-react";
+import { ArrowRight, Sparkles, LayoutGrid, LogIn } from "lucide-react";
+import { SignInButton } from "@clerk/nextjs";
 
 // Components
 import { CategorySelector } from "../components/category-selector";
@@ -84,12 +85,7 @@ function CreatePageContent() {
     }
   }, [searchParams]);
 
-  // Auth Protection
-  useEffect(() => {
-    if (!isAuthLoading && !isAuthenticated) {
-      router.push("/");
-    }
-  }, [isAuthenticated, isAuthLoading, router]);
+  const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
   // Data Fetching
   const createGeneration = useMutation(api.generations.create);
@@ -272,6 +268,25 @@ function CreatePageContent() {
             <div className="h-4 w-32 bg-surface-2 rounded"></div>
         </div>
     </div>;
+  }
+
+  if (!isAuthenticated && AUTH_ENABLED) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+            <LogIn size={28} className="text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold text-foreground">سجّل دخولك للمتابعة</h2>
+          <p className="text-muted">يجب تسجيل الدخول لإنشاء تصاميم جديدة</p>
+          <SignInButton mode="modal" forceRedirectUrl="/create">
+            <button className="px-8 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
+              تسجيل الدخول
+            </button>
+          </SignInButton>
+        </div>
+      </div>
+    );
   }
 
   return (
