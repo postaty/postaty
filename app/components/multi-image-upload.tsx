@@ -72,7 +72,7 @@ export function MultiImageUpload({
               <img
                 src={preview}
                 alt={`صورة ${i + 1}`}
-                className="w-full h-full object-cover rounded-lg border border-slate-200"
+                className="w-full h-full object-cover rounded-lg border border-card-border"
               />
               <button
                 onClick={() => handleRemove(i)}
@@ -88,7 +88,7 @@ export function MultiImageUpload({
         <div
           {...getRootProps()}
           className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors
-            ${isDragActive ? "border-primary bg-primary/5" : "border-card-border hover:border-primary/50 hover:bg-slate-50"}`}
+            ${isDragActive ? "border-primary bg-primary/5" : "border-card-border hover:border-primary/50 hover:bg-surface-2"}`}
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-1 text-muted-foreground">

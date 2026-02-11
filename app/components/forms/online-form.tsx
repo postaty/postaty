@@ -48,7 +48,7 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         {/* Left Column */}
         <div className="space-y-6">
-          <div className="bg-slate-50/50 p-1 rounded-2xl border border-slate-100">
+          <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
              <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
           </div>
 
@@ -86,20 +86,20 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
             </div>
 
             <div className="group space-y-2">
-                <label className="text-sm font-semibold text-slate-700">نوع الشحن</label>
+                <label className="text-sm font-semibold text-foreground">نوع الشحن</label>
                 <div className="relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none">
                         <Truck size={18} />
                     </div>
                     <select
                         name="shipping"
                         required
-                        className="w-full pr-11 pl-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-900 font-medium transition-all duration-300 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-slate-300 appearance-none cursor-pointer"
+                        className="w-full pr-11 pl-4 py-3.5 bg-surface-1 border border-card-border rounded-xl outline-none text-foreground font-medium transition-all duration-300 focus:bg-surface-2 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-primary/30 appearance-none cursor-pointer"
                     >
                         <option value="free">شحن مجاني</option>
                         <option value="paid">شحن مدفوع</option>
                     </select>
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -143,13 +143,13 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
              <ImageUpload label="صورة المنتج" value={productImage} onChange={setProductImage} />
           </div>
           
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-card-border">
              <FormatSelector selected={formats} onChange={setFormats} />
           </div>
         </div>
       </div>
 
-      <div className="sticky bottom-24 z-30 bg-gradient-to-t from-white via-white/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
+      <div className="sticky bottom-24 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
         <button
           type="submit"
           disabled={isLoading || !logo || !productImage}

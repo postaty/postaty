@@ -1,83 +1,107 @@
 "use client";
 
-import { ImageIcon, Wand2, Share2, Sparkles, BarChart3 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Sparkles, Zap, Palette, Smartphone } from "lucide-react";
 
 export function HeroVisual() {
   return (
-    <div className="relative w-full max-w-lg aspect-square mx-auto lg:mx-0 perspective-1000">
+    <div className="relative w-full max-w-sm aspect-[3/4] mx-auto lg:mx-0">
       {/* Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-accent/20 to-transparent rounded-full blur-[56px] md:blur-[80px] motion-safe:animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 via-accent/15 to-transparent rounded-full blur-[60px] md:blur-[80px] motion-safe:animate-pulse" />
 
-      {/* Main Floating Interface Card */}
-      <div className="absolute inset-x-4 top-10 bottom-10 bg-white/60 backdrop-blur-md md:backdrop-blur-xl border border-white/80 rounded-3xl shadow-2xl shadow-primary/10 flex flex-col overflow-hidden motion-safe:animate-float">
-        {/* Header */}
-        <div className="h-10 border-b border-white/50 flex items-center px-4 gap-2 bg-white/50">
-          <div className="w-3 h-3 rounded-full bg-red-400" />
-          <div className="w-3 h-3 rounded-full bg-yellow-400" />
-          <div className="w-3 h-3 rounded-full bg-green-400" />
-          <div className="ml-auto flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-medium text-slate-500 shadow-sm">
-            <Sparkles size={10} className="text-primary" />
-            <span>AI Generator</span>
-          </div>
+      {/* Phone Frame */}
+      <motion.div
+        className="absolute inset-x-6 top-4 bottom-4 bg-surface-1 border border-card-border rounded-[2.5rem] shadow-2xl overflow-hidden motion-safe:animate-float"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Phone Notch */}
+        <div className="flex justify-center pt-3 pb-2">
+          <div className="w-20 h-5 bg-background rounded-full" />
         </div>
 
-        {/* Content Body */}
-        <div className="flex-1 p-6 space-y-4 relative">
-          {/* Simulated Image Placeholder */}
-          <div className="aspect-video w-full rounded-xl bg-gradient-to-br from-slate-50 to-white border border-slate-200/60 shadow-inner flex items-center justify-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent translate-x-[-100%] motion-safe:animate-[shimmer_3s_infinite]" />
-            <ImageIcon className="text-primary/30 w-12 h-12" />
-            
-            {/* Floating Badge */}
-            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm border border-slate-100">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 motion-safe:animate-pulse" />
-                <span className="text-[10px] font-bold text-slate-600">Ready</span>
+        {/* Screen Content - Simulated poster */}
+        <div className="px-4 pb-4 space-y-3">
+          {/* Poster Preview Area */}
+          <div className="aspect-square w-full rounded-2xl bg-gradient-to-br from-violet-500/20 via-cyan-400/10 to-violet-500/20 border border-card-border overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent translate-x-[-100%] motion-safe:animate-[shimmer_3s_infinite]" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Sparkles className="text-white" size={28} />
+              </div>
+              <div className="space-y-2 w-full">
+                <div className="h-3 w-3/4 mx-auto bg-foreground/10 rounded-full" />
+                <div className="h-2 w-1/2 mx-auto bg-foreground/8 rounded-full" />
+              </div>
             </div>
           </div>
 
-          {/* Simulated Controls */}
-          <div className="space-y-2">
-            <div className="h-2 w-3/4 bg-slate-100 rounded-full" />
-            <div className="h-2 w-1/2 bg-slate-100 rounded-full" />
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <div className="flex-1 h-8 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-center gap-2">
-                <Wand2 size={12} className="text-primary" />
-                <div className="w-12 h-1.5 bg-primary/20 rounded-full" />
+          {/* Simulated action buttons */}
+          <div className="flex gap-2">
+            <div className="flex-1 h-10 rounded-xl bg-gradient-to-r from-primary to-primary-hover flex items-center justify-center">
+              <div className="w-16 h-2 bg-white/40 rounded-full" />
             </div>
-             <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-sm">
-                <Share2 size={12} className="text-slate-400" />
+            <div className="w-10 h-10 rounded-xl bg-surface-2 border border-card-border flex items-center justify-center">
+              <div className="w-4 h-4 rounded-full bg-foreground/10" />
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Floating Elements (Decorations) */}
-      
-      {/* Card 1: Stats */}
-      <div className="absolute -right-4 top-20 bg-white/80 backdrop-blur-sm md:backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/60 w-32 motion-safe:animate-float" style={{ animationDelay: '1s' }}>
-        <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-green-100 rounded-md">
-                <BarChart3 size={12} className="text-green-600" />
-            </div>
-            <span className="text-[10px] font-bold text-slate-500">Engagement</span>
+          {/* Simulated format pills */}
+          <div className="flex gap-2 justify-center pt-1">
+            <div className="h-6 w-16 rounded-full bg-surface-2 border border-card-border" />
+            <div className="h-6 w-16 rounded-full bg-primary/10 border border-primary/20" />
+            <div className="h-6 w-16 rounded-full bg-surface-2 border border-card-border" />
+          </div>
         </div>
-        <div className="text-xl font-black text-slate-800">85%</div>
-        <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
-            <div className="bg-green-500 w-[85%] h-full rounded-full" />
-        </div>
-      </div>
+      </motion.div>
 
-      {/* Card 2: Color Palette */}
-      <div className="absolute -left-8 bottom-32 bg-white/80 backdrop-blur-sm md:backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/60 motion-safe:animate-float" style={{ animationDelay: '2s' }}>
-        <div className="flex gap-2">
-            <div className="w-6 h-6 rounded-full bg-[#6366f1] shadow-sm ring-2 ring-white" />
-            <div className="w-6 h-6 rounded-full bg-[#d946ef] shadow-sm ring-2 ring-white" />
-            <div className="w-6 h-6 rounded-full bg-[#f43f5e] shadow-sm ring-2 ring-white" />
+      {/* Floating Badge: Speed */}
+      <motion.div
+        className="absolute -right-2 top-16 bg-surface-1/90 backdrop-blur-sm border border-card-border p-2.5 rounded-xl shadow-lg"
+        initial={{ x: 20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-primary/15 rounded-lg">
+            <Zap size={14} className="text-primary" />
+          </div>
+          <span className="text-xs font-bold text-foreground">30 ثانية</span>
         </div>
-      </div>
+      </motion.div>
 
+      {/* Floating Badge: Styles */}
+      <motion.div
+        className="absolute -left-4 top-36 bg-surface-1/90 backdrop-blur-sm border border-card-border p-2.5 rounded-xl shadow-lg motion-safe:animate-float"
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.8, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        style={{ animationDelay: "2s" }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-accent/15 rounded-lg">
+            <Palette size={14} className="text-accent" />
+          </div>
+          <span className="text-xs font-bold text-foreground">+28 ستايل</span>
+        </div>
+      </motion.div>
+
+      {/* Floating Badge: Formats */}
+      <motion.div
+        className="absolute -right-4 bottom-24 bg-surface-1/90 backdrop-blur-sm border border-card-border p-2.5 rounded-xl shadow-lg motion-safe:animate-float"
+        initial={{ x: 20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 1.0, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        style={{ animationDelay: "1.5s" }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-success/15 rounded-lg">
+            <Smartphone size={14} className="text-success" />
+          </div>
+          <span className="text-xs font-bold text-foreground">6 أحجام</span>
+        </div>
+      </motion.div>
     </div>
   );
 }

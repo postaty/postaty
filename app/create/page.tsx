@@ -19,7 +19,9 @@ import dynamic from "next/dynamic";
 import type { Category, PostFormData, PosterResult, PosterGenStep } from "@/lib/types";
 import type { BrandKitPromptData } from "@/lib/prompts";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
+import { CATEGORY_THEMES } from "@/lib/category-themes";
 import { generatePosters } from "../actions-v2";
+import { TAP_SCALE } from "@/lib/animation";
 
 const PosterGrid = dynamic(
   () => import("../components/poster-grid").then((mod) => mod.PosterGrid)
@@ -44,10 +46,10 @@ function getProductName(data: PostFormData): string {
 export default function CreatePage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 bg-slate-200 rounded-full mb-4"></div>
-          <div className="h-4 w-32 bg-slate-200 rounded"></div>
+          <div className="h-12 w-12 bg-surface-2 rounded-full mb-4"></div>
+          <div className="h-4 w-32 bg-surface-2 rounded"></div>
         </div>
       </div>
     }>
@@ -71,6 +73,9 @@ function CreatePageContent() {
   const [error, setError] = useState<string>();
   const generatingRef = useRef(false);
 
+  // Get category theme
+  const theme = category ? CATEGORY_THEMES[category] : null;
+
   // Initialize category from URL if present
   useEffect(() => {
     const catParam = searchParams.get("category");
@@ -92,7 +97,7 @@ function CreatePageContent() {
   const updateOutput = useMutation(api.generations.updateOutput);
   const generateUploadUrl = useMutation(api.generations.generateUploadUrl);
   const savePosterTemplate = useMutation(api.posterTemplates.save);
-  
+
   const defaultBrandKit = useQuery(
     api.brandKits.getDefault,
     isAuthenticated ? { orgId } : "skip"
@@ -111,7 +116,6 @@ function CreatePageContent() {
   // Handlers
   const handleCategorySelect = (cat: Category) => {
     setCategory(cat);
-    // Update URL without reload to support back button
     const url = new URL(window.location.href);
     url.searchParams.set("category", cat);
     window.history.pushState({}, "", url);
@@ -133,7 +137,6 @@ function CreatePageContent() {
   };
 
   const runGeneration = (data: PostFormData) => {
-    // Guard against double-submission
     if (generatingRef.current) return;
     generatingRef.current = true;
 
@@ -263,32 +266,41 @@ function CreatePageContent() {
   };
 
   if (isAuthLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    return <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 bg-slate-200 rounded-full mb-4"></div>
-            <div className="h-4 w-32 bg-slate-200 rounded"></div>
+            <div className="h-12 w-12 bg-surface-2 rounded-full mb-4"></div>
+            <div className="h-4 w-32 bg-surface-2 rounded"></div>
         </div>
     </div>;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20 md:pb-0">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div className="min-h-screen pb-20 md:pb-0">
+      {/* Header with category accent */}
+      <header className="bg-surface-1 border-b border-card-border sticky top-0 z-40 relative overflow-hidden">
+        {/* Category accent line */}
+        {theme && (
+          <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${theme.gradient}`} />
+        )}
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <button 
+             <motion.button
+                whileTap={TAP_SCALE}
                 onClick={handleBack}
-                className="p-2 -mr-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+                className="p-2 -mr-2 rounded-full hover:bg-surface-2 text-muted transition-colors"
              >
                 <ArrowRight size={20} />
-             </button>
-             <h1 className="text-lg font-bold text-slate-800">
+             </motion.button>
+             <h1 className="text-lg font-bold text-foreground">
                 {results.length > 0 ? "نتائج التصميم" : category ? "تفاصيل الإعلان" : "إنشاء جديد"}
              </h1>
           </div>
-          
+
           {category && !results.length && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold">
+            <div
+              className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold"
+              style={{ backgroundColor: `${CATEGORY_THEMES[category].accent}15`, color: CATEGORY_THEMES[category].accent }}
+            >
                 <Sparkles size={12} />
                 <span>{CATEGORY_LABELS[category]}</span>
             </div>
@@ -306,8 +318,8 @@ function CreatePageContent() {
                 exit={{ opacity: 0, y: -10 }}
             >
                 <div className="text-center mb-10">
-                    <h2 className="text-3xl font-black text-slate-900 mb-3">ماذا تريد أن تصمم اليوم؟</h2>
-                    <p className="text-slate-500 text-lg">اختر نوع نشاطك التجاري للبدء في تصميم إعلانك</p>
+                    <h2 className="text-3xl font-black text-foreground mb-3">ماذا تريد أن تصمم اليوم؟</h2>
+                    <p className="text-muted text-lg">اختر نوع نشاطك التجاري للبدء في تصميم إعلانك</p>
                 </div>
                 <CategorySelector onSelect={handleCategorySelect} />
             </motion.div>
@@ -318,7 +330,7 @@ function CreatePageContent() {
                 animate={{ opacity: 1 }}
                 className="space-y-8"
             >
-                <div className="bg-white rounded-3xl p-1 shadow-sm border border-slate-100">
+                <div className="bg-surface-1 rounded-3xl p-1 shadow-sm border border-card-border">
                     <PosterGrid
                         results={results}
                         giftResult={giftResult}
@@ -328,15 +340,16 @@ function CreatePageContent() {
                         onSaveAsTemplate={handleSaveAsTemplate}
                     />
                 </div>
-                
+
                 <div className="flex justify-center">
-                    <button 
+                    <motion.button
+                        whileTap={TAP_SCALE}
                         onClick={() => { setResults([]); setGenStep("idle"); }}
-                        className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 font-medium transition-colors"
+                        className="flex items-center gap-2 px-6 py-3 bg-surface-1 border border-card-border text-foreground rounded-xl hover:bg-surface-2 font-medium transition-colors"
                     >
                         <LayoutGrid size={18} />
                         <span>تصميم آخر</span>
-                    </button>
+                    </motion.button>
                 </div>
             </motion.div>
           ) : (
@@ -346,7 +359,10 @@ function CreatePageContent() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
             >
-                <div className="bg-white rounded-3xl p-6 md:p-10 shadow-xl shadow-slate-200/50 border border-slate-100 max-w-3xl mx-auto">
+                <div
+                  className="bg-surface-1 rounded-3xl p-6 md:p-10 shadow-xl border max-w-3xl mx-auto"
+                  style={{ borderColor: theme ? theme.border : "var(--card-border)" }}
+                >
                     {category === "restaurant" && (
                         <RestaurantForm onSubmit={runGeneration} isLoading={isGenerating} />
                     )}

@@ -34,13 +34,13 @@ export function CampaignTypeSelector({ value, onChange }: CampaignTypeSelectorPr
               className={`group text-center rounded-xl border px-2 py-1 transition-all shadow-sm hover:shadow-md ${
                 isActive
                   ? "border-primary/60 bg-primary/10"
-                  : "border-card-border bg-white/60 hover:border-primary/30"
+                  : "border-card-border bg-surface-1 hover:border-primary/30"
               }`}
             >
               <div className="flex flex-col items-center justify-center gap-3">
               <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    isActive ? "bg-primary text-white" : "bg-slate-100 text-muted"
+                    isActive ? "bg-primary text-white" : "bg-surface-2 text-muted"
                   }`}
                 >
                   <Icon size={16} />

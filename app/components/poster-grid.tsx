@@ -150,7 +150,7 @@ function SkeletonColorPhase() {
            initial={{ opacity: 0 }}
            animate={{ opacity: 1 }}
            transition={{ delay: 0.8 }}
-           className="text-xs font-medium text-slate-500 flex items-center gap-2"
+           className="text-xs font-medium text-muted flex items-center gap-2"
         >
           <Palette size={14} className="animate-pulse text-purple-500" />
           <span>INJECTING_PALETTE...</span>
@@ -163,7 +163,7 @@ function SkeletonColorPhase() {
 // ── Phase 3: Neural Processing
 function SkeletonProcessingPhase() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/5">
+    <div className="absolute inset-0 flex items-center justify-center bg-background/5">
       {/* Central Core */}
       <div className="relative">
         {/* Orbital Rings */}
@@ -236,16 +236,16 @@ function PosterSkeleton({ index, lowMotion }: { index: number; lowMotion: boolea
 
   if (lowMotion) {
     return (
-      <div className="relative rounded-3xl overflow-hidden w-full h-full bg-white border border-slate-200 shadow-lg">
-        <div className="h-8 bg-slate-50 border-b border-slate-100 flex items-center px-3 justify-between">
+      <div className="relative rounded-3xl overflow-hidden w-full h-full bg-surface-1 border border-card-border shadow-lg">
+        <div className="h-8 bg-surface-2 border-b border-card-border flex items-center px-3 justify-between">
           <div className="flex gap-1.5">
             <div className="w-2 h-2 rounded-full bg-red-400/50" />
             <div className="w-2 h-2 rounded-full bg-amber-400/50" />
             <div className="w-2 h-2 rounded-full bg-green-400/50" />
           </div>
-          <div className="text-[10px] font-mono text-slate-400">PROCESSING_NODE_{index + 1}</div>
+          <div className="text-[10px] font-mono text-muted-foreground">PROCESSING_NODE_{index + 1}</div>
         </div>
-        <div className="aspect-square bg-slate-50 p-6">
+        <div className="aspect-square bg-surface-2 p-6">
           <div className="h-full w-full border-2 border-dashed border-primary/30 rounded-2xl" />
         </div>
         <div className="p-3 bg-slate-900 border-t border-slate-800">
@@ -266,23 +266,23 @@ function PosterSkeleton({ index, lowMotion }: { index: number; lowMotion: boolea
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="relative rounded-3xl overflow-hidden w-full h-full bg-white border border-slate-200 shadow-xl"
+      className="relative rounded-3xl overflow-hidden w-full h-full bg-surface-1 border border-card-border shadow-xl"
     >
       {/* Top Status Bar */}
-      <div className="h-8 bg-slate-50 border-b border-slate-100 flex items-center px-3 justify-between">
+      <div className="h-8 bg-surface-2 border-b border-card-border flex items-center px-3 justify-between">
         <div className="flex gap-1.5">
           <div className="w-2 h-2 rounded-full bg-red-400/50" />
           <div className="w-2 h-2 rounded-full bg-amber-400/50" />
           <div className="w-2 h-2 rounded-full bg-green-400/50" />
         </div>
-        <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1">
+        <div className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
           PROCESSING_NODE_{index + 1}
         </div>
       </div>
 
       {/* Main Canvas Area */}
-      <div className="relative aspect-square bg-white overflow-hidden">
+      <div className="relative aspect-square bg-surface-1 overflow-hidden">
         <AnimatePresence mode="wait">
           {phase === 0 && (
             <motion.div
@@ -475,7 +475,7 @@ export function PosterGrid({
               <CheckCircle2 size={24} className="text-success" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-foreground">
                 تم اكتمال التصميم!
               </h3>
               <p className="text-muted text-sm">
@@ -507,7 +507,7 @@ export function PosterGrid({
           <div className="p-4 bg-danger/10 rounded-full">
             <XCircle size={40} className="text-danger" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">عذراً، حدث خطأ</h3>
+          <h3 className="text-xl font-bold text-foreground">عذراً، حدث خطأ</h3>
           {error && (
             <p className="max-w-md mx-auto text-muted bg-danger/5 border border-danger/10 rounded-lg p-3 text-sm">
               {error}
@@ -663,7 +663,7 @@ function GiftReveal({
         </motion.div>
 
         {/* Gift Card */}
-        <div className="relative rounded-3xl overflow-hidden border-2 border-amber-400/40 shadow-xl shadow-amber-500/10 bg-white">
+        <div className="relative rounded-3xl overflow-hidden border-2 border-amber-400/40 shadow-xl shadow-amber-500/10 bg-surface-1">
           {/* Gradient border glow */}
           <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-amber-400/20 via-transparent to-pink-500/20 pointer-events-none z-10" />
 
@@ -857,11 +857,11 @@ function PosterCard({
             ? undefined
             : { type: "spring" as const, damping: 15, stiffness: 100 }
         }
-        className="group relative rounded-3xl overflow-hidden transition-all border border-slate-200 shadow-lg bg-white hover:shadow-xl cursor-pointer h-full flex flex-col"
+        className="group relative rounded-3xl overflow-hidden transition-all border border-card-border shadow-lg bg-surface-1 hover:shadow-xl cursor-pointer h-full flex flex-col"
         onClick={onClick}
       >
         {/* Image */}
-        <div className="relative aspect-square overflow-hidden bg-slate-100">
+        <div className="relative aspect-square overflow-hidden bg-surface-2">
           {result.imageBase64 ? (
             <img
               src={result.imageBase64}
@@ -869,7 +869,7 @@ function PosterCard({
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-400">
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                 <Loader2 className="animate-spin" />
             </div>
           )}
@@ -887,7 +887,7 @@ function PosterCard({
         </div>
 
         {/* Footer */}
-        <div className="p-4 flex items-center justify-between mt-auto bg-white relative z-10 border-t border-slate-100">
+        <div className="p-4 flex items-center justify-between mt-auto bg-surface-1 relative z-10 border-t border-card-border">
           <span className="text-sm font-medium text-foreground/80 truncate max-w-[40%]">
             {result.designNameAr || `تصميم ${result.designIndex + 1}`}
           </span>
@@ -896,7 +896,7 @@ function PosterCard({
               <button
                 type="button"
                 onClick={handleSave}
-                className="p-2 rounded-lg text-slate-500 hover:text-accent hover:bg-accent/10 transition-colors"
+                className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-colors"
                 title="حفظ كقالب"
               >
                 <Save size={18} />
@@ -906,7 +906,7 @@ function PosterCard({
               <button
                 type="button"
                 onClick={handleShare}
-                className="p-2 rounded-lg text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
+                className="p-2 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
                 title="مشاركة"
               >
                 <Share2 size={18} />
@@ -916,7 +916,7 @@ function PosterCard({
               type="button"
               onClick={handleExport}
               disabled={isExporting}
-              className="p-2 rounded-lg text-slate-500 hover:text-success hover:bg-success/10 transition-colors"
+              className="p-2 rounded-lg text-muted hover:text-success hover:bg-success/10 transition-colors"
               title="تصدير PNG"
             >
               {isExporting ? (

@@ -20,14 +20,14 @@ export default function BrandKitPage() {
 
       <div className="max-w-3xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full border border-slate-200/60 shadow-sm animate-fade-in-up">
+          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-surface-1/80 backdrop-blur-sm px-6 py-2 rounded-full border border-card-border shadow-sm animate-fade-in-up">
             <Palette size={24} className="text-primary" />
-            <span className="text-slate-700 font-semibold tracking-wide text-sm">تخصيص العلامة</span>
+            <span className="text-foreground font-semibold tracking-wide text-sm">تخصيص العلامة</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-slate-900 animate-gradient-flow">
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-foreground animate-gradient-flow">
             هوية العلامة التجارية
           </h1>
-          <p className="text-slate-500 text-lg max-w-xl mx-auto leading-relaxed font-light">
+          <p className="text-muted text-lg max-w-xl mx-auto leading-relaxed font-light">
             أضف شعارك وألوانك لتطبيقها تلقائياً على كل البوسترات التي تنشئها
           </p>
         </div>

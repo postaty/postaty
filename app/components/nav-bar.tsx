@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
+import { ThemeToggle } from "./theme-toggle";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -33,7 +34,6 @@ function NavBarWithAuth() {
   const initializeBilling = useMutation(api.billing.initializeBillingForCurrentUser);
   const didInitBilling = useRef(false);
 
-  // Fetch real credit balance
   const creditState = useQuery(
     api.billing.getCreditState,
     isConvexAuthenticated ? {} : "skip"
@@ -63,8 +63,8 @@ function NavBarWithAuth() {
   return (
     <nav className="sticky top-0 z-50 px-4 py-3 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-white/90">
-          
+        <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-surface-1/90">
+
           {/* Brand / Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative w-9 h-9 transition-transform duration-300 group-hover:rotate-12">
@@ -76,13 +76,13 @@ function NavBarWithAuth() {
                 priority
               />
             </div>
-            <span className="text-xl font-black tracking-tighter text-slate-900">
+            <span className="text-xl font-black tracking-tighter text-foreground">
               Postaty
             </span>
           </Link>
 
           {/* Navigation Items */}
-          <div className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
+          <div className="hidden md:flex items-center gap-1 bg-surface-2/50 p-1 rounded-xl border border-card-border">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
@@ -92,8 +92,8 @@ function NavBarWithAuth() {
                   href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative overflow-hidden group/nav ${
                     isActive
-                      ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                      ? "bg-surface-1 text-primary shadow-sm ring-1 ring-card-border"
+                      : "text-muted hover:text-foreground hover:bg-surface-1/50"
                   }`}
                 >
                   <Icon size={16} className={`transition-transform duration-300 ${isActive ? 'scale-110 text-primary' : 'group-hover/nav:scale-110'}`} />
@@ -108,11 +108,14 @@ function NavBarWithAuth() {
 
           {/* Actions / Credits */}
           <div className="flex items-center gap-3">
-            
+
+            {/* Theme Toggle */}
+            <ThemeToggle className="hidden sm:flex" />
+
             {/* Desktop Generate Button */}
-            <button 
+            <button
               onClick={handleGenerateClick}
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
               <Plus size={18} />
               <span>إنشاء جديد</span>
@@ -122,8 +125,8 @@ function NavBarWithAuth() {
               <Loader2 size={20} className="animate-spin text-muted" />
             ) : isClerkSignedIn ? (
               <>
-                <div className="hidden sm:flex items-center gap-2 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg border border-amber-200 text-xs font-semibold shadow-sm">
-                  <Zap size={14} className="fill-amber-500 text-amber-500 animate-pulse" />
+                <div className="hidden sm:flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20 text-xs font-semibold shadow-sm">
+                  <Zap size={14} className="fill-primary text-primary animate-pulse" />
                   <span>
                     {isConvexLoading
                       ? "جاري التحميل..."
@@ -142,7 +145,7 @@ function NavBarWithAuth() {
             ) : (
               <div className="hidden sm:block">
                   <SignInButton mode="modal">
-                    <button className="text-sm font-bold text-slate-600 hover:text-primary transition-colors px-3 py-1.5">
+                    <button className="text-sm font-bold text-muted hover:text-primary transition-colors px-3 py-1.5">
                         تسجيل دخول
                     </button>
                   </SignInButton>
@@ -161,7 +164,7 @@ function NavBarNoAuth() {
   return (
     <nav className="sticky top-0 z-50 px-4 py-3 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white/80 backdrop-blur-xl border border-slate-200/60 shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-white/90">
+        <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-surface-1/90">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative w-9 h-9 transition-transform duration-300 group-hover:rotate-12">
               <Image
@@ -172,12 +175,12 @@ function NavBarNoAuth() {
                 priority
               />
             </div>
-            <span className="text-xl font-black tracking-tighter text-slate-900">
+            <span className="text-xl font-black tracking-tighter text-foreground">
               Postaty
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl border border-slate-200/50">
+          <div className="hidden md:flex items-center gap-1 bg-surface-2/50 p-1 rounded-xl border border-card-border">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
@@ -187,8 +190,8 @@ function NavBarNoAuth() {
                   href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                     isActive
-                      ? "bg-white text-primary shadow-sm ring-1 ring-slate-200"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                      ? "bg-surface-1 text-primary shadow-sm ring-1 ring-card-border"
+                      : "text-muted hover:text-foreground hover:bg-surface-1/50"
                   }`}
                 >
                   <Icon size={16} />
@@ -199,9 +202,10 @@ function NavBarNoAuth() {
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle className="hidden sm:flex" />
             <Link
               href="/create"
-              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-accent text-white text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
               <Plus size={18} />
               <span>إنشاء جديد</span>

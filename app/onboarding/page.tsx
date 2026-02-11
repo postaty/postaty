@@ -29,12 +29,12 @@ export default function OnboardingPage() {
       <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-xl w-full relative z-10">
-        <div className="bg-white/80 backdrop-blur-xl border border-white/60 shadow-xl rounded-3xl p-8 md:p-10 animate-fade-in-up">
+        <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-xl rounded-3xl p-8 md:p-10 animate-fade-in-up">
           
           {/* Progress Indicator */}
           <div className="flex items-center justify-center gap-2 mb-8">
-            <div className={`h-1.5 rounded-full transition-all duration-500 ${step >= 1 ? "w-8 bg-primary" : "w-2 bg-slate-200"}`} />
-            <div className={`h-1.5 rounded-full transition-all duration-500 ${step >= 2 ? "w-8 bg-primary" : "w-2 bg-slate-200"}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-500 ${step >= 1 ? "w-8 bg-primary" : "w-2 bg-surface-2"}`} />
+            <div className={`h-1.5 rounded-full transition-all duration-500 ${step >= 2 ? "w-8 bg-primary" : "w-2 bg-surface-2"}`} />
           </div>
 
           {step === 1 && (
@@ -43,55 +43,55 @@ export default function OnboardingPage() {
                 <Sparkles size={32} className="text-primary animate-pulse" />
               </div>
               
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 مرحباً بك في <span className="text-gradient-primary">Postaty AI</span>
               </h1>
               
-              <p className="text-slate-500 text-lg leading-relaxed">
+              <p className="text-muted text-lg leading-relaxed">
                 دعنا نخصص تجربتك. ما هو نوع النشاط الذي تريد تصميم بوسترات له؟
               </p>
 
               <div className="grid gap-4 mt-8">
                 <button
                   onClick={() => handleGoalSelect("restaurant")}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-primary/50 hover:bg-slate-50 transition-all text-right"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-card-border hover:border-primary/30 hover:bg-surface-1 transition-all text-right"
                 >
                   <div className="p-3 rounded-lg bg-orange-100 text-orange-600 group-hover:scale-110 transition-transform">
                     <Utensils size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">مطعم أو كافيه</h3>
-                    <p className="text-sm text-slate-500">تصميم قوائم الطعام والعروض</p>
+                    <h3 className="font-bold text-foreground">مطعم أو كافيه</h3>
+                    <p className="text-sm text-muted">تصميم قوائم الطعام والعروض</p>
                   </div>
-                  <ArrowRight className="mr-auto text-slate-300 group-hover:text-primary transition-colors" size={20} />
+                  <ArrowRight className="mr-auto text-muted group-hover:text-primary transition-colors" size={20} />
                 </button>
 
                 <button
                   onClick={() => handleGoalSelect("shop")}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-primary/50 hover:bg-slate-50 transition-all text-right"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-card-border hover:border-primary/30 hover:bg-surface-1 transition-all text-right"
                 >
                   <div className="p-3 rounded-lg bg-blue-100 text-blue-600 group-hover:scale-110 transition-transform">
                     <Store size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">متجر أو سوبر ماركت</h3>
-                    <p className="text-sm text-slate-500">عروض المنتجات والخصومات</p>
+                    <h3 className="font-bold text-foreground">متجر أو سوبر ماركت</h3>
+                    <p className="text-sm text-muted">عروض المنتجات والخصومات</p>
                   </div>
-                  <ArrowRight className="mr-auto text-slate-300 group-hover:text-primary transition-colors" size={20} />
+                  <ArrowRight className="mr-auto text-muted group-hover:text-primary transition-colors" size={20} />
                 </button>
 
                 <button
                   onClick={() => handleGoalSelect("online")}
-                  className="group flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-primary/50 hover:bg-slate-50 transition-all text-right"
+                  className="group flex items-center gap-4 p-4 rounded-xl border border-card-border hover:border-primary/30 hover:bg-surface-1 transition-all text-right"
                 >
                   <div className="p-3 rounded-lg bg-purple-100 text-purple-600 group-hover:scale-110 transition-transform">
                     <ShoppingBag size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">متجر إلكتروني</h3>
-                    <p className="text-sm text-slate-500">تسويق المنتجات أونلاين</p>
+                    <h3 className="font-bold text-foreground">متجر إلكتروني</h3>
+                    <p className="text-sm text-muted">تسويق المنتجات أونلاين</p>
                   </div>
-                  <ArrowRight className="mr-auto text-slate-300 group-hover:text-primary transition-colors" size={20} />
+                  <ArrowRight className="mr-auto text-muted group-hover:text-primary transition-colors" size={20} />
                 </button>
               </div>
             </div>
@@ -103,11 +103,11 @@ export default function OnboardingPage() {
                 <CheckCircle2 size={40} className="text-success" />
               </div>
               
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 أنت جاهز للبدء!
               </h1>
               
-              <p className="text-slate-500 text-lg leading-relaxed max-w-sm mx-auto">
+              <p className="text-muted text-lg leading-relaxed max-w-sm mx-auto">
                 لقد قمنا بإعداد الأدوات المناسبة لك. ابدأ الآن بإنشاء أول تصميم احترافي لك في ثوانٍ.
               </p>
 
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
         </div>
         
         {/* Footer info */}
-        <p className="text-center text-slate-400 text-sm mt-8">
+        <p className="text-center text-muted-foreground text-sm mt-8">
           © 2026 Postaty AI. جميع الحقوق محفوظة.
         </p>
       </div>

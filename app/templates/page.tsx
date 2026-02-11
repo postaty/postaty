@@ -30,7 +30,7 @@ export default function TemplatesPage() {
 
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-white/50 backdrop-blur-sm px-6 py-2 rounded-full border border-white/20 shadow-sm">
+          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-surface-1/50 backdrop-blur-sm px-6 py-2 rounded-full border border-card-border shadow-sm">
             <LayoutTemplate size={24} className="text-primary" />
             <span className="text-primary font-semibold tracking-wide text-sm">
               قوالب جاهزة
@@ -51,7 +51,7 @@ export default function TemplatesPage() {
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
               !selectedCategory
                 ? "bg-primary text-white shadow-md shadow-primary/20"
-                : "bg-white border border-card-border text-muted hover:border-primary/30 hover:text-primary"
+                : "bg-surface-1 border border-card-border text-muted hover:border-primary/30 hover:text-primary"
             }`}
           >
             الكل
@@ -63,7 +63,7 @@ export default function TemplatesPage() {
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 selectedCategory === key
                   ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "bg-white border border-card-border text-muted hover:border-primary/30 hover:text-primary"
+                  : "bg-surface-1 border border-card-border text-muted hover:border-primary/30 hover:text-primary"
               }`}
             >
               {labels.ar}
@@ -78,7 +78,7 @@ export default function TemplatesPage() {
           </div>
         ) : templates.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-2 flex items-center justify-center">
               <Inbox size={36} className="text-muted" />
             </div>
             <h3 className="text-lg font-bold text-foreground mb-2">

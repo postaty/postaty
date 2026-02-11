@@ -212,7 +212,7 @@ function TypewriterAnimation({ color }: { color: string }) {
 function ImageScanAnimation({ color }: { color: string }) {
   return (
     <div className="absolute inset-0 flex items-center justify-center">
-      <div className="relative w-20 h-20 rounded-xl border-2 border-slate-200 overflow-hidden">
+      <div className="relative w-20 h-20 rounded-xl border-2 border-card-border overflow-hidden">
         {/* Grid pattern */}
         <div
           className="absolute inset-0 opacity-10"
@@ -369,7 +369,7 @@ function ProgressRing({
         fill="none"
         stroke="currentColor"
         strokeWidth="3"
-        className="text-slate-100"
+        className="text-surface-2"
       />
       <motion.circle
         cx="22"
@@ -417,7 +417,7 @@ export function LoadingSlideshow() {
 
   return (
     <div className="w-full max-w-lg mx-auto">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
+      <div className="bg-surface-1 rounded-3xl border border-card-border shadow-xl shadow-card-border overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -426,15 +426,15 @@ export function LoadingSlideshow() {
                 progress={overallProgress}
                 accentColor={slide.accentColor}
               />
-              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-slate-700">
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground">
                 {activeSlide + 1}/{SLIDES.length}
               </div>
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-800">
+              <p className="text-sm font-bold text-foreground">
                 جاري التصميم...
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 {elapsed > 0 && `${elapsed} ثانية`}
               </p>
             </div>
@@ -453,7 +453,7 @@ export function LoadingSlideshow() {
                       ? slide.accentColor
                       : i < activeSlide
                         ? slide.accentColor
-                        : "#e2e8f0",
+                        : "var(--surface-3)",
                   opacity: i <= activeSlide ? 1 : 0.5,
                 }}
                 transition={{ duration: 0.3 }}
@@ -520,10 +520,10 @@ export function LoadingSlideshow() {
               transition={{ duration: 0.35 }}
               className="text-center space-y-2"
             >
-              <h3 className="text-lg font-bold text-slate-900">
+              <h3 className="text-lg font-bold text-foreground">
                 {slide.title}
               </h3>
-              <p className="text-sm text-slate-500 leading-relaxed">
+              <p className="text-sm text-muted leading-relaxed">
                 {slide.subtitle}
               </p>
             </motion.div>
@@ -531,7 +531,7 @@ export function LoadingSlideshow() {
         </div>
 
         {/* Bottom shimmer bar */}
-        <div className="h-1 bg-slate-100 overflow-hidden">
+        <div className="h-1 bg-surface-2 overflow-hidden">
           <motion.div
             className={`h-full bg-gradient-to-r ${slide.gradient}`}
             animate={{ x: ["-100%", "100%"] }}

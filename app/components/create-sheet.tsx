@@ -46,20 +46,20 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-x-0 bottom-0 z-[70] bg-slate-50 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:inset-x-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[600px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:h-[85vh] md:max-h-[800px] flex flex-col overflow-hidden"
+            className="fixed inset-x-0 bottom-0 z-[70] bg-background rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.2)] md:inset-x-auto md:left-1/2 md:top-1/2 md:bottom-auto md:w-[600px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-3xl md:h-[85vh] md:max-h-[800px] flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white sticky top-0 z-10">
+            <div className="flex items-center justify-between p-4 border-b border-card-border bg-surface-1 sticky top-0 z-10">
                <div className="flex items-center gap-2">
                  {(category || (category === null && isOpen)) && (
                     <button 
                         onClick={handleBack}
-                        className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors"
+                        className="p-2 -ml-2 rounded-full hover:bg-surface-2 transition-colors"
                     >
-                        {category ? <ArrowLeft size={20} className="text-slate-600" /> : <X size={20} className="text-slate-600" />}
+                        {category ? <ArrowLeft size={20} className="text-muted" /> : <X size={20} className="text-muted" />}
                     </button>
                  )}
-                 <h2 className="text-lg font-bold text-slate-800">
+                 <h2 className="text-lg font-bold text-foreground">
                     {category ? "أدخل التفاصيل" : "ماذا تريد أن تصمم؟"}
                  </h2>
                </div>
@@ -73,7 +73,7 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
             </div>
 
             {/* Content Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto overscroll-contain bg-slate-50 p-4 pb-24 md:pb-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overscroll-contain bg-background p-4 pb-24 md:pb-4 custom-scrollbar">
                 <AnimatePresence mode="wait">
                     {!category ? (
                         <motion.div
@@ -92,7 +92,7 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                         >
-                            <div className="bg-white rounded-2xl p-1 shadow-sm border border-slate-100">
+                            <div className="bg-surface-1 rounded-2xl p-1 shadow-sm border border-card-border">
                                 {category === "restaurant" && (
                                     <RestaurantForm onSubmit={onSubmit} isLoading={isLoading} />
                                 )}
@@ -109,7 +109,7 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
             </div>
             
             {/* Mobile safe area spacer if needed */}
-            <div className="md:hidden h-[env(safe-area-inset-bottom)] bg-white" />
+            <div className="md:hidden h-[env(safe-area-inset-bottom)] bg-surface-1" />
           </motion.div>
         </>
       )}

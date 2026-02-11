@@ -36,29 +36,29 @@ export default function HistoryPage() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-white/80 backdrop-blur-sm px-6 py-2 rounded-full border border-slate-200/60 shadow-sm animate-fade-in-up">
+          <div className="inline-flex items-center justify-center gap-3 mb-4 bg-surface-1/80 backdrop-blur-sm px-6 py-2 rounded-full border border-card-border shadow-sm animate-fade-in-up">
             <Clock size={24} className="text-primary" />
-            <span className="text-slate-700 font-semibold tracking-wide text-sm">
+            <span className="text-foreground font-semibold tracking-wide text-sm">
               سجل الإنشاءات
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-slate-900 animate-gradient-flow">
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-foreground animate-gradient-flow">
             معرض البوسترات
           </h1>
-          <p className="text-slate-500 text-lg max-w-xl mx-auto leading-relaxed font-light">
+          <p className="text-muted text-lg max-w-xl mx-auto leading-relaxed font-light">
             عرض جميع البوسترات التي تم إنشاؤها سابقاً
           </p>
         </div>
 
         {/* View Mode Toggle */}
         <div className="flex justify-center mb-8">
-          <div className="inline-flex bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 shadow-sm p-1">
+          <div className="inline-flex bg-surface-1/80 backdrop-blur-sm rounded-xl border border-card-border shadow-sm p-1">
             <button
               onClick={() => setViewMode("gallery")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "gallery"
                   ? "bg-primary text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               <Grid3x3 size={16} />
@@ -69,7 +69,7 @@ export default function HistoryPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                 viewMode === "list"
                   ? "bg-primary text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  : "text-muted hover:text-foreground"
               }`}
             >
               <List size={16} />
@@ -80,7 +80,7 @@ export default function HistoryPage() {
 
         {/* Category Filter */}
         <div className="flex justify-center mb-8">
-          <div className="inline-flex flex-wrap justify-center gap-2 bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 shadow-sm p-2">
+          <div className="inline-flex flex-wrap justify-center gap-2 bg-surface-1/80 backdrop-blur-sm rounded-xl border border-card-border shadow-sm p-2">
             {HISTORY_FILTERS.map((filter) => (
               <button
                 key={filter.value}
@@ -88,7 +88,7 @@ export default function HistoryPage() {
                 className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
                   selectedCategory === filter.value
                     ? "bg-primary text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                    : "text-muted hover:text-foreground hover:bg-surface-2"
                 }`}
               >
                 {filter.label}
@@ -108,7 +108,7 @@ export default function HistoryPage() {
               </div>
             ) : generations.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-slate-500">لا توجد إنشاءات بعد</p>
+                <p className="text-muted">لا توجد إنشاءات بعد</p>
               </div>
             ) : (
               generations.map((gen) => (

@@ -28,7 +28,7 @@ export function GeneratingOverlay() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] bg-slate-900/90 backdrop-blur-xl flex flex-col items-center justify-center text-white"
+      className="fixed inset-0 z-[80] bg-background/95 backdrop-blur-xl flex flex-col items-center justify-center text-white"
     >
       <div className="relative w-32 h-32 mb-8">
         {/* Pulsing Orbs */}
@@ -66,12 +66,12 @@ export function GeneratingOverlay() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -20, opacity: 0 }}
-        className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-slate-400 text-center px-4"
+        className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground via-muted to-muted-foreground text-center px-4"
       >
         {MESSAGES[msgIndex].text}
       </motion.div>
       
-      <p className="mt-4 text-slate-400 text-sm animate-pulse">جاري التصميم بواسطة الذكاء الاصطناعي...</p>
+      <p className="mt-4 text-muted text-sm animate-pulse">جاري التصميم بواسطة الذكاء الاصطناعي...</p>
     </motion.div>
   );
 }

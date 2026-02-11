@@ -99,7 +99,7 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
           />
           
           <motion.div
@@ -107,7 +107,7 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-5xl h-full max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+            className="relative w-full max-w-5xl h-full max-h-[90vh] bg-surface-1 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
           >
             {/* Close Button Mobile */}
             <button 
@@ -118,7 +118,7 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
             </button>
 
             {/* Image Section */}
-            <div className="flex-1 bg-slate-100 relative flex items-center justify-center p-4 md:p-8 overflow-hidden">
+            <div className="flex-1 bg-surface-2 relative flex items-center justify-center p-4 md:p-8 overflow-hidden">
                 <div 
                     className="absolute inset-0 opacity-10"
                     style={{ 
@@ -138,7 +138,7 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
                             className="max-h-[calc(90vh-4rem)] md:max-h-[80vh] w-auto object-contain"
                         />
                     ) : (
-                        <div className="w-64 h-64 flex items-center justify-center bg-slate-200 text-slate-400">
+                        <div className="w-64 h-64 flex items-center justify-center bg-surface-3 text-muted-foreground">
                             No Image
                         </div>
                     )}
@@ -146,26 +146,26 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
             </div>
 
             {/* Sidebar / Controls */}
-            <div className="w-full md:w-80 bg-white border-l border-slate-200 p-6 flex flex-col gap-6 z-20">
+            <div className="w-full md:w-80 bg-surface-1 border-l border-card-border p-6 flex flex-col gap-6 z-20">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-900">تفاصيل التصميم</h2>
-                    <button 
+                    <h2 className="text-xl font-bold text-foreground">تفاصيل التصميم</h2>
+                    <button
                         onClick={onClose}
-                        className="hidden md:flex p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+                        className="hidden md:flex p-2 hover:bg-surface-2 rounded-full text-muted transition-colors"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
                 <div className="space-y-4 flex-1">
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                        <div className="text-sm font-medium text-slate-500">العنوان المقترح</div>
-                        <div className="font-bold text-slate-900">{result.designNameAr || "بدون عنوان"}</div>
+                    <div className="p-4 bg-surface-2 rounded-2xl border border-card-border space-y-3">
+                        <div className="text-sm font-medium text-muted">العنوان المقترح</div>
+                        <div className="font-bold text-foreground">{result.designNameAr || "بدون عنوان"}</div>
                     </div>
 
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                        <div className="text-sm font-medium text-slate-500">التنسيق</div>
-                        <div className="font-bold text-slate-900 uppercase">{result.format}</div>
+                    <div className="p-4 bg-surface-2 rounded-2xl border border-card-border space-y-3">
+                        <div className="text-sm font-medium text-muted">التنسيق</div>
+                        <div className="font-bold text-foreground uppercase">{result.format}</div>
                     </div>
                 </div>
 
@@ -183,7 +183,7 @@ export function PosterModal({ result, isOpen, onClose, onSaveAsTemplate }: Poste
                         {typeof navigator !== "undefined" && "share" in navigator && (
                             <button
                                 onClick={handleShare}
-                                className="flex items-center justify-center gap-2 py-3.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold transition-all active:scale-95"
+                                className="flex items-center justify-center gap-2 py-3.5 px-4 bg-surface-1 border border-card-border hover:bg-surface-2 text-foreground rounded-xl font-semibold transition-all active:scale-95"
                             >
                                 <Share2 size={18} />
                                 <span>مشاركة</span>

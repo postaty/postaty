@@ -253,7 +253,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="مثال: مطعم الشام"
-          className="w-full px-4 py-3 bg-white rounded-xl border border-card-border focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
+          className="w-full px-4 py-3 bg-surface-1 rounded-xl border border-card-border focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
         />
       </div>
 
@@ -264,7 +264,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
         </label>
         {logoPreview ? (
           <div className="relative inline-block">
-            <div className="w-32 h-32 rounded-2xl border-2 border-card-border overflow-hidden bg-white flex items-center justify-center">
+            <div className="w-32 h-32 rounded-2xl border-2 border-card-border overflow-hidden bg-surface-1 flex items-center justify-center">
               <img
                 src={logoPreview}
                 alt="Logo"
@@ -278,13 +278,13 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
               <X size={14} />
             </button>
             {isExtracting && (
-              <div className="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center">
+              <div className="absolute inset-0 bg-surface-1/80 rounded-2xl flex items-center justify-center">
                 <Loader2 size={24} className="animate-spin text-primary" />
               </div>
             )}
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-card-border rounded-2xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all bg-white/50">
+          <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-card-border rounded-2xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all bg-surface-1/50">
             <ImageIcon size={24} className="text-muted-foreground mb-2" />
             <span className="text-xs text-muted-foreground">رفع الشعار</span>
             <input
@@ -342,7 +342,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
                     type="text"
                     value={palette[key]}
                     onChange={(e) => handlePaletteChange(key, e.target.value)}
-                    className="flex-1 px-3 py-2 bg-white rounded-lg border border-card-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all"
+                    className="flex-1 px-3 py-2 bg-surface-1 rounded-lg border border-card-border text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all"
                     maxLength={7}
                   />
                 </div>
@@ -360,10 +360,10 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
         <select
           value={fontFamily}
           onChange={(e) => setFontFamily(e.target.value)}
-          className="w-full px-4 py-3 bg-white rounded-xl border border-card-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all"
+          className="w-full px-4 py-3 bg-surface-1 rounded-xl border border-card-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all"
         >
           {FONT_OPTIONS.map((font) => (
-            <option key={font} value={font} className="bg-white text-foreground">
+            <option key={font} value={font} className="bg-surface-1 text-foreground">
               {font}
             </option>
           ))}
@@ -388,7 +388,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   isSelected
                     ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "bg-white border border-card-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-slate-50"
+                    : "bg-surface-1 border border-card-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-surface-2"
                 } ${
                   !isSelected && selectedAdjectives.length >= 5
                     ? "opacity-50 cursor-not-allowed"
@@ -417,7 +417,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
                 value={rule}
                 onChange={(e) => handleRuleChange("do", i, e.target.value)}
                 placeholder="مثال: استخدم ألوان دافئة"
-                className="flex-1 px-4 py-2.5 bg-white rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
+                className="flex-1 px-4 py-2.5 bg-surface-1 rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
               />
               {doRules.length > 1 && (
                 <button
@@ -454,7 +454,7 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
                 value={rule}
                 onChange={(e) => handleRuleChange("dont", i, e.target.value)}
                 placeholder="مثال: لا تستخدم صور كرتونية"
-                className="flex-1 px-4 py-2.5 bg-white rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
+                className="flex-1 px-4 py-2.5 bg-surface-1 rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
               />
               {dontRules.length > 1 && (
                 <button

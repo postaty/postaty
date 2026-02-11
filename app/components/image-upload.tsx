@@ -66,7 +66,7 @@ export function ImageUpload({
       <div
         {...getRootProps()}
         className={`relative border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300
-          ${isDragActive ? "border-primary bg-primary/5 scale-[1.02]" : "border-card-border hover:border-primary/50 hover:bg-slate-50"}
+          ${isDragActive ? "border-primary bg-primary/5 scale-[1.02]" : "border-card-border hover:border-primary/50 hover:bg-surface-2"}
           ${preview ? "p-2 border-solid border-card-border" : "p-8"}`}
       >
         <input {...getInputProps()} />
@@ -75,21 +75,21 @@ export function ImageUpload({
             <img
               src={preview}
               alt="معاينة"
-              className="w-full h-48 object-contain rounded-xl shadow-sm bg-white"
+              className="w-full h-48 object-contain rounded-xl shadow-sm bg-surface-1"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
                <p className="text-white font-medium text-sm">انقر للتغيير</p>
             </div>
             <button
               onClick={handleRemove}
-              className="absolute top-2 left-2 bg-white text-danger rounded-full p-1.5 shadow-md hover:bg-danger hover:text-white transition-all transform hover:scale-110"
+              className="absolute top-2 left-2 bg-surface-1 text-danger rounded-full p-1.5 shadow-md hover:bg-danger hover:text-white transition-all transform hover:scale-110"
             >
               <X size={18} />
             </button>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <div className={`p-4 rounded-full ${isDragActive ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'}`}>
+            <div className={`p-4 rounded-full ${isDragActive ? 'bg-primary/10 text-primary' : 'bg-surface-2 text-muted'}`}>
                <ImagePlus size={32} />
             </div>
             <div className="space-y-1">
@@ -98,7 +98,7 @@ export function ImageUpload({
               </p>
               <p className="text-xs text-muted-foreground">أو اسحب وأفلت هنا</p>
             </div>
-            <p className="text-[10px] uppercase tracking-wider opacity-60 bg-slate-100 px-2 py-1 rounded text-slate-500">PNG, JPG, WEBP • Max 5MB</p>
+            <p className="text-[10px] uppercase tracking-wider opacity-60 bg-surface-2 px-2 py-1 rounded text-muted">PNG, JPG, WEBP • Max 5MB</p>
           </div>
         )}
       </div>

@@ -47,7 +47,7 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
         {/* Left Column: Inputs */}
         <div className="space-y-6">
-          <div className="bg-slate-50/50 p-1 rounded-2xl border border-slate-100">
+          <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
              <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
           </div>
 
@@ -120,14 +120,14 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
              <ImageUpload label="صورة الوجبة" value={mealImage} onChange={setMealImage} />
           </div>
           
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-card-border">
              <FormatSelector selected={formats} onChange={setFormats} />
           </div>
         </div>
       </div>
 
       {/* Sticky Submit Button */}
-      <div className="sticky bottom-24 z-30 bg-gradient-to-t from-white via-white/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
+      <div className="sticky bottom-24 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
         <button
           type="submit"
           disabled={isLoading || !logo || !mealImage}
