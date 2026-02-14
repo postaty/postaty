@@ -14,6 +14,12 @@ export default defineSchema(
         v.literal("admin"),
         v.literal("member")
       ),
+      // Onboarding fields
+      onboarded: v.optional(v.boolean()),
+      businessName: v.optional(v.string()),
+      businessCategory: v.optional(v.string()),
+      brandColors: v.optional(v.array(v.string())),
+      logoStorageId: v.optional(v.id("_storage")),
       createdAt: v.number(),
     })
       .index("by_clerkId", ["clerkId"])
@@ -121,7 +127,11 @@ export default defineSchema(
       category: v.union(
         v.literal("restaurant"),
         v.literal("supermarket"),
-        v.literal("online")
+        v.literal("ecommerce"),
+        v.literal("services"),
+        v.literal("fashion"),
+        v.literal("beauty"),
+        v.literal("online") // legacy
       ),
       businessName: v.string(),
       productName: v.string(),
@@ -199,6 +209,26 @@ export default defineSchema(
       updatedAt: v.number(),
     }).index("by_eventId", ["eventId"]),
 
+    stripeRevenueEvents: defineTable({
+      stripeEventId: v.string(),
+      stripeObjectId: v.optional(v.string()),
+      clerkUserId: v.optional(v.string()),
+      stripeCustomerId: v.optional(v.string()),
+      source: v.union(
+        v.literal("subscription_invoice"),
+        v.literal("addon_checkout")
+      ),
+      amountCents: v.number(),
+      currency: v.string(),
+      estimatedStripeFeeCents: v.number(),
+      netAmountCents: v.number(),
+      occurredAt: v.number(),
+      createdAt: v.number(),
+    })
+      .index("by_eventId", ["stripeEventId"])
+      .index("by_createdAt", ["createdAt"])
+      .index("by_source", ["source"]),
+
     creditLedger: defineTable({
       clerkUserId: v.string(),
       billingId: v.optional(v.id("billing")),
@@ -254,7 +284,11 @@ export default defineSchema(
       category: v.union(
         v.literal("restaurant"),
         v.literal("supermarket"),
-        v.literal("online")
+        v.literal("ecommerce"),
+        v.literal("services"),
+        v.literal("fashion"),
+        v.literal("beauty"),
+        v.literal("online") // legacy
       ),
       style: v.string(),
       designJson: v.string(),
@@ -275,7 +309,11 @@ export default defineSchema(
       category: v.union(
         v.literal("restaurant"),
         v.literal("supermarket"),
-        v.literal("online")
+        v.literal("ecommerce"),
+        v.literal("services"),
+        v.literal("fashion"),
+        v.literal("beauty"),
+        v.literal("online") // legacy
       ),
       formDataJson: v.string(),
       status: v.union(
@@ -322,6 +360,112 @@ export default defineSchema(
     })
       .index("by_orgId", ["orgId"])
       .index("by_action", ["action"]),
+
+    // ── AI Usage Events (per-generation cost tracking) ──────────────
+    aiUsageEvents: defineTable({
+      clerkUserId: v.string(),
+      model: v.string(),
+      route: v.union(v.literal("poster"), v.literal("gift")),
+      inputTokens: v.number(),
+      outputTokens: v.number(),
+      imagesGenerated: v.number(),
+      durationMs: v.number(),
+      success: v.boolean(),
+      error: v.optional(v.string()),
+      estimatedCostUsd: v.number(),
+      createdAt: v.number(),
+    })
+      .index("by_clerkUserId", ["clerkUserId"])
+      .index("by_model", ["model"])
+      .index("by_createdAt", ["createdAt"])
+      .index("by_success", ["success"]),
+
+    // ── AI Pricing Config (data-driven cost rules) ──────────────────
+    aiPricingConfig: defineTable({
+      model: v.string(),
+      effectiveFrom: v.number(),
+      effectiveTo: v.optional(v.number()),
+      inputTokenCostPer1k: v.number(),
+      outputTokenCostPer1k: v.number(),
+      imageGenerationCost: v.number(),
+      notes: v.optional(v.string()),
+      createdAt: v.number(),
+    })
+      .index("by_model", ["model"])
+      .index("by_effectiveFrom", ["effectiveFrom"]),
+
+    // ── Feedback (likes/dislikes on generated posters) ──────────────
+    feedback: defineTable({
+      clerkUserId: v.string(),
+      generationId: v.optional(v.id("generations")),
+      rating: v.union(v.literal("like"), v.literal("dislike")),
+      comment: v.optional(v.string()),
+      model: v.optional(v.string()),
+      category: v.optional(
+        v.union(
+          v.literal("restaurant"),
+          v.literal("supermarket"),
+          v.literal("ecommerce"),
+          v.literal("services"),
+          v.literal("fashion"),
+          v.literal("beauty"),
+          v.literal("online") // legacy
+        )
+      ),
+      imageStorageId: v.optional(v.id("_storage")),
+      createdAt: v.number(),
+    })
+      .index("by_clerkUserId", ["clerkUserId"])
+      .index("by_rating", ["rating"])
+      .index("by_createdAt", ["createdAt"])
+      .index("by_generationId", ["generationId"]),
+
+    // ── Support Tickets ─────────────────────────────────────────────
+    supportTickets: defineTable({
+      clerkUserId: v.string(),
+      subject: v.string(),
+      status: v.union(
+        v.literal("open"),
+        v.literal("in_progress"),
+        v.literal("waiting_on_customer"),
+        v.literal("resolved"),
+        v.literal("closed")
+      ),
+      priority: v.union(
+        v.literal("low"),
+        v.literal("medium"),
+        v.literal("high"),
+        v.literal("urgent")
+      ),
+      assignedTo: v.optional(v.string()),
+      createdAt: v.number(),
+      updatedAt: v.number(),
+    })
+      .index("by_clerkUserId", ["clerkUserId"])
+      .index("by_status", ["status"])
+      .index("by_priority", ["priority"])
+      .index("by_createdAt", ["createdAt"]),
+
+    // ── Support Messages (ticket thread) ─────────────────────────────
+    supportMessages: defineTable({
+      ticketId: v.id("supportTickets"),
+      senderClerkUserId: v.string(),
+      isAdmin: v.boolean(),
+      body: v.string(),
+      createdAt: v.number(),
+    })
+      .index("by_ticketId", ["ticketId"]),
+
+    // ── Showcase Images (admin-selected for landing page carousel) ──
+    showcase_images: defineTable({
+      storageId: v.id("_storage"),
+      title: v.optional(v.string()),
+      category: v.string(),
+      order: v.number(),
+      addedBy: v.string(), // admin clerkId
+      createdAt: v.number(),
+    })
+      .index("by_order", ["order"]),
   },
   { schemaValidation: true }
 );

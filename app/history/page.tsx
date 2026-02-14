@@ -14,19 +14,22 @@ const HISTORY_FILTERS: Array<{ value: "all" | Category; label: string }> = [
   { value: "all", label: "الكل" },
   { value: "restaurant", label: CATEGORY_LABELS.restaurant },
   { value: "supermarket", label: CATEGORY_LABELS.supermarket },
-  { value: "online", label: CATEGORY_LABELS.online },
+  { value: "ecommerce", label: CATEGORY_LABELS.ecommerce },
+  { value: "services", label: CATEGORY_LABELS.services },
+  { value: "fashion", label: CATEGORY_LABELS.fashion },
+  { value: "beauty", label: CATEGORY_LABELS.beauty },
 ];
 
 export default function HistoryPage() {
-  const { orgId } = useDevIdentity();
+  const { userId, orgId } = useDevIdentity();
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
   const [selectedCategory, setSelectedCategory] = useState<"all" | Category>("all");
   const categoryFilter = selectedCategory === "all" ? undefined : selectedCategory;
 
-  // Only fetch for list view
+  // User-specific query
   const generations = useQuery(
-    api.generations.listByOrg,
-    viewMode === "list" ? { orgId, limit: 50, category: categoryFilter } : "skip"
+    api.generations.listByUser,
+    viewMode === "list" ? { userId, limit: 50, category: categoryFilter } : "skip"
   );
 
   return (

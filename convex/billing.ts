@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { v } from "convex/values";
 import {
+  type ActionCtx,
   action,
   httpAction,
   internalMutation,
@@ -12,6 +13,33 @@ import { internal } from "./_generated/api";
 
 type PlanKey = "starter" | "growth" | "dominant";
 type AddonKey = "addon_5" | "addon_10";
+type BillingStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "canceled"
+  | "unpaid"
+  | "incomplete"
+  | "incomplete_expired";
+
+type StripeSubscriptionShape = {
+  id: string;
+  status: string;
+  customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null;
+  current_period_start?: number;
+  current_period_end?: number;
+  items: { data: Array<{ price?: { id?: string } }> };
+  metadata?: { clerkUserId?: string };
+};
+
+type StripeInvoiceShape = {
+  id?: string;
+  subscription?: string | null;
+  customer?: string | Stripe.Customer | Stripe.DeletedCustomer | null;
+  amount_paid?: number;
+  currency?: string;
+  created?: number;
+};
 
 const PLAN_CONFIG: Record<
   PlanKey,
@@ -81,6 +109,14 @@ function toStripeString(value: string | Stripe.DeletedCustomer | null) {
   return value;
 }
 
+function extractStripeCustomerId(
+  value: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined
+) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value.id ?? null;
+}
+
 function planFromPriceId(priceId: string | undefined): PlanKey | null {
   if (!priceId) return null;
   if (priceId === process.env.STRIPE_PRICE_STARTER) return "starter";
@@ -89,8 +125,13 @@ function planFromPriceId(priceId: string | undefined): PlanKey | null {
   return null;
 }
 
+function estimateStripeFeeCents(amountCents: number): number {
+  if (amountCents <= 0) return 0;
+  return Math.round(amountCents * 0.029 + 30);
+}
+
 async function upsertFromSubscriptionEvent(
-  ctx: { runMutation: (...args: any[]) => Promise<any> },
+  ctx: { runMutation: ActionCtx["runMutation"] },
   payload: {
     clerkUserId?: string;
     stripeCustomerId: string;
@@ -102,8 +143,8 @@ async function upsertFromSubscriptionEvent(
   }
 ) {
   const monthlyCreditLimit = PLAN_CONFIG[payload.planKey].monthlyCredits;
-  const status = MUTABLE_BILLING_STATUSES.has(payload.status)
-    ? payload.status
+  const status: BillingStatus = MUTABLE_BILLING_STATUSES.has(payload.status)
+    ? (payload.status as BillingStatus)
     : "incomplete";
 
   await ctx.runMutation(internal.billing.upsertBillingFromSubscription, {
@@ -475,7 +516,9 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
             ? session.subscription
             : null;
           if (!subscriptionId) break;
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
+          const subscription = (await stripe.subscriptions.retrieve(
+            subscriptionId
+          )) as unknown as StripeSubscriptionShape;
           const planKey = planFromPriceId(
             subscription.items.data[0]?.price?.id
           );
@@ -487,8 +530,12 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
             stripeSubscriptionId: subscription.id,
             planKey,
             status: subscription.status,
-            currentPeriodStart: subscription.current_period_start * 1000,
-            currentPeriodEnd: subscription.current_period_end * 1000,
+            currentPeriodStart: subscription.current_period_start
+              ? subscription.current_period_start * 1000
+              : undefined,
+            currentPeriodEnd: subscription.current_period_end
+              ? subscription.current_period_end * 1000
+              : undefined,
           });
         }
 
@@ -503,14 +550,28 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
               stripeCheckoutSessionId: session.id,
             });
           }
+
+          const amountCents = session.amount_total ?? 0;
+          if (amountCents > 0) {
+            await ctx.runMutation(internal.billing.recordRevenueEvent, {
+              stripeEventId: event.id,
+              stripeObjectId: session.id,
+              clerkUserId: session.metadata?.clerkUserId,
+              stripeCustomerId,
+              source: "addon_checkout",
+              amountCents,
+              currency: (session.currency ?? "usd").toUpperCase(),
+              occurredAt: session.created ? session.created * 1000 : Date.now(),
+            });
+          }
         }
         break;
       }
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as any;
-        const stripeCustomerId = toStripeString(subscription.customer as string | null);
+        const subscription = event.data.object as unknown as StripeSubscriptionShape;
+        const stripeCustomerId = extractStripeCustomerId(subscription.customer);
         if (!stripeCustomerId) break;
 
         let planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
@@ -546,11 +607,13 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
         break;
       }
       case "invoice.paid": {
-        const invoice = event.data.object as any;
+        const invoice = event.data.object as unknown as StripeInvoiceShape;
         if (typeof invoice.subscription !== "string") break;
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription) as any;
+        const subscription = (await stripe.subscriptions.retrieve(
+          invoice.subscription
+        )) as unknown as StripeSubscriptionShape;
         const planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
-        const stripeCustomerId = toStripeString(subscription.customer as string | null);
+        const stripeCustomerId = extractStripeCustomerId(subscription.customer);
         if (!stripeCustomerId || !planKey) break;
 
         await upsertFromSubscriptionEvent(ctx, {
@@ -559,14 +622,35 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
           stripeSubscriptionId: subscription.id,
           planKey,
           status: subscription.status,
-          currentPeriodStart: subscription.current_period_start * 1000,
-          currentPeriodEnd: subscription.current_period_end * 1000,
+          currentPeriodStart: subscription.current_period_start
+            ? subscription.current_period_start * 1000
+            : undefined,
+          currentPeriodEnd: subscription.current_period_end
+            ? subscription.current_period_end * 1000
+            : undefined,
         });
+
+        const amountPaid = typeof invoice.amount_paid === "number" ? invoice.amount_paid : 0;
+        if (amountPaid > 0) {
+          await ctx.runMutation(internal.billing.recordRevenueEvent, {
+            stripeEventId: event.id,
+            stripeObjectId: typeof invoice.id === "string" ? invoice.id : undefined,
+            clerkUserId: subscription.metadata?.clerkUserId,
+            stripeCustomerId,
+            source: "subscription_invoice",
+            amountCents: amountPaid,
+            currency:
+              typeof invoice.currency === "string"
+                ? invoice.currency.toUpperCase()
+                : "USD",
+            occurredAt: invoice.created ? invoice.created * 1000 : Date.now(),
+          });
+        }
         break;
       }
       case "invoice.payment_failed": {
-        const invoice = event.data.object as any;
-        const stripeCustomerId = toStripeString(invoice.customer as string | null);
+        const invoice = event.data.object as unknown as StripeInvoiceShape;
+        const stripeCustomerId = extractStripeCustomerId(invoice.customer);
         if (stripeCustomerId) {
           await ctx.runMutation(internal.billing.updateStatusByCustomerId, {
             stripeCustomerId,
@@ -875,6 +959,43 @@ export const updateStatusByCustomerId = internalMutation({
     await ctx.db.patch(billing._id, {
       status: args.status,
       updatedAt: Date.now(),
+    });
+  },
+});
+
+export const recordRevenueEvent = internalMutation({
+  args: {
+    stripeEventId: v.string(),
+    stripeObjectId: v.optional(v.string()),
+    clerkUserId: v.optional(v.string()),
+    stripeCustomerId: v.optional(v.string()),
+    source: v.union(v.literal("subscription_invoice"), v.literal("addon_checkout")),
+    amountCents: v.number(),
+    currency: v.string(),
+    occurredAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("stripeRevenueEvents")
+      .withIndex("by_eventId", (q) => q.eq("stripeEventId", args.stripeEventId))
+      .first();
+    if (existing) return existing._id;
+
+    const estimatedStripeFeeCents = estimateStripeFeeCents(args.amountCents);
+    const netAmountCents = Math.max(args.amountCents - estimatedStripeFeeCents, 0);
+
+    return await ctx.db.insert("stripeRevenueEvents", {
+      stripeEventId: args.stripeEventId,
+      stripeObjectId: args.stripeObjectId,
+      clerkUserId: args.clerkUserId,
+      stripeCustomerId: args.stripeCustomerId,
+      source: args.source,
+      amountCents: args.amountCents,
+      currency: args.currency.toUpperCase(),
+      estimatedStripeFeeCents,
+      netAmountCents,
+      occurredAt: args.occurredAt,
+      createdAt: Date.now(),
     });
   },
 });

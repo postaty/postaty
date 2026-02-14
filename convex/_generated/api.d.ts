@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
+import type * as aiUsage from "../aiUsage.js";
 import type * as auditLogs from "../auditLogs.js";
 import type * as billing from "../billing.js";
 import type * as brandKits from "../brandKits.js";
@@ -20,6 +22,7 @@ import type * as posterJobs from "../posterJobs.js";
 import type * as posterTemplates from "../posterTemplates.js";
 import type * as seed from "../seed.js";
 import type * as seedTemplates from "../seedTemplates.js";
+import type * as showcase from "../showcase.js";
 import type * as templates from "../templates.js";
 import type * as users from "../users.js";
 
@@ -30,6 +33,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
+  aiUsage: typeof aiUsage;
   auditLogs: typeof auditLogs;
   billing: typeof billing;
   brandKits: typeof brandKits;
@@ -42,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   posterTemplates: typeof posterTemplates;
   seed: typeof seed;
   seedTemplates: typeof seedTemplates;
+  showcase: typeof showcase;
   templates: typeof templates;
   users: typeof users;
 }>;

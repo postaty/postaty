@@ -1,7 +1,7 @@
 import type { Id } from "@/convex/_generated/dataModel";
 
 // ── Categories & Formats ───────────────────────────────────────────
-export type Category = "restaurant" | "supermarket" | "online";
+export type Category = "restaurant" | "supermarket" | "ecommerce" | "services" | "fashion" | "beauty";
 export type CampaignType = "standard" | "ramadan" | "eid";
 
 export type OutputFormat =
@@ -26,9 +26,15 @@ export interface RestaurantFormData {
   restaurantName: string;
   logo: string; // base64
   mealImage: string; // base64
+  postType: "menu" | "meal-offer" | "delivery";
   mealName: string;
+  description?: string;
   newPrice: string;
   oldPrice: string;
+  offerBadge?: "discount" | "new" | "bestseller";
+  deliveryType?: "free" | "paid";
+  deliveryTime?: string;
+  coverageAreas?: string;
   offerDuration?: string;
   whatsapp: string;
   cta: string;
@@ -41,29 +47,102 @@ export interface SupermarketFormData {
   campaignType: CampaignType;
   supermarketName: string;
   logo: string; // base64
-  productName: string;
   productImages: string[]; // base64[]
-  weight?: string;
+  postType: "product" | "daily-offers" | "section-sales";
+  productName: string;
+  quantity?: string;
+  newPrice: string;
+  oldPrice: string;
+  discountPercentage?: string;
+  offerLimit?: string;
   offerDuration?: string;
+  expiryDate?: string;
   whatsapp: string;
-  headline: string;
   cta: string;
   formats: OutputFormat[];
   brandKitId?: string;
 }
 
-export interface OnlineFormData {
-  category: "online";
+export interface EcommerceFormData {
+  category: "ecommerce";
   campaignType: CampaignType;
   shopName: string;
   logo: string; // base64
   productImage: string; // base64
+  postType: "product" | "sales" | "new-arrival";
   productName: string;
-  price: string;
-  discount?: string;
-  shipping: "free" | "paid";
+  features?: string;
+  newPrice: string;
+  oldPrice: string;
+  colorSize?: string;
+  availability: "in-stock" | "out-of-stock" | "preorder";
+  shippingDuration?: string;
+  purchaseLink?: string;
   whatsapp: string;
-  headline: string;
+  cta: string;
+  formats: OutputFormat[];
+  brandKitId?: string;
+}
+
+export interface ServicesFormData {
+  category: "services";
+  campaignType: CampaignType;
+  businessName: string;
+  logo: string; // base64
+  serviceImage: string; // base64
+  serviceType: "maintenance" | "cleaning" | "travel" | "business" | "consulting";
+  serviceName: string;
+  serviceDetails?: string;
+  price: string;
+  priceType: "fixed" | "starting-from";
+  executionTime?: string;
+  coverageArea?: string;
+  warranty?: string;
+  quickFeatures?: string;
+  offerDuration?: string;
+  whatsapp: string;
+  cta: string;
+  formats: OutputFormat[];
+  brandKitId?: string;
+}
+
+export interface FashionFormData {
+  category: "fashion";
+  campaignType: CampaignType;
+  brandName: string;
+  logo: string; // base64
+  productImage: string; // base64
+  postType: "product" | "discount" | "collection";
+  itemName: string;
+  description?: string;
+  newPrice: string;
+  oldPrice: string;
+  availableSizes?: string;
+  availableColors?: string;
+  offerNote?: string;
+  offerDuration?: string;
+  whatsapp: string;
+  cta: string;
+  formats: OutputFormat[];
+  brandKitId?: string;
+}
+
+export interface BeautyFormData {
+  category: "beauty";
+  campaignType: CampaignType;
+  salonName: string;
+  logo: string; // base64
+  serviceImage: string; // base64
+  postType: "salon-service" | "spa-session" | "beauty-product";
+  serviceName: string;
+  benefit?: string;
+  newPrice: string;
+  oldPrice: string;
+  sessionDuration?: string;
+  suitableFor?: string;
+  bookingCondition: "advance" | "available-now";
+  offerDuration?: string;
+  whatsapp: string;
   cta: string;
   formats: OutputFormat[];
   brandKitId?: string;
@@ -72,7 +151,10 @@ export interface OnlineFormData {
 export type PostFormData =
   | RestaurantFormData
   | SupermarketFormData
-  | OnlineFormData;
+  | EcommerceFormData
+  | ServicesFormData
+  | FashionFormData
+  | BeautyFormData;
 
 // ── Generation ─────────────────────────────────────────────────────
 export interface GenerationResult {
@@ -238,6 +320,31 @@ export interface PosterResult {
   isGift?: boolean;
 }
 
+export type GiftEditorFontFamily = "noto-kufi";
+
+export interface GiftEditorTextLayer {
+  content: string;
+  color: string;
+  fontSize: number;
+  fontWeight: 400 | 500 | 600 | 700 | 800;
+  fontFamily: GiftEditorFontFamily;
+  x: number; // 0..1 relative to canvas width
+  y: number; // 0..1 relative to canvas height
+}
+
+export interface GiftEditorOverlayLayer {
+  imageBase64: string | null;
+  x: number; // 0..1 relative to canvas width
+  y: number; // 0..1 relative to canvas height
+  scale: number;
+  borderRadius: number;
+}
+
+export interface GiftEditorState {
+  text: GiftEditorTextLayer;
+  overlay: GiftEditorOverlayLayer;
+}
+
 export interface GeneratePostersResult {
   main: PosterResult;
   gift?: PosterResult;
@@ -261,4 +368,171 @@ export interface PlanLimits {
   exportFormats: OutputFormat[];
   hasWatermark: boolean;
   historyRetentionDays: number;
+}
+
+// ── Admin API Contracts ─────────────────────────────────────────────
+// Convex function names and response shapes for Agent B (frontend)
+//
+// Queries:
+//   admin.getAiOverview        → AdminAiOverview
+//   admin.getFinancialOverview → AdminFinancialOverview
+//   admin.listUsers            → AdminUser[]
+//   admin.listSubscriptions    → AdminSubscriptionsResult
+//   admin.listFeedback         → AdminFeedbackItem[]
+//   admin.getFeedbackSummary   → AdminFeedbackSummary
+//   admin.listSupportTickets   → AdminSupportTicket[]
+//   admin.getSupportTicketThread → AdminSupportThread
+//   admin.getDailyUsage        → AdminDailyUsageRow[]
+//
+// Mutations:
+//   admin.submitFeedback       → (rating, comment?, model?, category?, generationId?)
+//   admin.createSupportTicket  → (subject, body, priority?)
+//   admin.replySupportTicket   → (ticketId, body, newStatus?)
+//   admin.updateTicketStatus   → (ticketId, status)
+//   admin.assignTicket         → (ticketId, assignedTo)
+
+export interface AdminAiOverview {
+  periodDays: number;
+  totalRequests: number;
+  successCount: number;
+  failureCount: number;
+  successRate: number;
+  totalCostUsd: number;
+  totalImages: number;
+  byModel: Record<string, {
+    count: number;
+    cost: number;
+    images: number;
+    avgDurationMs: number;
+    totalDuration: number;
+  }>;
+}
+
+export interface AdminFinancialOverview {
+  periodDays: number;
+  grossRevenue: number;
+  estimatedStripeFees: number;
+  apiCostUsd: number;
+  netProfit: number;
+  activeSubscriptions: number;
+  subscriptionsByPlan: {
+    starter: number;
+    growth: number;
+    dominant: number;
+  };
+  mrr: number;
+}
+
+export interface AdminUser {
+  _id: string;
+  clerkId: string;
+  email: string;
+  name: string;
+  role: "owner" | "admin" | "member";
+  createdAt: number;
+  billing: {
+    planKey: string;
+    status: string;
+    monthlyCreditsUsed: number;
+    monthlyCreditLimit: number;
+    addonCreditsBalance: number;
+  } | null;
+  totalGenerations: number;
+  totalCostUsd: number;
+}
+
+export interface AdminSubscriptionsResult {
+  subscriptions: Array<{
+    _id: string;
+    clerkUserId: string;
+    planKey: string;
+    status: string;
+    monthlyCreditLimit: number;
+    monthlyCreditsUsed: number;
+    addonCreditsBalance: number;
+    currentPeriodStart?: number;
+    currentPeriodEnd?: number;
+    userName: string;
+    userEmail: string;
+  }>;
+  summary: {
+    total: number;
+    active: number;
+    trialing: number;
+    pastDue: number;
+    canceled: number;
+  };
+}
+
+export interface AdminFeedbackItem {
+  _id: string;
+  clerkUserId: string;
+  rating: "like" | "dislike";
+  comment?: string;
+  model?: string;
+  category?: Category;
+  createdAt: number;
+  userName: string;
+  userEmail: string;
+}
+
+export interface AdminFeedbackSummary {
+  total: number;
+  likes: number;
+  dislikes: number;
+  likeRate: number;
+}
+
+export interface AdminSupportTicket {
+  _id: string;
+  clerkUserId: string;
+  subject: string;
+  status: "open" | "in_progress" | "waiting_on_customer" | "resolved" | "closed";
+  priority: "low" | "medium" | "high" | "urgent";
+  assignedTo?: string;
+  createdAt: number;
+  updatedAt: number;
+  userName: string;
+  userEmail: string;
+  messageCount: number;
+  lastMessageAt: number;
+}
+
+export interface AdminSupportThread {
+  ticket: AdminSupportTicket;
+  messages: Array<{
+    _id: string;
+    ticketId: string;
+    senderClerkUserId: string;
+    isAdmin: boolean;
+    body: string;
+    createdAt: number;
+  }>;
+}
+
+export interface AdminDailyUsageRow {
+  date: string;
+  requests: number;
+  cost: number;
+  images: number;
+  failures: number;
+}
+
+// ── User Business Profile (onboarding) ────────────────────────────
+export interface UserBusinessProfile {
+  businessName: string;
+  businessCategory: Category;
+  brandColors: string[];
+  logoStorageId?: string;
+  logoUrl?: string;
+}
+
+// ── Showcase Images (landing page carousel) ───────────────────────
+export interface ShowcaseImage {
+  _id: string;
+  storageId: string;
+  url?: string;
+  title?: string;
+  category: Category;
+  order: number;
 }

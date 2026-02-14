@@ -80,3 +80,46 @@ export const updateRole = mutation({
     await ctx.db.patch(args.userId, { role: args.role });
   },
 });
+
+export const getCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.subject) return null;
+
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
+  },
+});
+
+export const completeOnboarding = mutation({
+  args: {
+    businessName: v.string(),
+    businessCategory: v.string(),
+    brandColors: v.array(v.string()),
+    logoStorageId: v.optional(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity?.subject) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .first();
+
+    if (!user) throw new Error("User not found");
+
+    await ctx.db.patch(user._id, {
+      onboarded: true,
+      businessName: args.businessName,
+      businessCategory: args.businessCategory,
+      brandColors: args.brandColors,
+      logoStorageId: args.logoStorageId,
+    });
+
+    return user._id;
+  },
+});

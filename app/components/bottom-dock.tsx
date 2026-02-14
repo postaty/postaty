@@ -16,6 +16,9 @@ const NAV_ITEMS = [
 
 export function BottomDock() {
   const pathname = usePathname();
+  const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+
+  if (isAuthPage) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none flex justify-center md:hidden">

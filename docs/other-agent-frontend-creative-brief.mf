@@ -1,0 +1,144 @@
+# Creative Frontend Brief (Admin Dashboard)
+
+You are the frontend design-and-implementation agent for this project.
+
+## Mission
+
+Build a visually striking, professional admin dashboard that feels premium and intentional, not generic SaaS boilerplate.
+
+Deliver a bold, polished UI for:
+
+1. `/admin/ai`
+2. `/admin/finance`
+3. `/admin/users`
+4. `/admin/subscriptions`
+5. `/admin/support`
+6. `/admin/feedback`
+7. Feedback controls inside `app/components/poster-modal.tsx`
+
+## Non-Negotiables
+
+- Keep existing app architecture (Next.js + Convex + Clerk).
+- Use existing backend endpoints (already implemented).
+- Do not break current create/history/settings flows.
+- Keep mobile + desktop quality high.
+- TypeScript strict, no `any`.
+
+## Design Direction (Important)
+
+Create a unique visual identity for admin:
+
+- Editorial + studio feel (data meets creative production).
+- Strong typography hierarchy (display + readable body).
+- Rich but controlled color system via CSS variables.
+- Layered backgrounds (gradients/noise/subtle shapes), not flat.
+- Data cards with depth, contrast, and strong spacing rhythm.
+- Smooth motion:
+  - page enter
+  - section stagger
+  - chart/data reveal
+
+Avoid:
+
+- Template-like dashboards.
+- Default purple-on-white aesthetics.
+- Repetitive card grids with no visual hierarchy.
+
+## UX Requirements
+
+- Fast scanability:
+  - top KPI strip
+  - secondary insights
+  - deep-dive tables/charts
+- Clear storytelling on finance page:
+  - explicit formula: `Profit = Revenue - Stripe Fees - API Usage Cost`
+  - each metric explained in plain language.
+- Strong loading/empty/error states (designed, not plain text).
+- Arabic-friendly typography and spacing where Arabic content appears.
+
+## Data Wiring (Use these APIs)
+
+Queries:
+
+- `api.admin.getAiOverview({ periodDays? })`
+- `api.admin.getDailyUsage({ periodDays? })`
+- `api.admin.getFinancialOverview({ periodDays? })`
+- `api.admin.listUsers({ limit? })`
+- `api.admin.listSubscriptions({})`
+- `api.admin.listSupportTickets({ status?, limit? })`
+- `api.admin.getSupportTicketThread({ ticketId })`
+- `api.admin.listFeedback({ rating?, limit? })`
+- `api.admin.getFeedbackSummary({})`
+
+Mutations:
+
+- `api.admin.submitFeedback(...)`
+- `api.admin.createSupportTicket(...)`
+- `api.admin.replySupportTicket(...)`
+- `api.admin.updateTicketStatus(...)`
+- `api.admin.assignTicket(...)`
+
+## Page-by-Page Creative Targets
+
+### `/admin/ai`
+
+- “AI operations cockpit” look.
+- Visual model comparison blocks (paid vs free).
+- Daily usage chart with meaningful styling and annotations.
+- Highlight model strategy:
+  - `gemini-3-pro-image-preview` (paid)
+  - `gemini-2.5-flash-image` (free)
+
+### `/admin/finance`
+
+- “Finance intelligence” style.
+- Formula panel as hero section.
+- Metric cards:
+  - Gross revenue
+  - Stripe fees
+  - API cost
+  - Net profit
+- Include confidence/explanation text for estimates.
+
+### `/admin/users` & `/admin/subscriptions`
+
+- Premium table system:
+  - sticky headers
+  - elegant row hover states
+  - compact badges for status/plan
+- Rich filters/search controls.
+
+### `/admin/support`
+
+- Inbox + thread split layout.
+- Clear status and priority visuals.
+- Admin reply composer that feels production-ready.
+
+### `/admin/feedback`
+
+- Sentiment overview cards (like/dislike/ratio).
+- Filterable timeline/table with context chips (model/category).
+
+### `poster-modal` feedback
+
+- Add thumbs up/down controls.
+- Optional comment prompt.
+- Clean microinteraction and success acknowledgement.
+
+## Build Quality
+
+- Reusable UI primitives for admin pages.
+- No duplicated business logic in components.
+- Keep state predictable and easy to debug.
+- Respect accessibility basics (contrast, focus states, keyboard).
+
+## Deliverables
+
+1. Complete admin UI pages + shared layout.
+2. Convex wiring for all listed views/actions.
+3. Feedback controls integrated in poster modal.
+4. Short implementation note describing:
+   - design system choices
+   - component architecture
+   - known limitations/future polish ideas
+

@@ -5,7 +5,11 @@ import { v } from "convex/values";
 const categoryValidator = v.union(
   v.literal("restaurant"),
   v.literal("supermarket"),
-  v.literal("online")
+  v.literal("ecommerce"),
+  v.literal("services"),
+  v.literal("fashion"),
+  v.literal("beauty"),
+  v.literal("online") // legacy
 );
 
 const statusValidator = v.union(
@@ -206,14 +210,32 @@ export const listByUser = query({
   args: {
     userId: v.id("users"),
     limit: v.optional(v.number()),
+    category: v.optional(categoryValidator),
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    return await ctx.db
+    const baseQuery = ctx.db
       .query("generations")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-      .order("desc")
-      .take(limit);
+      .order("desc");
+
+    const generations = args.category
+      ? await baseQuery.filter((q) => q.eq(q.field("category"), args.category)).take(limit)
+      : await baseQuery.take(limit);
+
+    return Promise.all(
+      generations.map(async (gen) => ({
+        ...gen,
+        outputs: await Promise.all(
+          gen.outputs.map(async (output) => ({
+            ...output,
+            url: output.storageId
+              ? await ctx.storage.getUrl(output.storageId)
+              : null,
+          }))
+        ),
+      }))
+    );
   },
 });
 

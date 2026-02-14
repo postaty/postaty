@@ -19,10 +19,13 @@ import {
   ArrowLeft,
   UtensilsCrossed,
   ShoppingCart,
-  Package,
+  Store,
+  Wrench,
+  Shirt,
 } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
 import { HeroVisual } from "./components/hero-visual";
+import { ShowcaseCarousel } from "./components/showcase-carousel";
 import { AnimateOnScroll, StaggerOnScroll } from "./components/animate-on-scroll";
 import { STAGGER_ITEM, TAP_SCALE, FADE_UP } from "@/lib/animation";
 
@@ -114,9 +117,9 @@ const CATEGORIES = [
     iconColor: "text-emerald-400",
   },
   {
-    id: "online" as const,
-    icon: Package,
-    title: "متاجر أونلاين",
+    id: "ecommerce" as const,
+    icon: Store,
+    title: "متاجر إلكترونية",
     subtitle: "إعلانات تزيد مبيعاتك",
     bullets: ["بوسترات منتجات جذابة", "إعلانات خصومات حصرية", "تصاميم سوشيال ميديا"],
     gradient: "from-violet-500 to-fuchsia-500",
@@ -124,6 +127,42 @@ const CATEGORIES = [
     border: "border-violet-500/20 hover:border-violet-500/40",
     iconBg: "bg-violet-500/10",
     iconColor: "text-violet-400",
+  },
+  {
+    id: "services" as const,
+    icon: Wrench,
+    title: "خدمات",
+    subtitle: "إعلانات احترافية لخدماتك",
+    bullets: ["صيانة وتنظيف واستشارات", "تصاميم تبني الثقة", "بوسترات بتفاصيل الخدمة"],
+    gradient: "from-blue-500 to-cyan-500",
+    glow: "shadow-blue-500/20",
+    border: "border-blue-500/20 hover:border-blue-500/40",
+    iconBg: "bg-blue-500/10",
+    iconColor: "text-blue-400",
+  },
+  {
+    id: "fashion" as const,
+    icon: Shirt,
+    title: "أزياء وموضة",
+    subtitle: "تصاميم أنيقة لعلامتك",
+    bullets: ["بوسترات ملابس وإكسسوارات", "عروض مقاسات وألوان", "تصاميم بطابع مجلات الموضة"],
+    gradient: "from-pink-500 to-rose-500",
+    glow: "shadow-pink-500/20",
+    border: "border-pink-500/20 hover:border-pink-500/40",
+    iconBg: "bg-pink-500/10",
+    iconColor: "text-pink-400",
+  },
+  {
+    id: "beauty" as const,
+    icon: Sparkles,
+    title: "تجميل وعناية",
+    subtitle: "بوسترات جذابة لصالونك",
+    bullets: ["خدمات تجميل وسبا", "منتجات عناية بالبشرة", "عروض حجوزات وجلسات"],
+    gradient: "from-fuchsia-400 to-purple-500",
+    glow: "shadow-fuchsia-500/20",
+    border: "border-fuchsia-500/20 hover:border-fuchsia-500/40",
+    iconBg: "bg-fuchsia-500/10",
+    iconColor: "text-fuchsia-400",
   },
 ];
 
@@ -163,7 +202,7 @@ export default function Home() {
             </h1>
 
             <p className="text-lg text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              الذكاء الاصطناعي يصمم لك إعلانات احترافية لمطعمك أو متجرك في 30 ثانية.
+              بوستاتي يصمم لك إعلانات احترافية لمطعمك أو متجرك في 30 ثانية.
               <br className="hidden md:block" />
               بدون مصمم، بدون خبرة.
             </p>
@@ -171,7 +210,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               {!isAuthenticated ? (
                 AUTH_ENABLED ? (
-                  <SignInButton mode="modal" forceRedirectUrl="/create">
+                  <SignInButton forceRedirectUrl="/create">
                     <motion.button
                       whileTap={TAP_SCALE}
                       className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-lg"
@@ -299,7 +338,7 @@ export default function Home() {
             <p className="text-muted text-lg">تصاميم مخصصة حسب نوع عملك</p>
           </AnimateOnScroll>
 
-          <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          <StaggerOnScroll className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -341,6 +380,11 @@ export default function Home() {
           </StaggerOnScroll>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 4.5: SHOWCASE CAROUSEL
+      ═══════════════════════════════════════════════════════ */}
+      <ShowcaseCarousel />
 
       {/* ═══════════════════════════════════════════════════════
           SECTION 5: FEATURES GRID
@@ -414,7 +458,7 @@ export default function Home() {
               </ul>
               {!isAuthenticated ? (
                 AUTH_ENABLED ? (
-                  <SignInButton mode="modal" forceRedirectUrl="/create">
+                  <SignInButton forceRedirectUrl="/create">
                     <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
                       ابدأ الآن
                     </button>
@@ -492,7 +536,7 @@ export default function Home() {
               </ul>
               {!isAuthenticated ? (
                 AUTH_ENABLED ? (
-                  <SignInButton mode="modal" forceRedirectUrl="/create">
+                  <SignInButton forceRedirectUrl="/create">
                     <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
                       ابدأ الآن
                     </button>
@@ -509,27 +553,6 @@ export default function Home() {
               )}
             </motion.div>
           </StaggerOnScroll>
-
-          {/* Add-ons Section */}
-          <AnimateOnScroll className="mt-16 text-center">
-            <h3 className="text-2xl font-bold mb-8">هل تحتاج أرصدة إضافية؟</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-              <div className="bg-surface-1 border border-card-border rounded-xl p-6">
-                <div className="text-2xl font-black text-primary mb-2">5 تصاميم</div>
-                <p className="text-lg text-muted mb-4">$3</p>
-                <button className="w-full py-2 border border-card-border rounded-lg font-bold text-foreground hover:bg-surface-2 transition-colors text-sm">
-                  أضف الآن
-                </button>
-              </div>
-              <div className="bg-surface-1 border border-card-border rounded-xl p-6">
-                <div className="text-2xl font-black text-accent mb-2">10 تصاميم</div>
-                <p className="text-lg text-muted mb-4">$7</p>
-                <button className="w-full py-2 border border-card-border rounded-lg font-bold text-foreground hover:bg-surface-2 transition-colors text-sm">
-                  أضف الآن
-                </button>
-              </div>
-            </div>
-          </AnimateOnScroll>
         </div>
       </section>
 
@@ -552,7 +575,7 @@ export default function Home() {
 
           {!isAuthenticated ? (
             AUTH_ENABLED ? (
-              <SignInButton mode="modal" forceRedirectUrl="/create">
+              <SignInButton forceRedirectUrl="/create">
                 <motion.button
                   whileTap={TAP_SCALE}
                   className="px-10 py-5 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold text-xl shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-1 transition-all"

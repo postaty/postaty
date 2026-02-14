@@ -13,7 +13,11 @@ export const save = mutation({
     category: v.union(
       v.literal("restaurant"),
       v.literal("supermarket"),
-      v.literal("online")
+      v.literal("ecommerce"),
+      v.literal("services"),
+      v.literal("fashion"),
+      v.literal("beauty"),
+      v.literal("online") // legacy
     ),
     style: v.string(),
     designJson: v.string(),
@@ -45,7 +49,11 @@ export const list = query({
       v.union(
         v.literal("restaurant"),
         v.literal("supermarket"),
-        v.literal("online")
+        v.literal("ecommerce"),
+        v.literal("services"),
+        v.literal("fashion"),
+        v.literal("beauty"),
+        v.literal("online") // legacy
       )
     ),
     orgId: v.optional(v.id("organizations")),

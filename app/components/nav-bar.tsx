@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Palette, Clock, Zap, Plus, Loader2, Settings } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { SignInButton, UserButton, useAuth, useClerk } from "@clerk/nextjs";
+import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -19,6 +19,11 @@ const NAV_ITEMS = [
 ] as const;
 
 export function NavBar() {
+  const pathname = usePathname();
+  const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+
+  if (isAuthPage) return null;
+
   if (!AUTH_ENABLED) {
     return <NavBarNoAuth />;
   }
@@ -30,7 +35,7 @@ function NavBarWithAuth() {
   const router = useRouter();
   const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexLoading } = useConvexAuth();
   const { isLoaded: isClerkLoaded, userId } = useAuth();
-  const { openSignIn } = useClerk();
+
   const isClerkSignedIn = Boolean(userId);
   const initializeBilling = useMutation(api.billing.initializeBillingForCurrentUser);
   const didInitBilling = useRef(false);
@@ -55,7 +60,7 @@ function NavBarWithAuth() {
     if (!isClerkLoaded) return;
 
     if (!isClerkSignedIn) {
-      openSignIn({ afterSignInUrl: "/create" });
+      router.push("/sign-in");
     } else {
       router.push("/create");
     }
@@ -145,7 +150,7 @@ function NavBarWithAuth() {
               </>
             ) : (
               <div className="hidden sm:block">
-                  <SignInButton mode="modal">
+                  <SignInButton>
                     <button className="text-sm font-bold text-muted hover:text-primary transition-colors px-3 py-1.5">
                         تسجيل دخول
                     </button>

@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Store, ShoppingBasket, Scale, Clock, Phone, Type, MousePointerClick } from "lucide-react";
+import { Store, ShoppingBasket, Scale, Clock, Phone, MousePointerClick, Tag, Percent, FileText, CalendarDays, Package } from "lucide-react";
 import type { SupermarketFormData, OutputFormat, CampaignType } from "@/lib/types";
-import {
-  SUPERMARKET_CTA_OPTIONS,
-  SUPERMARKET_HEADLINE_OPTIONS,
-} from "@/lib/constants";
+import { SUPERMARKET_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { MultiImageUpload } from "../multi-image-upload";
 import { FormatSelector } from "../format-selector";
@@ -16,9 +13,17 @@ import { FormInput, FormSelect } from "../ui/form-input";
 interface SupermarketFormProps {
   onSubmit: (data: SupermarketFormData) => void;
   isLoading: boolean;
+  defaultValues?: { businessName?: string };
 }
 
-export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
+const POST_TYPE_OPTIONS = ["منتج", "عروض يومية", "تخفيضات قسم"] as const;
+const POST_TYPE_VALUES: Record<string, SupermarketFormData["postType"]> = {
+  "منتج": "product",
+  "عروض يومية": "daily-offers",
+  "تخفيضات قسم": "section-sales",
+};
+
+export function SupermarketForm({ onSubmit, isLoading, defaultValues }: SupermarketFormProps) {
   const [logo, setLogo] = useState<string | null>(null);
   const [productImages, setProductImages] = useState<string[]>([]);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
@@ -30,17 +35,24 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
 
     if (!logo || productImages.length === 0) return;
 
+    const postTypeLabel = fd.get("postType") as string;
+
     onSubmit({
       category: "supermarket",
       campaignType,
       supermarketName: fd.get("supermarketName") as string,
       logo,
-      productName: fd.get("productName") as string,
       productImages,
-      weight: (fd.get("weight") as string) || undefined,
+      postType: POST_TYPE_VALUES[postTypeLabel] ?? "product",
+      productName: fd.get("productName") as string,
+      quantity: (fd.get("quantity") as string) || undefined,
+      newPrice: fd.get("newPrice") as string,
+      oldPrice: fd.get("oldPrice") as string,
+      discountPercentage: (fd.get("discountPercentage") as string) || undefined,
+      offerLimit: (fd.get("offerLimit") as string) || undefined,
       offerDuration: (fd.get("offerDuration") as string) || undefined,
+      expiryDate: (fd.get("expiryDate") as string) || undefined,
       whatsapp: fd.get("whatsapp") as string,
-      headline: fd.get("headline") as string,
       cta: fd.get("cta") as string,
       formats,
     });
@@ -62,6 +74,15 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
                 placeholder="مثال: كارفور"
                 required
                 icon={Store}
+                defaultValue={defaultValues?.businessName}
+            />
+
+            <FormSelect
+                label="نوع البوست"
+                name="postType"
+                options={POST_TYPE_OPTIONS}
+                required
+                icon={FileText}
             />
 
             <FormInput
@@ -72,18 +93,56 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
                 icon={ShoppingBasket}
             />
 
+            <FormInput
+                label="الكمية / الوزن (اختياري)"
+                name="quantity"
+                placeholder="مثال: 200 جرام أو 6 حبات"
+                icon={Scale}
+            />
+
             <div className="grid grid-cols-2 gap-4">
                 <FormInput
-                    label="الوزن/الحجم (اختياري)"
-                    name="weight"
-                    placeholder="مثال: 200 جرام"
-                    icon={Scale}
+                    label="السعر الجديد"
+                    name="newPrice"
+                    placeholder="15 ر.س"
+                    required
+                    icon={Tag}
                 />
+                <FormInput
+                    label="السعر القديم"
+                    name="oldPrice"
+                    placeholder="25 ر.س"
+                    required
+                    icon={Tag}
+                />
+            </div>
+
+            <FormInput
+                label="نسبة الخصم (اختياري)"
+                name="discountPercentage"
+                placeholder="مثال: 40"
+                icon={Percent}
+            />
+
+            <FormInput
+                label="حد العرض (اختياري)"
+                name="offerLimit"
+                placeholder="مثال: 3 قطع لكل عميل"
+                icon={Package}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
                 <FormInput
                     label="مدة العرض (اختياري)"
                     name="offerDuration"
                     placeholder="مثال: حتى نفاذ الكمية"
                     icon={Clock}
+                />
+                <FormInput
+                    label="تاريخ الانتهاء (اختياري)"
+                    name="expiryDate"
+                    placeholder="مثال: 2025/03/15"
+                    icon={CalendarDays}
                 />
             </div>
 
@@ -96,14 +155,6 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
                 required
                 icon={Phone}
                 className="text-left"
-            />
-
-            <FormSelect
-                label="نص العرض الرئيسي"
-                name="headline"
-                options={SUPERMARKET_HEADLINE_OPTIONS}
-                required
-                icon={Type}
             />
 
             <FormSelect
@@ -126,7 +177,7 @@ export function SupermarketForm({ onSubmit, isLoading }: SupermarketFormProps) {
                 onChange={setProductImages}
              />
           </div>
-          
+
           <div className="pt-4 border-t border-card-border">
              <FormatSelector selected={formats} onChange={setFormats} />
           </div>

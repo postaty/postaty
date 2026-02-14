@@ -2,18 +2,26 @@
 
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Category } from "./types";
+import type { Category, CampaignType } from "./types";
 
 // ── Category to directory mapping ──────────────────────────────
 
 const CATEGORY_DIRS: Record<Category, string> = {
   restaurant: "food",
   supermarket: "supermarkets",
-  online: "products",
+  ecommerce: "products",
+  services: "services",
+  fashion: "fashion",
+  beauty: "beauty",
+};
+
+// Seasonal campaign directories (only for categories that have them)
+const SEASONAL_DIRS: Partial<Record<Category, Partial<Record<CampaignType, string>>>> = {
+  restaurant: { ramadan: "food-ramadan" },
 };
 
 const INSPIRATIONS_ROOT = join(process.cwd(), "public", "inspirations");
-const MAX_IMAGES = 2;
+const MAX_IMAGES = 1;
 const RESIZE_WIDTH = 540;
 const RESIZE_HEIGHT = 675;
 const JPEG_QUALITY = 70;
@@ -24,23 +32,23 @@ export interface InspirationImage {
   mediaType: "image/jpeg";
 }
 
-// ── In-memory cache: category → all resized buffers ────────────
-// Populated once per category on first call, then reused forever.
+// ── In-memory cache: dir key → all resized buffers ────────────
+// Populated once per directory on first call, then reused forever.
 
-const imageCache = new Map<Category, Buffer[]>();
-const cachePromises = new Map<Category, Promise<Buffer[]>>();
+const imageCache = new Map<string, Buffer[]>();
+const cachePromises = new Map<string, Promise<Buffer[]>>();
 
-async function loadAndCacheCategory(category: Category): Promise<Buffer[]> {
+async function loadAndCacheDir(dirName: string): Promise<Buffer[]> {
   // Return cached result if available
-  const cached = imageCache.get(category);
+  const cached = imageCache.get(dirName);
   if (cached) return cached;
 
-  // Deduplicate concurrent loads for the same category
-  const existing = cachePromises.get(category);
+  // Deduplicate concurrent loads for the same directory
+  const existing = cachePromises.get(dirName);
   if (existing) return existing;
 
   const promise = (async () => {
-    const dir = join(INSPIRATIONS_ROOT, CATEGORY_DIRS[category]);
+    const dir = join(INSPIRATIONS_ROOT, dirName);
 
     let filenames: string[];
     try {
@@ -68,25 +76,36 @@ async function loadAndCacheCategory(category: Category): Promise<Buffer[]> {
       })
     );
 
-    imageCache.set(category, buffers);
-    cachePromises.delete(category);
+    imageCache.set(dirName, buffers);
+    cachePromises.delete(dirName);
     return buffers;
   })();
 
-  cachePromises.set(category, promise);
+  cachePromises.set(dirName, promise);
   return promise;
 }
 
 /**
  * Select random inspiration images for a category.
+ * For seasonal campaigns, loads from the seasonal directory if available.
  * First call reads ALL images from disk and caches them.
  * Subsequent calls shuffle the cached array and pick `count` items — zero I/O.
  */
 export async function getInspirationImages(
   category: Category,
-  count: number = MAX_IMAGES
+  count: number = MAX_IMAGES,
+  campaignType: CampaignType = "standard"
 ): Promise<InspirationImage[]> {
-  const allBuffers = await loadAndCacheCategory(category);
+  // Determine which directory to load from
+  let dirName = CATEGORY_DIRS[category];
+  if (campaignType !== "standard") {
+    const seasonalDir = SEASONAL_DIRS[category]?.[campaignType];
+    if (seasonalDir) {
+      dirName = seasonalDir;
+    }
+  }
+
+  const allBuffers = await loadAndCacheDir(dirName);
   if (allBuffers.length === 0) return [];
 
   // Fisher-Yates shuffle on indices to avoid mutating the cache

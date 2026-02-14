@@ -13,12 +13,16 @@ import { SignInButton } from "@clerk/nextjs";
 import { CategorySelector } from "../components/category-selector";
 import { RestaurantForm } from "../components/forms/restaurant-form";
 import { SupermarketForm } from "../components/forms/supermarket-form";
-import { OnlineForm } from "../components/forms/online-form";
+import { EcommerceForm } from "../components/forms/ecommerce-form";
+import { ServicesForm } from "../components/forms/services-form";
+import { FashionForm } from "../components/forms/fashion-form";
+import { BeautyForm } from "../components/forms/beauty-form";
 import dynamic from "next/dynamic";
 
 // Types & Libs
 import type { Category, PostFormData, PosterResult, PosterGenStep } from "@/lib/types";
 import type { BrandKitPromptData } from "@/lib/prompts";
+import type { GenerationUsage } from "@/lib/generate-designs";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
 import { CATEGORY_THEMES } from "@/lib/category-themes";
 import { generatePosters } from "../actions-v2";
@@ -28,11 +32,20 @@ const PosterGrid = dynamic(
   () => import("../components/poster-grid").then((mod) => mod.PosterGrid)
 );
 
+const ALL_CATEGORIES: Category[] = ["restaurant", "supermarket", "ecommerce", "services", "fashion", "beauty"];
+
+function getNowMs(): number {
+  return Date.now();
+}
+
 function getBusinessName(data: PostFormData): string {
   switch (data.category) {
     case "restaurant": return data.restaurantName;
     case "supermarket": return data.supermarketName;
-    case "online": return data.shopName;
+    case "ecommerce": return data.shopName;
+    case "services": return data.businessName;
+    case "fashion": return data.brandName;
+    case "beauty": return data.salonName;
   }
 }
 
@@ -40,7 +53,10 @@ function getProductName(data: PostFormData): string {
   switch (data.category) {
     case "restaurant": return data.mealName;
     case "supermarket": return data.productName;
-    case "online": return data.productName;
+    case "ecommerce": return data.productName;
+    case "services": return data.serviceName;
+    case "fashion": return data.itemName;
+    case "beauty": return data.serviceName;
   }
 }
 
@@ -80,7 +96,8 @@ function CreatePageContent() {
   // Initialize category from URL if present
   useEffect(() => {
     const catParam = searchParams.get("category");
-    if (catParam && ["restaurant", "supermarket", "online"].includes(catParam)) {
+    if (catParam && ALL_CATEGORIES.includes(catParam as Category)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCategory(catParam as Category);
     }
   }, [searchParams]);
@@ -93,6 +110,7 @@ function CreatePageContent() {
   const updateOutput = useMutation(api.generations.updateOutput);
   const generateUploadUrl = useMutation(api.generations.generateUploadUrl);
   const savePosterTemplate = useMutation(api.posterTemplates.save);
+  const recordUsageBatch = useMutation(api.aiUsage.recordUsageBatch);
 
   const defaultBrandKit = useQuery(
     api.brandKits.getDefault,
@@ -108,6 +126,26 @@ function CreatePageContent() {
         styleSeed: defaultBrandKit.styleSeed ?? undefined,
       }
     : undefined;
+
+  const persistUsageEvents = async (usages: GenerationUsage[]) => {
+    if (usages.length === 0) return;
+    try {
+      await recordUsageBatch({
+        events: usages.map((usage) => ({
+          route: usage.route,
+          model: usage.model,
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          imagesGenerated: usage.imagesGenerated,
+          durationMs: usage.durationMs,
+          success: usage.success,
+          error: usage.error,
+        })),
+      });
+    } catch (usageErr) {
+      console.error("Failed to persist AI usage events:", usageErr);
+    }
+  };
 
   // Handlers
   const handleCategorySelect = (cat: Category) => {
@@ -142,10 +180,11 @@ function CreatePageContent() {
     setResults([]);
     setGiftResult(null);
 
-    const startTime = Date.now();
+    const startTime = getNowMs();
 
     generatePosters(data, brandKitPromptData)
-      .then(({ main: posterResult, gift }) => {
+      .then(({ main: posterResult, gift, usages }) => {
+        void persistUsageEvents(usages);
         setResults([posterResult]);
         if (gift) setGiftResult(gift);
         setGenStep("complete");
@@ -174,7 +213,11 @@ function CreatePageContent() {
       });
   };
 
-  const saveToConvex = async (data: PostFormData, posterResult: PosterResult, startTime: number) => {
+  const saveToConvex = async (
+    data: PostFormData,
+    posterResult: PosterResult,
+    startTime: number
+  ) => {
     try {
       const generationId = await createGeneration({
         orgId,
@@ -189,6 +232,7 @@ function CreatePageContent() {
           mealImage: undefined,
           productImage: undefined,
           productImages: undefined,
+          serviceImage: undefined,
         }),
         formats: data.formats,
         creditsCharged: 1,
@@ -230,7 +274,7 @@ function CreatePageContent() {
       await updateStatus({
         generationId,
         status: "complete",
-        durationMs: Date.now() - startTime,
+        durationMs: getNowMs() - startTime,
       });
     } catch (saveErr) {
       console.error("Failed to save generation:", saveErr);
@@ -279,7 +323,7 @@ function CreatePageContent() {
           </div>
           <h2 className="text-2xl font-bold text-foreground">سجّل دخولك للمتابعة</h2>
           <p className="text-muted">يجب تسجيل الدخول لإنشاء تصاميم جديدة</p>
-          <SignInButton mode="modal" forceRedirectUrl="/create">
+          <SignInButton forceRedirectUrl="/create">
             <button className="px-8 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
               تسجيل الدخول
             </button>
@@ -288,6 +332,25 @@ function CreatePageContent() {
       </div>
     );
   }
+
+  const renderForm = () => {
+    switch (category) {
+      case "restaurant":
+        return <RestaurantForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      case "supermarket":
+        return <SupermarketForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      case "ecommerce":
+        return <EcommerceForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      case "services":
+        return <ServicesForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      case "fashion":
+        return <FashionForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      case "beauty":
+        return <BeautyForm onSubmit={runGeneration} isLoading={isGenerating} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -378,15 +441,7 @@ function CreatePageContent() {
                   className="bg-surface-1 rounded-3xl p-6 md:p-10 shadow-xl border max-w-3xl mx-auto"
                   style={{ borderColor: theme ? theme.border : "var(--card-border)" }}
                 >
-                    {category === "restaurant" && (
-                        <RestaurantForm onSubmit={runGeneration} isLoading={isGenerating} />
-                    )}
-                    {category === "supermarket" && (
-                        <SupermarketForm onSubmit={runGeneration} isLoading={isGenerating} />
-                    )}
-                    {category === "online" && (
-                        <OnlineForm onSubmit={runGeneration} isLoading={isGenerating} />
-                    )}
+                    {renderForm()}
                 </div>
             </motion.div>
           )}

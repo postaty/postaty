@@ -1,7 +1,7 @@
 "use server";
 
 import { generateText } from "ai";
-import { gateway } from "@/lib/ai";
+import { paidImageModel, freeImageModel } from "@/lib/ai";
 import {
   getImageDesignSystemPrompt,
   getImageDesignUserMessage,
@@ -22,20 +22,63 @@ export type GeneratedDesign = {
   imageBase64: string;
 };
 
-// ── Model Config ──────────────────────────────────────────────────
+export type GenerationUsage = {
+  route: "poster" | "gift";
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  imagesGenerated: number;
+  durationMs: number;
+  success: boolean;
+  error?: string;
+};
 
-const IMAGE_MODEL = "google/gemini-3-pro-image";
-const GIFT_MODEL = "google/gemini-2.5-flash-image";
+// ── Model IDs (for usage tracking) ─────────────────────────────────
+
+const PAID_MODEL_ID = "gemini-3-pro-image-preview";
+const FREE_MODEL_ID = "gemini-2.5-flash-image";
+
+// ── Google provider options for image responses ────────────────────
+
+const IMAGE_PROVIDER_OPTIONS = {
+  google: {
+    responseModalities: ["TEXT", "IMAGE"],
+  },
+};
 
 // ── Helpers ──────────────────────────────────────────────────────
 
-function dataUrlToImagePart(dataUrl: string): { image: Buffer; mediaType: string } | null {
+async function compressImageFromDataUrl(
+  dataUrl: string,
+  maxWidth = 800,
+  maxHeight = 800,
+  quality = 75
+): Promise<{ image: Buffer; mediaType: "image/jpeg" } | null> {
   const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
   if (!match) return null;
-  return {
-    image: Buffer.from(match[2], "base64"),
-    mediaType: match[1],
-  };
+  const raw = Buffer.from(match[2], "base64");
+  const sharp = (await import("sharp")).default;
+  const compressed = await sharp(raw)
+    .resize(maxWidth, maxHeight, { fit: "inside", withoutEnlargement: true })
+    .jpeg({ quality })
+    .toBuffer();
+  return { image: compressed, mediaType: "image/jpeg" };
+}
+
+async function compressLogoFromDataUrl(
+  dataUrl: string,
+  maxWidth = 400,
+  maxHeight = 400
+): Promise<{ image: Buffer; mediaType: "image/png" } | null> {
+  const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
+  if (!match) return null;
+  const raw = Buffer.from(match[2], "base64");
+  const sharp = (await import("sharp")).default;
+  const compressed = await sharp(raw)
+    .resize(maxWidth, maxHeight, { fit: "inside", withoutEnlargement: true })
+    .png({ quality: 80 })
+    .toBuffer();
+  return { image: compressed, mediaType: "image/png" };
 }
 
 function extractFormImages(data: PostFormData): { product: string; logo: string } {
@@ -44,22 +87,28 @@ function extractFormImages(data: PostFormData): { product: string; logo: string 
       return { product: data.mealImage, logo: data.logo };
     case "supermarket":
       return { product: data.productImages[0], logo: data.logo };
-    case "online":
+    case "ecommerce":
       return { product: data.productImage, logo: data.logo };
+    case "services":
+      return { product: data.serviceImage, logo: data.logo };
+    case "fashion":
+      return { product: data.productImage, logo: data.logo };
+    case "beauty":
+      return { product: data.serviceImage, logo: data.logo };
   }
 }
 
-// ── Generate a single poster via Gemini Pro ──────────────────────
+// ── Generate a single poster via Gemini Pro (paid) ─────────────────
 
 export async function generatePoster(
   data: PostFormData,
   brandKit?: BrandKitPromptData
-): Promise<GeneratedDesign> {
+): Promise<GeneratedDesign & { usage: GenerationUsage }> {
   const systemPrompt = getImageDesignSystemPrompt(data, brandKit);
   let userMessage = getImageDesignUserMessage(data);
 
   // Enrich with a design recipe for creative direction
-  const [recipe] = selectRecipes(data.category, 1);
+  const [recipe] = selectRecipes(data.category, 1, data.campaignType);
   if (recipe) {
     const recipeDirective = formatRecipeForPrompt(recipe, data.campaignType);
     userMessage += `\n\n${recipeDirective}`;
@@ -68,11 +117,11 @@ export async function generatePoster(
   userMessage += `\n\nMake this design unique, bold, and visually striking.`;
 
   // Load inspiration images and extract form images
-  const inspirationImages = await getInspirationImages(data.category);
+  const inspirationImages = await getInspirationImages(data.category, undefined, data.campaignType);
   const formImages = extractFormImages(data);
 
   console.info("[generatePoster] start", {
-    model: IMAGE_MODEL,
+    model: PAID_MODEL_ID,
     recipe: recipe?.id ?? "none",
     inspirationCount: inspirationImages.length,
   });
@@ -92,8 +141,8 @@ export async function generatePoster(
     });
   }
 
-  // Add product image
-  const productPart = dataUrlToImagePart(formImages.product);
+  // Add product image (compressed)
+  const productPart = await compressImageFromDataUrl(formImages.product);
   if (productPart) {
     contentParts.push({
       type: "image" as const,
@@ -102,8 +151,8 @@ export async function generatePoster(
     });
   }
 
-  // Add logo image
-  const logoPart = dataUrlToImagePart(formImages.logo);
+  // Add logo image (compressed, PNG to preserve transparency)
+  const logoPart = await compressLogoFromDataUrl(formImages.logo);
   if (logoPart) {
     contentParts.push({
       type: "image" as const,
@@ -115,22 +164,28 @@ export async function generatePoster(
   // Build context text explaining each image
   let contextText = "";
   if (inspirationImages.length > 0) {
-    contextText += `The first ${inspirationImages.length} image(s) are professional reference posters — match their quality and style.\n\n`;
+    contextText += `The first ${inspirationImages.length} image(s) are professional reference posters — match their layout quality and composition style.\n`;
+    if (data.campaignType === "standard") {
+      contextText += `IMPORTANT: If the reference images contain seasonal or religious motifs (Ramadan, Eid, crescents, lanterns, Islamic arches), IGNORE those motifs entirely. Use only their general design quality, layout structure, and color energy as inspiration.\n`;
+    }
+    contextText += `\n`;
   }
   if (productPart) {
-    contextText += `The ${inspirationImages.length > 0 ? "next" : "first"} image is the product/meal photo — feature it prominently in the poster.\n`;
+    contextText += `The ${inspirationImages.length > 0 ? "next" : "first"} image is the product/meal photo — place it EXACTLY as shown, unchanged. Do NOT redraw, stylize, or add elements to the product itself. Feature it prominently but preserve it exactly.\n`;
   }
   if (logoPart) {
-    contextText += `The last image is the business logo — include it in the poster.\n`;
+    contextText += `The last image is the business logo — include it EXACTLY as given. Do NOT modify, redraw, or add text to the logo.\n`;
   }
   contextText += `\n${userMessage}`;
 
   contentParts.push({ type: "text" as const, text: contextText });
 
+  const startTime = Date.now();
   let result;
   try {
     result = await generateText({
-      model: gateway(IMAGE_MODEL),
+      model: paidImageModel,
+      providerOptions: IMAGE_PROVIDER_OPTIONS,
       system: systemPrompt,
       messages: [
         {
@@ -140,11 +195,25 @@ export async function generatePoster(
       ],
     });
   } catch (err) {
+    const durationMs = Date.now() - startTime;
     console.error("[generatePoster] generateText threw", err);
-    throw new Error(
-      `Image generation failed: ${err instanceof Error ? err.message : String(err)}`
+    const usage: GenerationUsage = {
+      route: "poster",
+      model: PAID_MODEL_ID,
+      inputTokens: 0,
+      outputTokens: 0,
+      imagesGenerated: 0,
+      durationMs,
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+    throw Object.assign(
+      new Error(`Image generation failed: ${err instanceof Error ? err.message : String(err)}`),
+      { usage }
     );
   }
+
+  const durationMs = Date.now() - startTime;
 
   // Extract generated image from result.files (AI SDK v6)
   const imageFile = result.files?.find((f) => f.mediaType?.startsWith("image/"));
@@ -154,35 +223,59 @@ export async function generatePoster(
       filesCount: result.files?.length ?? 0,
       textSnippet: result.text?.slice(0, 200),
     });
-    throw new Error("Image model did not return an image");
+    const usage: GenerationUsage = {
+      route: "poster",
+      model: PAID_MODEL_ID,
+      inputTokens: result.usage?.inputTokens ?? 0,
+      outputTokens: result.usage?.outputTokens ?? 0,
+      imagesGenerated: 0,
+      durationMs,
+      success: false,
+      error: "Image model did not return an image",
+    };
+    throw Object.assign(new Error("Image model did not return an image"), { usage });
   }
 
   const base64 = Buffer.from(imageFile.uint8Array).toString("base64");
   const base64DataUrl = `data:${imageFile.mediaType};base64,${base64}`;
 
+  const usage: GenerationUsage = {
+    route: "poster",
+    model: PAID_MODEL_ID,
+    inputTokens: result.usage?.inputTokens ?? 0,
+    outputTokens: result.usage?.outputTokens ?? 0,
+    imagesGenerated: 1,
+    durationMs,
+    success: true,
+  };
+
   console.info("[generatePoster] success", {
-    model: IMAGE_MODEL,
+    model: PAID_MODEL_ID,
     recipe: recipe?.name ?? "none",
+    durationMs,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
   });
 
   return {
     name: recipe?.name ?? "AI Design",
     nameAr: "تصميم بالذكاء الاصطناعي",
     imageBase64: base64DataUrl,
+    usage,
   };
 }
 
-// ── Generate a gift image via Gemini 2.5 Flash (visual-only) ────
+// ── Generate a gift image via Gemini 2.5 Flash (free) ──────────────
 
 export async function generateGiftImage(
   data: PostFormData
-): Promise<GeneratedDesign> {
+): Promise<GeneratedDesign & { usage: GenerationUsage }> {
   const systemPrompt = getGiftImageSystemPrompt(data);
   const userMessage = getGiftImageUserMessage(data);
 
   const formImages = extractFormImages(data);
 
-  console.info("[generateGiftImage] start", { model: GIFT_MODEL });
+  console.info("[generateGiftImage] start", { model: FREE_MODEL_ID });
 
   // Build multimodal content — only product + logo, no inspiration images
   const contentParts: Array<
@@ -190,30 +283,32 @@ export async function generateGiftImage(
     | { type: "text"; text: string }
   > = [];
 
-  const productPart = dataUrlToImagePart(formImages.product);
-  if (productPart) {
+  const giftProductPart = await compressImageFromDataUrl(formImages.product);
+  if (giftProductPart) {
     contentParts.push({
       type: "image" as const,
-      image: productPart.image,
-      mediaType: productPart.mediaType,
+      image: giftProductPart.image,
+      mediaType: giftProductPart.mediaType,
     });
   }
 
-  const logoPart = dataUrlToImagePart(formImages.logo);
-  if (logoPart) {
+  const giftLogoPart = await compressLogoFromDataUrl(formImages.logo);
+  if (giftLogoPart) {
     contentParts.push({
       type: "image" as const,
-      image: logoPart.image,
-      mediaType: logoPart.mediaType,
+      image: giftLogoPart.image,
+      mediaType: giftLogoPart.mediaType,
     });
   }
 
   contentParts.push({ type: "text" as const, text: userMessage });
 
+  const startTime = Date.now();
   let result;
   try {
     result = await generateText({
-      model: gateway(GIFT_MODEL),
+      model: freeImageModel,
+      providerOptions: IMAGE_PROVIDER_OPTIONS,
       system: systemPrompt,
       messages: [
         {
@@ -223,11 +318,25 @@ export async function generateGiftImage(
       ],
     });
   } catch (err) {
+    const durationMs = Date.now() - startTime;
     console.error("[generateGiftImage] generateText threw", err);
-    throw new Error(
-      `Gift image generation failed: ${err instanceof Error ? err.message : String(err)}`
+    const usage: GenerationUsage = {
+      route: "gift",
+      model: FREE_MODEL_ID,
+      inputTokens: 0,
+      outputTokens: 0,
+      imagesGenerated: 0,
+      durationMs,
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+    throw Object.assign(
+      new Error(`Gift image generation failed: ${err instanceof Error ? err.message : String(err)}`),
+      { usage }
     );
   }
+
+  const durationMs = Date.now() - startTime;
 
   const imageFile = result.files?.find((f) => f.mediaType?.startsWith("image/"));
 
@@ -236,17 +345,43 @@ export async function generateGiftImage(
       filesCount: result.files?.length ?? 0,
       textSnippet: result.text?.slice(0, 200),
     });
-    throw new Error("Gift image model did not return an image");
+    const usage: GenerationUsage = {
+      route: "gift",
+      model: FREE_MODEL_ID,
+      inputTokens: result.usage?.inputTokens ?? 0,
+      outputTokens: result.usage?.outputTokens ?? 0,
+      imagesGenerated: 0,
+      durationMs,
+      success: false,
+      error: "Gift image model did not return an image",
+    };
+    throw Object.assign(new Error("Gift image model did not return an image"), { usage });
   }
 
   const base64 = Buffer.from(imageFile.uint8Array).toString("base64");
   const base64DataUrl = `data:${imageFile.mediaType};base64,${base64}`;
 
-  console.info("[generateGiftImage] success", { model: GIFT_MODEL });
+  const usage: GenerationUsage = {
+    route: "gift",
+    model: FREE_MODEL_ID,
+    inputTokens: result.usage?.inputTokens ?? 0,
+    outputTokens: result.usage?.outputTokens ?? 0,
+    imagesGenerated: 1,
+    durationMs,
+    success: true,
+  };
+
+  console.info("[generateGiftImage] success", {
+    model: FREE_MODEL_ID,
+    durationMs,
+    inputTokens: usage.inputTokens,
+    outputTokens: usage.outputTokens,
+  });
 
   return {
     name: "Gift Design",
     nameAr: "هدية مجانية",
     imageBase64: base64DataUrl,
+    usage,
   };
 }

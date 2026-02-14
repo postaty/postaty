@@ -10,7 +10,11 @@ export const create = mutation({
     category: v.union(
       v.literal("restaurant"),
       v.literal("supermarket"),
-      v.literal("online")
+      v.literal("ecommerce"),
+      v.literal("services"),
+      v.literal("fashion"),
+      v.literal("beauty"),
+      v.literal("online") // legacy
     ),
     formDataJson: v.string(),
     format: v.string(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { UtensilsCrossed, ShoppingCart, Package, ArrowLeft } from "lucide-react";
+import { UtensilsCrossed, ShoppingCart, Store, Wrench, Shirt, Sparkles, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { STAGGER_ITEM, TAP_SCALE } from "@/lib/animation";
 import type { Category } from "@/lib/types";
@@ -43,21 +43,54 @@ const categories: {
     iconColor: "text-emerald-400",
   },
   {
-    id: "online",
-    label: "منتجات أونلاين",
-    icon: Package,
-    description: "روج لمنتجات متجرك الإلكتروني وزد مبيعاتك.",
+    id: "ecommerce",
+    label: "متاجر إلكترونية",
+    icon: Store,
+    description: "روّج لمنتجات متجرك الإلكتروني وزد مبيعاتك.",
     gradient: "from-violet-500 to-fuchsia-500",
     glow: "shadow-violet-500/20",
     border: "border-violet-500/15 hover:border-violet-500/40",
     iconBg: "bg-violet-500/10",
     iconColor: "text-violet-400",
   },
+  {
+    id: "services",
+    label: "خدمات",
+    icon: Wrench,
+    description: "إعلانات احترافية لخدمات الصيانة والتنظيف والاستشارات.",
+    gradient: "from-blue-500 to-cyan-500",
+    glow: "shadow-blue-500/20",
+    border: "border-blue-500/15 hover:border-blue-500/40",
+    iconBg: "bg-blue-500/10",
+    iconColor: "text-blue-400",
+  },
+  {
+    id: "fashion",
+    label: "أزياء وموضة",
+    icon: Shirt,
+    description: "تصاميم أنيقة لعلامتك في عالم الأزياء والإكسسوارات.",
+    gradient: "from-pink-500 to-rose-500",
+    glow: "shadow-pink-500/20",
+    border: "border-pink-500/15 hover:border-pink-500/40",
+    iconBg: "bg-pink-500/10",
+    iconColor: "text-pink-400",
+  },
+  {
+    id: "beauty",
+    label: "تجميل وعناية",
+    icon: Sparkles,
+    description: "بوسترات جذابة لصالونات التجميل ومنتجات العناية.",
+    gradient: "from-fuchsia-400 to-purple-500",
+    glow: "shadow-fuchsia-500/20",
+    border: "border-fuchsia-500/15 hover:border-fuchsia-500/40",
+    iconBg: "bg-fuchsia-500/10",
+    iconColor: "text-fuchsia-400",
+  },
 ];
 
 export function CategorySelector({ onSelect }: CategorySelectorProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
       {categories.map((cat) => {
         const Icon = cat.icon;
         return (

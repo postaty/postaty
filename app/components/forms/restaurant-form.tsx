@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Store, Utensils, Tag, Clock, Phone, MousePointerClick } from "lucide-react";
+import { Store, Utensils, Tag, Clock, Phone, MousePointerClick, Truck, MapPin, FileText, Award } from "lucide-react";
 import type { RestaurantFormData, OutputFormat, CampaignType } from "@/lib/types";
 import { RESTAURANT_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
@@ -12,9 +12,30 @@ import { FormInput, FormSelect } from "../ui/form-input";
 interface RestaurantFormProps {
   onSubmit: (data: RestaurantFormData) => void;
   isLoading: boolean;
+  defaultValues?: { businessName?: string };
 }
 
-export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
+const POST_TYPE_OPTIONS = ["قائمة طعام", "عرض وجبة", "توصيل"] as const;
+const POST_TYPE_VALUES: Record<string, RestaurantFormData["postType"]> = {
+  "قائمة طعام": "menu",
+  "عرض وجبة": "meal-offer",
+  "توصيل": "delivery",
+};
+
+const OFFER_BADGE_OPTIONS = ["خصم %", "جديد", "الأفضل مبيعاً"] as const;
+const OFFER_BADGE_VALUES: Record<string, NonNullable<RestaurantFormData["offerBadge"]>> = {
+  "خصم %": "discount",
+  "جديد": "new",
+  "الأفضل مبيعاً": "bestseller",
+};
+
+const DELIVERY_OPTIONS = ["مجاني", "مدفوع"] as const;
+const DELIVERY_VALUES: Record<string, NonNullable<RestaurantFormData["deliveryType"]>> = {
+  "مجاني": "free",
+  "مدفوع": "paid",
+};
+
+export function RestaurantForm({ onSubmit, isLoading, defaultValues }: RestaurantFormProps) {
   const [logo, setLogo] = useState<string | null>(null);
   const [mealImage, setMealImage] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
@@ -26,15 +47,25 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
 
     if (!logo || !mealImage) return;
 
+    const postTypeLabel = fd.get("postType") as string;
+    const offerBadgeLabel = fd.get("offerBadge") as string;
+    const deliveryLabel = fd.get("deliveryType") as string;
+
     onSubmit({
       category: "restaurant",
       campaignType,
       restaurantName: fd.get("restaurantName") as string,
       logo,
       mealImage,
+      postType: POST_TYPE_VALUES[postTypeLabel] ?? "meal-offer",
       mealName: fd.get("mealName") as string,
+      description: (fd.get("description") as string) || undefined,
       newPrice: fd.get("newPrice") as string,
       oldPrice: fd.get("oldPrice") as string,
+      offerBadge: offerBadgeLabel ? OFFER_BADGE_VALUES[offerBadgeLabel] : undefined,
+      deliveryType: deliveryLabel ? DELIVERY_VALUES[deliveryLabel] : undefined,
+      deliveryTime: (fd.get("deliveryTime") as string) || undefined,
+      coverageAreas: (fd.get("coverageAreas") as string) || undefined,
       offerDuration: (fd.get("offerDuration") as string) || undefined,
       whatsapp: fd.get("whatsapp") as string,
       cta: fd.get("cta") as string,
@@ -58,14 +89,30 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
                 placeholder="مثال: مطعم الشام"
                 required
                 icon={Store}
+                defaultValue={defaultValues?.businessName}
             />
-            
+
+            <FormSelect
+                label="نوع البوست"
+                name="postType"
+                options={POST_TYPE_OPTIONS}
+                required
+                icon={FileText}
+            />
+
             <FormInput
                 label="اسم الوجبة"
                 name="mealName"
                 placeholder="مثال: شاورما دجاج"
                 required
                 icon={Utensils}
+            />
+
+            <FormInput
+                label="وصف سريع (اختياري)"
+                name="description"
+                placeholder="مثال: برجر + بطاطس + مشروب"
+                icon={FileText}
             />
 
             <div className="grid grid-cols-2 gap-4">
@@ -84,6 +131,35 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
                     icon={Tag}
                 />
             </div>
+
+            <FormSelect
+                label="شارة العرض (اختياري)"
+                name="offerBadge"
+                options={OFFER_BADGE_OPTIONS}
+                icon={Award}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+                <FormSelect
+                    label="التوصيل (اختياري)"
+                    name="deliveryType"
+                    options={DELIVERY_OPTIONS}
+                    icon={Truck}
+                />
+                <FormInput
+                    label="وقت التوصيل"
+                    name="deliveryTime"
+                    placeholder="30-45 دقيقة"
+                    icon={Clock}
+                />
+            </div>
+
+            <FormInput
+                label="المناطق التي يغطيها (اختياري)"
+                name="coverageAreas"
+                placeholder="مثال: جدة - الرياض"
+                icon={MapPin}
+            />
 
             <FormInput
                 label="مدة العرض (اختياري)"
@@ -119,7 +195,7 @@ export function RestaurantForm({ onSubmit, isLoading }: RestaurantFormProps) {
              <ImageUpload label="لوجو المطعم" value={logo} onChange={setLogo} />
              <ImageUpload label="صورة الوجبة" value={mealImage} onChange={setMealImage} />
           </div>
-          
+
           <div className="pt-4 border-t border-card-border">
              <FormatSelector selected={formats} onChange={setFormats} />
           </div>

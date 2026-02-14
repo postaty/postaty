@@ -1,20 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Store, ShoppingBag, Tag, Percent, Truck, Phone, Type, MousePointerClick } from "lucide-react";
-import type { OnlineFormData, OutputFormat, CampaignType } from "@/lib/types";
-import { ONLINE_CTA_OPTIONS, ONLINE_HEADLINE_OPTIONS } from "@/lib/constants";
+import {
+  Store,
+  Tag,
+  Shirt,
+  FileText,
+  Ruler,
+  Palette,
+  Percent,
+  Calendar,
+  Phone,
+  MousePointerClick,
+} from "lucide-react";
+import type { FashionFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { FASHION_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
 import { CampaignTypeSelector } from "../campaign-type-selector";
 import { FormInput, FormSelect } from "../ui/form-input";
 
-interface OnlineFormProps {
-  onSubmit: (data: OnlineFormData) => void;
+interface FashionFormProps {
+  onSubmit: (data: FashionFormData) => void;
   isLoading: boolean;
+  defaultValues?: { businessName?: string };
 }
 
-export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
+export function FashionForm({ onSubmit, isLoading, defaultValues }: FashionFormProps) {
   const [logo, setLogo] = useState<string | null>(null);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
@@ -27,17 +39,21 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
     if (!logo || !productImage) return;
 
     onSubmit({
-      category: "online",
+      category: "fashion",
       campaignType,
-      shopName: fd.get("shopName") as string,
+      brandName: fd.get("brandName") as string,
       logo,
       productImage,
-      productName: fd.get("productName") as string,
-      price: fd.get("price") as string,
-      discount: (fd.get("discount") as string) || undefined,
-      shipping: fd.get("shipping") as "free" | "paid",
+      postType: fd.get("postType") as FashionFormData["postType"],
+      itemName: fd.get("itemName") as string,
+      description: (fd.get("description") as string) || undefined,
+      newPrice: fd.get("newPrice") as string,
+      oldPrice: fd.get("oldPrice") as string,
+      availableSizes: (fd.get("availableSizes") as string) || undefined,
+      availableColors: (fd.get("availableColors") as string) || undefined,
+      offerNote: (fd.get("offerNote") as string) || undefined,
+      offerDuration: (fd.get("offerDuration") as string) || undefined,
       whatsapp: fd.get("whatsapp") as string,
-      headline: fd.get("headline") as string,
       cta: fd.get("cta") as string,
       formats,
     });
@@ -46,7 +62,7 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left Column */}
+        {/* Left Column: Inputs */}
         <div className="space-y-6">
           <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
              <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
@@ -54,58 +70,81 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
 
           <div className="space-y-5">
             <FormInput
-                label="اسم المتجر"
-                name="shopName"
-                placeholder="مثال: متجر نون"
+                label="اسم المتجر/البراند"
+                name="brandName"
+                placeholder="مثال: ستايل بوتيك"
                 required
                 icon={Store}
+                defaultValue={defaultValues?.businessName}
             />
-            
-            <FormInput
-                label="اسم المنتج"
-                name="productName"
-                placeholder="مثال: سماعات أيربودز"
+
+            <FormSelect
+                label="نوع البوست"
+                name="postType"
+                options={["منتج", "خصم", "كوليكشن"]}
                 required
-                icon={ShoppingBag}
+                icon={Tag}
+            />
+
+            <FormInput
+                label="اسم القطعة"
+                name="itemName"
+                placeholder="مثال: فستان سهرة"
+                required
+                icon={Shirt}
+            />
+
+            <FormInput
+                label="وصف سريع (اختياري)"
+                name="description"
+                placeholder="مثال: قماش ساتان فاخر"
+                icon={FileText}
             />
 
             <div className="grid grid-cols-2 gap-4">
                 <FormInput
-                    label="السعر"
-                    name="price"
+                    label="السعر الجديد"
+                    name="newPrice"
                     placeholder="199 ر.س"
                     required
                     icon={Tag}
                 />
                 <FormInput
-                    label="خصم (اختياري)"
-                    name="discount"
-                    placeholder="مثال: 30%"
-                    icon={Percent}
+                    label="السعر القديم"
+                    name="oldPrice"
+                    placeholder="350 ر.س"
+                    required
+                    icon={Tag}
                 />
             </div>
 
-            <div className="group space-y-2">
-                <label className="text-sm font-semibold text-foreground">نوع الشحن</label>
-                <div className="relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none">
-                        <Truck size={18} />
-                    </div>
-                    <select
-                        name="shipping"
-                        required
-                        className="w-full pr-11 pl-4 py-3.5 bg-surface-1 border border-card-border rounded-xl outline-none text-foreground font-medium transition-all duration-300 focus:bg-surface-2 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-primary/30 appearance-none cursor-pointer"
-                    >
-                        <option value="free">شحن مجاني</option>
-                        <option value="paid">شحن مدفوع</option>
-                    </select>
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
+            <FormInput
+                label="المقاسات المتاحة (اختياري)"
+                name="availableSizes"
+                placeholder="مثال: S, M, L, XL"
+                icon={Ruler}
+            />
+
+            <FormInput
+                label="الألوان المتاحة (اختياري)"
+                name="availableColors"
+                placeholder="مثال: أسود، أبيض، أحمر"
+                icon={Palette}
+            />
+
+            <FormInput
+                label="ملاحظة عرض (اختياري)"
+                name="offerNote"
+                placeholder="مثال: خصم 30% على القطعة الثانية"
+                icon={Percent}
+            />
+
+            <FormInput
+                label="مدة العرض (اختياري)"
+                name="offerDuration"
+                placeholder="مثال: لفترة محدودة"
+                icon={Calendar}
+            />
 
             <FormInput
                 label="رقم الواتساب"
@@ -119,36 +158,29 @@ export function OnlineForm({ onSubmit, isLoading }: OnlineFormProps) {
             />
 
             <FormSelect
-                label="نص العرض الرئيسي"
-                name="headline"
-                options={ONLINE_HEADLINE_OPTIONS}
-                required
-                icon={Type}
-            />
-
-            <FormSelect
                 label="نص الزر (CTA)"
                 name="cta"
-                options={ONLINE_CTA_OPTIONS}
+                options={FASHION_CTA_OPTIONS}
                 required
                 icon={MousePointerClick}
             />
           </div>
         </div>
 
-        {/* Right Column */}
+        {/* Right Column: Uploads */}
         <div className="space-y-8">
           <div className="space-y-6">
-             <ImageUpload label="لوجو المتجر" value={logo} onChange={setLogo} />
+             <ImageUpload label="لوجو البراند" value={logo} onChange={setLogo} />
              <ImageUpload label="صورة المنتج" value={productImage} onChange={setProductImage} />
           </div>
-          
+
           <div className="pt-4 border-t border-card-border">
              <FormatSelector selected={formats} onChange={setFormats} />
           </div>
         </div>
       </div>
 
+      {/* Sticky Submit Button */}
       <div className="sticky bottom-24 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
         <button
           type="submit"

@@ -44,6 +44,8 @@ const textFieldSchema = (name: string, maxLen = 100) =>
 
 const campaignTypeSchema = z.enum(["standard", "ramadan", "eid"]);
 
+const formatsSchema = z.array(outputFormatSchema).min(1, "Select at least one format");
+
 // ── Form data validators ───────────────────────────────────────────
 
 export const restaurantFormSchema = z.object({
@@ -52,13 +54,19 @@ export const restaurantFormSchema = z.object({
   restaurantName: textFieldSchema("Restaurant name"),
   logo: base64ImageSchema,
   mealImage: base64ImageSchema,
+  postType: z.enum(["menu", "meal-offer", "delivery"]),
   mealName: textFieldSchema("Meal name"),
+  description: z.string().max(200).optional(),
   newPrice: priceSchema,
   oldPrice: priceSchema,
+  offerBadge: z.enum(["discount", "new", "bestseller"]).optional(),
+  deliveryType: z.enum(["free", "paid"]).optional(),
+  deliveryTime: z.string().max(50).optional(),
+  coverageAreas: z.string().max(200).optional(),
   offerDuration: z.string().max(50).optional(),
   whatsapp: phoneSchema,
   cta: textFieldSchema("CTA", 200),
-  formats: z.array(outputFormatSchema).min(1, "Select at least one format"),
+  formats: formatsSchema,
   brandKitId: z.string().optional(),
 });
 
@@ -67,41 +75,117 @@ export const supermarketFormSchema = z.object({
   campaignType: campaignTypeSchema,
   supermarketName: textFieldSchema("Supermarket name"),
   logo: base64ImageSchema,
-  productName: textFieldSchema("Product name"),
   productImages: z
     .array(base64ImageSchema)
     .min(1, "At least one product image required")
     .max(5, "Maximum 5 product images"),
-  weight: z.string().max(50).optional(),
+  postType: z.enum(["product", "daily-offers", "section-sales"]),
+  productName: textFieldSchema("Product name"),
+  quantity: z.string().max(50).optional(),
+  newPrice: priceSchema,
+  oldPrice: priceSchema,
+  discountPercentage: z.string().max(10).optional(),
+  offerLimit: z.string().max(100).optional(),
   offerDuration: z.string().max(50).optional(),
+  expiryDate: z.string().max(50).optional(),
   whatsapp: phoneSchema,
-  headline: textFieldSchema("Headline", 200),
   cta: textFieldSchema("CTA", 200),
-  formats: z.array(outputFormatSchema).min(1, "Select at least one format"),
+  formats: formatsSchema,
   brandKitId: z.string().optional(),
 });
 
-export const onlineFormSchema = z.object({
-  category: z.literal("online"),
+export const ecommerceFormSchema = z.object({
+  category: z.literal("ecommerce"),
   campaignType: campaignTypeSchema,
   shopName: textFieldSchema("Shop name"),
   logo: base64ImageSchema,
   productImage: base64ImageSchema,
+  postType: z.enum(["product", "sales", "new-arrival"]),
   productName: textFieldSchema("Product name"),
-  price: priceSchema,
-  discount: z.string().max(50).optional(),
-  shipping: z.enum(["free", "paid"]),
+  features: z.string().max(200).optional(),
+  newPrice: priceSchema,
+  oldPrice: priceSchema,
+  colorSize: z.string().max(100).optional(),
+  availability: z.enum(["in-stock", "out-of-stock", "preorder"]),
+  shippingDuration: z.string().max(50).optional(),
+  purchaseLink: z.string().max(500).optional(),
   whatsapp: phoneSchema,
-  headline: textFieldSchema("Headline", 200),
   cta: textFieldSchema("CTA", 200),
-  formats: z.array(outputFormatSchema).min(1, "Select at least one format"),
+  formats: formatsSchema,
+  brandKitId: z.string().optional(),
+});
+
+export const servicesFormSchema = z.object({
+  category: z.literal("services"),
+  campaignType: campaignTypeSchema,
+  businessName: textFieldSchema("Business name"),
+  logo: base64ImageSchema,
+  serviceImage: base64ImageSchema,
+  serviceType: z.enum(["maintenance", "cleaning", "travel", "business", "consulting"]),
+  serviceName: textFieldSchema("Service name"),
+  serviceDetails: z.string().max(200).optional(),
+  price: priceSchema,
+  priceType: z.enum(["fixed", "starting-from"]),
+  executionTime: z.string().max(50).optional(),
+  coverageArea: z.string().max(200).optional(),
+  warranty: z.string().max(100).optional(),
+  quickFeatures: z.string().max(200).optional(),
+  offerDuration: z.string().max(50).optional(),
+  whatsapp: phoneSchema,
+  cta: textFieldSchema("CTA", 200),
+  formats: formatsSchema,
+  brandKitId: z.string().optional(),
+});
+
+export const fashionFormSchema = z.object({
+  category: z.literal("fashion"),
+  campaignType: campaignTypeSchema,
+  brandName: textFieldSchema("Brand name"),
+  logo: base64ImageSchema,
+  productImage: base64ImageSchema,
+  postType: z.enum(["product", "discount", "collection"]),
+  itemName: textFieldSchema("Item name"),
+  description: z.string().max(200).optional(),
+  newPrice: priceSchema,
+  oldPrice: priceSchema,
+  availableSizes: z.string().max(100).optional(),
+  availableColors: z.string().max(100).optional(),
+  offerNote: z.string().max(200).optional(),
+  offerDuration: z.string().max(50).optional(),
+  whatsapp: phoneSchema,
+  cta: textFieldSchema("CTA", 200),
+  formats: formatsSchema,
+  brandKitId: z.string().optional(),
+});
+
+export const beautyFormSchema = z.object({
+  category: z.literal("beauty"),
+  campaignType: campaignTypeSchema,
+  salonName: textFieldSchema("Salon name"),
+  logo: base64ImageSchema,
+  serviceImage: base64ImageSchema,
+  postType: z.enum(["salon-service", "spa-session", "beauty-product"]),
+  serviceName: textFieldSchema("Service name"),
+  benefit: z.string().max(200).optional(),
+  newPrice: priceSchema,
+  oldPrice: priceSchema,
+  sessionDuration: z.string().max(50).optional(),
+  suitableFor: z.string().max(200).optional(),
+  bookingCondition: z.enum(["advance", "available-now"]),
+  offerDuration: z.string().max(50).optional(),
+  whatsapp: phoneSchema,
+  cta: textFieldSchema("CTA", 200),
+  formats: formatsSchema,
   brandKitId: z.string().optional(),
 });
 
 export const postFormDataSchema = z.discriminatedUnion("category", [
   restaurantFormSchema,
   supermarketFormSchema,
-  onlineFormSchema,
+  ecommerceFormSchema,
+  servicesFormSchema,
+  fashionFormSchema,
+  beautyFormSchema,
 ]);
 
 // ── Brand kit validators ───────────────────────────────────────────

@@ -107,7 +107,7 @@ export default function TemplateEditorPage({
             {category === "supermarket" && (
               <TemplateFormSupermarket values={values} onChange={handleChange} />
             )}
-            {category === "online" && (
+            {category === "ecommerce" && (
               <TemplateFormOnline values={values} onChange={handleChange} />
             )}
 

@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowLeft, ChevronRight } from "lucide-react";
+import { X, ArrowLeft } from "lucide-react";
 import { CategorySelector } from "./category-selector";
 import { RestaurantForm } from "./forms/restaurant-form";
 import { SupermarketForm } from "./forms/supermarket-form";
-import { OnlineForm } from "./forms/online-form";
+import { EcommerceForm } from "./forms/ecommerce-form";
+import { ServicesForm } from "./forms/services-form";
+import { FashionForm } from "./forms/fashion-form";
+import { BeautyForm } from "./forms/beauty-form";
 import type { Category, PostFormData } from "@/lib/types";
+import { CATEGORY_LABELS } from "@/lib/constants";
 
 interface CreateSheetProps {
   isOpen: boolean;
@@ -24,6 +28,25 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
       setCategory(null);
     } else {
       onClose();
+    }
+  };
+
+  const renderForm = () => {
+    switch (category) {
+      case "restaurant":
+        return <RestaurantForm onSubmit={onSubmit} isLoading={isLoading} />;
+      case "supermarket":
+        return <SupermarketForm onSubmit={onSubmit} isLoading={isLoading} />;
+      case "ecommerce":
+        return <EcommerceForm onSubmit={onSubmit} isLoading={isLoading} />;
+      case "services":
+        return <ServicesForm onSubmit={onSubmit} isLoading={isLoading} />;
+      case "fashion":
+        return <FashionForm onSubmit={onSubmit} isLoading={isLoading} />;
+      case "beauty":
+        return <BeautyForm onSubmit={onSubmit} isLoading={isLoading} />;
+      default:
+        return null;
     }
   };
 
@@ -52,7 +75,7 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
             <div className="flex items-center justify-between p-4 border-b border-card-border bg-surface-1 sticky top-0 z-10">
                <div className="flex items-center gap-2">
                  {(category || (category === null && isOpen)) && (
-                    <button 
+                    <button
                         onClick={handleBack}
                         className="p-2 -ml-2 rounded-full hover:bg-surface-2 transition-colors"
                     >
@@ -65,9 +88,7 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
                </div>
                {category && (
                  <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {category === "restaurant" && "مطاعم"}
-                    {category === "supermarket" && "سوبر ماركت"}
-                    {category === "online" && "منتجات"}
+                    {CATEGORY_LABELS[category]}
                  </span>
                )}
             </div>
@@ -93,21 +114,13 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
                             exit={{ opacity: 0, x: -20 }}
                         >
                             <div className="bg-surface-1 rounded-2xl p-1 shadow-sm border border-card-border">
-                                {category === "restaurant" && (
-                                    <RestaurantForm onSubmit={onSubmit} isLoading={isLoading} />
-                                )}
-                                {category === "supermarket" && (
-                                    <SupermarketForm onSubmit={onSubmit} isLoading={isLoading} />
-                                )}
-                                {category === "online" && (
-                                    <OnlineForm onSubmit={onSubmit} isLoading={isLoading} />
-                                )}
+                                {renderForm()}
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
-            
+
             {/* Mobile safe area spacer if needed */}
             <div className="md:hidden h-[env(safe-area-inset-bottom)] bg-surface-1" />
           </motion.div>

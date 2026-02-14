@@ -70,9 +70,12 @@ export const POSTER_GENERATION_FORMATS: OutputFormat[] = [
 // ── Category Labels ────────────────────────────────────────────────
 
 export const CATEGORY_LABELS: Record<Category, string> = {
-  restaurant: "مطاعم",
+  restaurant: "مطاعم وكافيهات",
   supermarket: "سوبر ماركت",
-  online: "منتجات أونلاين",
+  ecommerce: "متاجر إلكترونية",
+  services: "خدمات",
+  fashion: "أزياء وموضة",
+  beauty: "تجميل وعناية",
 };
 
 // ── Campaign Types ────────────────────────────────────────────────
@@ -120,11 +123,38 @@ export const ONLINE_HEADLINE_OPTIONS = [
   "توصيل لجميع المناطق",
 ] as const;
 
-export const ONLINE_CTA_OPTIONS = [
-  "اطلب الان",
-  "اشتري بسهولة",
-  "تواصل للشراء",
+export const ECOMMERCE_HEADLINE_OPTIONS = [
+  "خصم حصري",
+  "منتج مطلوب الان",
+  "توصيل لجميع المناطق",
 ] as const;
+
+export const ECOMMERCE_CTA_OPTIONS = [
+  "اشترِ الآن",
+  "تسوق الآن",
+  "شاهد التفاصيل",
+] as const;
+
+export const SERVICES_CTA_OPTIONS = [
+  "احجز الآن",
+  "اطلب زيارة",
+  "استشارة واتساب",
+] as const;
+
+export const FASHION_CTA_OPTIONS = [
+  "اطلب الآن",
+  "تسوق الآن",
+  "راسلنا للمقاسات",
+] as const;
+
+export const BEAUTY_CTA_OPTIONS = [
+  "احجزي الآن",
+  "احجز الآن",
+  "اطلب واتساب",
+] as const;
+
+// Legacy alias (online-form.tsx / template-form-online.tsx still use these)
+export const ONLINE_CTA_OPTIONS = ECOMMERCE_CTA_OPTIONS;
 
 // ── Template Categories ────────────────────────────────────────────
 

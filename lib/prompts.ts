@@ -1,4 +1,4 @@
-import type { PostFormData, BrandPalette, CampaignType } from "./types";
+import type { PostFormData, BrandPalette, CampaignType, Category } from "./types";
 import { DEFAULT_NEGATIVE_PROMPTS } from "./constants";
 
 // ── Base Instructions ──────────────────────────────────────────────
@@ -23,9 +23,10 @@ OUTPUT: Return ONLY the image generation prompt text. No explanations or additio
 
 // ── Category-specific prompts ──────────────────────────────────────
 
-const RESTAURANT_PROMPT = `${BASE_INSTRUCTIONS}
+const CATEGORY_PROMPTS: Record<Category, string> = {
+  restaurant: `${BASE_INSTRUCTIONS}
 
-CATEGORY: Restaurant / مطاعم
+CATEGORY: Restaurant / مطاعم وكافيهات
 STYLE: Warm, appetizing food photography style. Rich reds, golds, and warm tones. The meal should look delicious and irresistible. Include visual elements like steam, fresh ingredients, or garnishes around the meal image.
 
 The poster should include:
@@ -35,11 +36,12 @@ The poster should include:
 4. Meal name in Arabic
 5. New price (very large, bold, in a bright circle or badge)
 6. Old price (smaller, with strikethrough)
-7. Offer duration if provided
-8. WhatsApp button with number
-9. CTA text in a prominent button`;
+7. Offer badge if provided (discount/new/bestseller)
+8. Delivery info if applicable
+9. WhatsApp button with number
+10. CTA text in a prominent button`,
 
-const SUPERMARKET_PROMPT = `${BASE_INSTRUCTIONS}
+  supermarket: `${BASE_INSTRUCTIONS}
 
 CATEGORY: Supermarket / سوبر ماركت
 STYLE: Clean, organized retail aesthetic. Bright yellows, reds, and greens typical of supermarket flyers. Multiple products should be arranged attractively. Bold price tags and discount badges.
@@ -47,31 +49,84 @@ STYLE: Clean, organized retail aesthetic. Bright yellows, reds, and greens typic
 The poster should include:
 1. Supermarket logo (top area)
 2. Supermarket name in bold Arabic
-3. Headline text (e.g., "عرض الاسبوع") in a banner
-4. Product image(s) (center, well-arranged)
-5. Product name in Arabic
-6. Weight/size if provided
-7. Price in a large bold tag/sticker style
-8. Offer duration if provided
+3. Product image(s) (center, well-arranged)
+4. Product name in Arabic
+5. New price (very large, bold, in a price tag style)
+6. Old price (smaller, with strikethrough)
+7. Discount percentage badge
+8. Offer limit and expiry if provided
 9. WhatsApp button with number
-10. CTA text in a prominent button`;
+10. CTA text in a prominent button`,
 
-const ONLINE_PROMPT = `${BASE_INSTRUCTIONS}
+  ecommerce: `${BASE_INSTRUCTIONS}
 
-CATEGORY: Online Store / منتجات أونلاين
+CATEGORY: E-commerce / متاجر إلكترونية
 STYLE: Modern e-commerce aesthetic. Clean whites, brand-colored accents, professional product photography feel. Minimalist but impactful. Trust badges, shipping icons.
 
 The poster should include:
 1. Shop logo (top area)
 2. Shop name in Arabic
-3. Headline text in a stylish banner
-4. Product image (center, clean background)
-5. Product name in Arabic
-6. Price (large, bold)
-7. Discount badge if provided
-8. Shipping info (مجاني/مدفوع) with delivery icon
+3. Product image (center, clean background)
+4. Product name and key features in Arabic
+5. New price (large, bold) and old price (strikethrough)
+6. Availability status badge
+7. Shipping/delivery duration info
+8. WhatsApp button with number
+9. CTA text in a prominent button`,
+
+  services: `${BASE_INSTRUCTIONS}
+
+CATEGORY: Services / خدمات
+STYLE: Professional, trust-building aesthetic. Clean blues, navies, whites, and subtle golds. Icon-driven design elements. Clear service information hierarchy.
+
+The poster should include:
+1. Business logo (top area)
+2. Business name in bold Arabic
+3. Service type badge
+4. Service name and details in Arabic
+5. Price (with "fixed" or "starting from" indicator)
+6. Execution time/visit duration
+7. Coverage area
+8. Warranty/certification badge if provided
+9. Quick features (3 key points)
+10. WhatsApp button with number
+11. CTA text in a prominent button`,
+
+  fashion: `${BASE_INSTRUCTIONS}
+
+CATEGORY: Fashion / أزياء وموضة
+STYLE: Elegant editorial aesthetic. Soft blacks, blush pinks, rose gold accents, neutral tones. Magazine-style layout with garment/accessory as hero. Aspirational and stylish.
+
+The poster should include:
+1. Brand logo (top area)
+2. Brand name in stylish Arabic typography
+3. Product image (center, fashion-forward presentation)
+4. Item name in Arabic
+5. New price (large, bold) and old price (strikethrough)
+6. Available sizes line
+7. Available colors line
+8. Offer note if provided (e.g., second item -50%)
 9. WhatsApp button with number
-10. CTA text in a prominent button`;
+10. CTA text in a prominent button`,
+
+  beauty: `${BASE_INSTRUCTIONS}
+
+CATEGORY: Beauty & Care / تجميل وعناية
+STYLE: Soft, feminine, spa-like aesthetic. Pinks, golds, soft lilacs, creamy whites. Dreamy bokeh effects, soft glow. Product or treatment result as hero. Premium and luxurious feel.
+
+The poster should include:
+1. Salon/spa logo (top area)
+2. Salon/spa name in elegant Arabic
+3. Service/product image (center, glowing presentation)
+4. Service/product name in Arabic
+5. Key benefit/result (e.g., moisturizing + glow)
+6. New price (large, bold) and old price (strikethrough)
+7. Session duration or product size
+8. Suitable for (skin type/category)
+9. Booking condition (advance/available now)
+10. WhatsApp button with number
+11. CTA text in a prominent button`,
+};
 
 // ── Campaign Type Hints ────────────────────────────────────────────
 
@@ -149,18 +204,7 @@ export function getSystemPrompt(
   data: PostFormData,
   brandKit?: BrandKitPromptData
 ): string {
-  let prompt: string;
-  switch (data.category) {
-    case "restaurant":
-      prompt = RESTAURANT_PROMPT;
-      break;
-    case "supermarket":
-      prompt = SUPERMARKET_PROMPT;
-      break;
-    case "online":
-      prompt = ONLINE_PROMPT;
-      break;
-  }
+  let prompt = CATEGORY_PROMPTS[data.category];
 
   prompt += buildCampaignSection(data.campaignType);
 
@@ -188,9 +232,15 @@ export function buildUserMessage(data: PostFormData): string {
     case "restaurant":
       return `Create a poster for this restaurant offer:
 - Restaurant Name: ${data.restaurantName}
+- Post Type: ${data.postType}
 - Meal Name: ${data.mealName}
+${data.description ? `- Description: ${data.description}` : ""}
 - New Price: ${data.newPrice}
 - Old Price: ${data.oldPrice}
+${data.offerBadge ? `- Offer Badge: ${data.offerBadge}` : ""}
+${data.deliveryType ? `- Delivery: ${data.deliveryType === "free" ? "مجاني" : "مدفوع"}` : ""}
+${data.deliveryTime ? `- Delivery Time: ${data.deliveryTime}` : ""}
+${data.coverageAreas ? `- Coverage Areas: ${data.coverageAreas}` : ""}
 ${data.offerDuration ? `- Offer Duration: ${data.offerDuration}` : ""}
 - WhatsApp: ${data.whatsapp}
 - CTA: ${data.cta}
@@ -201,10 +251,15 @@ The user has uploaded the meal image and restaurant logo. Describe the poster in
     case "supermarket":
       return `Create a poster for this supermarket offer:
 - Supermarket Name: ${data.supermarketName}
+- Post Type: ${data.postType}
 - Product Name: ${data.productName}
-${data.weight ? `- Weight/Size: ${data.weight}` : ""}
+${data.quantity ? `- Quantity/Weight: ${data.quantity}` : ""}
+- New Price: ${data.newPrice}
+- Old Price: ${data.oldPrice}
+${data.discountPercentage ? `- Discount: ${data.discountPercentage}%` : ""}
+${data.offerLimit ? `- Offer Limit: ${data.offerLimit}` : ""}
 ${data.offerDuration ? `- Offer Duration: ${data.offerDuration}` : ""}
-- Headline: ${data.headline}
+${data.expiryDate ? `- Expiry Date: ${data.expiryDate}` : ""}
 - WhatsApp: ${data.whatsapp}
 - CTA: ${data.cta}
 - Number of product images: ${data.productImages.length}
@@ -212,18 +267,75 @@ ${data.campaignType !== "standard" ? `- Campaign Type: ${data.campaignType}` : "
 
 The user has uploaded ${data.productImages.length} product image(s) and the supermarket logo. Describe the poster incorporating these images.`;
 
-    case "online":
-      return `Create a poster for this online product:
+    case "ecommerce":
+      return `Create a poster for this e-commerce product:
 - Shop Name: ${data.shopName}
+- Post Type: ${data.postType}
 - Product Name: ${data.productName}
-- Price: ${data.price}
-${data.discount ? `- Discount: ${data.discount}` : ""}
-- Shipping: ${data.shipping === "free" ? "مجاني (Free)" : "مدفوع (Paid)"}
-- Headline: ${data.headline}
+${data.features ? `- Features: ${data.features}` : ""}
+- New Price: ${data.newPrice}
+- Old Price: ${data.oldPrice}
+${data.colorSize ? `- Color/Size: ${data.colorSize}` : ""}
+- Availability: ${data.availability}
+${data.shippingDuration ? `- Shipping Duration: ${data.shippingDuration}` : ""}
 - WhatsApp: ${data.whatsapp}
 - CTA: ${data.cta}
 ${data.campaignType !== "standard" ? `- Campaign Type: ${data.campaignType}` : ""}
 
 The user has uploaded the product image and shop logo. Describe the poster incorporating these images.`;
+
+    case "services":
+      return `Create a poster for this service:
+- Business Name: ${data.businessName}
+- Service Type: ${data.serviceType}
+- Service Name: ${data.serviceName}
+${data.serviceDetails ? `- Details: ${data.serviceDetails}` : ""}
+- Price: ${data.price} (${data.priceType === "fixed" ? "سعر ثابت" : "ابتداءً من"})
+${data.executionTime ? `- Execution Time: ${data.executionTime}` : ""}
+${data.coverageArea ? `- Coverage Area: ${data.coverageArea}` : ""}
+${data.warranty ? `- Warranty: ${data.warranty}` : ""}
+${data.quickFeatures ? `- Key Features: ${data.quickFeatures}` : ""}
+${data.offerDuration ? `- Offer Duration: ${data.offerDuration}` : ""}
+- WhatsApp: ${data.whatsapp}
+- CTA: ${data.cta}
+${data.campaignType !== "standard" ? `- Campaign Type: ${data.campaignType}` : ""}
+
+The user has uploaded a service image and business logo. Describe the poster incorporating these images.`;
+
+    case "fashion":
+      return `Create a poster for this fashion item:
+- Brand Name: ${data.brandName}
+- Post Type: ${data.postType}
+- Item Name: ${data.itemName}
+${data.description ? `- Description: ${data.description}` : ""}
+- New Price: ${data.newPrice}
+- Old Price: ${data.oldPrice}
+${data.availableSizes ? `- Available Sizes: ${data.availableSizes}` : ""}
+${data.availableColors ? `- Available Colors: ${data.availableColors}` : ""}
+${data.offerNote ? `- Offer Note: ${data.offerNote}` : ""}
+${data.offerDuration ? `- Offer Duration: ${data.offerDuration}` : ""}
+- WhatsApp: ${data.whatsapp}
+- CTA: ${data.cta}
+${data.campaignType !== "standard" ? `- Campaign Type: ${data.campaignType}` : ""}
+
+The user has uploaded the product image and brand logo. Describe the poster incorporating these images.`;
+
+    case "beauty":
+      return `Create a poster for this beauty/care offer:
+- Salon/Spa Name: ${data.salonName}
+- Post Type: ${data.postType}
+- Service/Product Name: ${data.serviceName}
+${data.benefit ? `- Benefit: ${data.benefit}` : ""}
+- New Price: ${data.newPrice}
+- Old Price: ${data.oldPrice}
+${data.sessionDuration ? `- Session Duration: ${data.sessionDuration}` : ""}
+${data.suitableFor ? `- Suitable For: ${data.suitableFor}` : ""}
+- Booking: ${data.bookingCondition === "advance" ? "حجز مسبق" : "متاح فوراً"}
+${data.offerDuration ? `- Offer Duration: ${data.offerDuration}` : ""}
+- WhatsApp: ${data.whatsapp}
+- CTA: ${data.cta}
+${data.campaignType !== "standard" ? `- Campaign Type: ${data.campaignType}` : ""}
+
+The user has uploaded the service/product image and salon logo. Describe the poster incorporating these images.`;
   }
 }
