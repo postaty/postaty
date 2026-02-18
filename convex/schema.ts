@@ -477,6 +477,26 @@ export default defineSchema(
       createdAt: v.number(),
     })
       .index("by_order", ["order"]),
+
+    // ── Country Pricing (admin-adjustable per-country plan prices) ────
+    countryPricing: defineTable({
+      countryCode: v.string(),
+      planKey: v.union(
+        v.literal("starter"),
+        v.literal("growth"),
+        v.literal("dominant")
+      ),
+      currency: v.string(),
+      currencySymbol: v.string(),
+      monthlyAmountCents: v.number(),
+      firstMonthAmountCents: v.number(),
+      isActive: v.boolean(),
+      updatedAt: v.number(),
+      createdAt: v.number(),
+    })
+      .index("by_countryCode", ["countryCode"])
+      .index("by_countryCode_planKey", ["countryCode", "planKey"])
+      .index("by_planKey", ["planKey"]),
   },
   { schemaValidation: true }
 );

@@ -1074,3 +1074,117 @@ export const failStripeEventProcessing = internalMutation({
     });
   },
 });
+
+// ── Embedded Checkout ──────────────────────────────────────────────
+
+export const createEmbeddedCheckout = action({
+  args: {
+    planKey: v.optional(
+      v.union(v.literal("starter"), v.literal("growth"), v.literal("dominant"))
+    ),
+    addonKey: v.optional(v.union(v.literal("addon_5"), v.literal("addon_10"))),
+    couponId: v.optional(v.string()),
+    returnUrl: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ clientSecret: string }> => {
+    const identity = await ctx.auth.getUserIdentity();
+    const clerkUserId = extractClerkUserId(identity);
+
+    if (!args.planKey && !args.addonKey) {
+      throw new Error("Must specify either planKey or addonKey");
+    }
+
+    const stripe = getStripe();
+    const existingBilling = await ctx.runQuery(
+      internal.billing.getBillingByClerkUserId,
+      { clerkUserId }
+    );
+
+    let stripeCustomerId = existingBilling?.stripeCustomerId;
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        metadata: { clerkUserId },
+      });
+      stripeCustomerId = customer.id;
+      await ctx.runMutation(internal.billing.upsertBillingProfile, {
+        clerkUserId,
+        stripeCustomerId,
+      });
+    }
+
+    if (args.planKey) {
+      const discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
+
+      if (args.couponId) {
+        discounts.push({ coupon: args.couponId });
+      } else {
+        const discountCents = PLAN_CONFIG[args.planKey].firstMonthDiscountCents;
+        if (discountCents > 0) {
+          const coupon = await stripe.coupons.create({
+            duration: "once",
+            amount_off: discountCents,
+            currency: "usd",
+            name: `First month ${args.planKey}`,
+            metadata: { clerkUserId, planKey: args.planKey },
+          });
+          discounts.push({ coupon: coupon.id });
+        }
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        ui_mode: "embedded",
+        mode: "subscription",
+        customer: stripeCustomerId,
+        line_items: [{ price: getPlanPriceId(args.planKey), quantity: 1 }],
+        ...(discounts.length > 0 ? { discounts } : {}),
+        return_url: args.returnUrl,
+        metadata: { clerkUserId, planKey: args.planKey },
+        subscription_data: {
+          metadata: { clerkUserId, planKey: args.planKey },
+        },
+      });
+
+      if (!session.client_secret) {
+        throw new Error("Missing client_secret from Stripe");
+      }
+      return { clientSecret: session.client_secret };
+    }
+
+    // Payment mode (addon)
+    const addon = ADDON_CONFIG[args.addonKey!];
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      mode: "payment",
+      customer: stripeCustomerId,
+      line_items: [{ price: getAddonPriceId(args.addonKey!), quantity: 1 }],
+      return_url: args.returnUrl,
+      metadata: {
+        clerkUserId,
+        addonKey: args.addonKey!,
+        addonCredits: String(addon.credits),
+      },
+    });
+
+    if (!session.client_secret) {
+      throw new Error("Missing client_secret from Stripe");
+    }
+    return { clientSecret: session.client_secret };
+  },
+});
+
+export const getCheckoutSessionStatus = action({
+  args: { sessionId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    extractClerkUserId(identity);
+
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.retrieve(args.sessionId);
+
+    return {
+      status: session.status,
+      paymentStatus: session.payment_status,
+      customerEmail: session.customer_details?.email ?? null,
+    };
+  },
+});
