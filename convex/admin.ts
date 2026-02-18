@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internal } from "./_generated/api";
 
 // ── Admin guard helper ─────────────────────────────────────────────
 
@@ -914,6 +915,16 @@ export const addCreditsToUser = mutation({
       metadata: JSON.stringify({ amount: args.amount }),
       createdAt: now,
     });
+
+    if (target.email.includes("@")) {
+      await ctx.scheduler.runAfter(0, internal.emailing.sendCreditsAddedEmail, {
+        toEmail: target.email,
+        userName: target.name,
+        amount: args.amount,
+        newBalance: newAddonBalance,
+        reason: args.reason,
+      });
+    }
   },
 });
 
