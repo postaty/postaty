@@ -27,6 +27,15 @@ const STATUS_LABELS: Record<string, string> = {
   none: "بدون",
 };
 
+function countryCodeToFlag(countryCode?: string) {
+  if (!countryCode || countryCode.length !== 2) return null;
+  const upper = countryCode.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return null;
+  return String.fromCodePoint(
+    ...[...upper].map((char) => 127397 + char.charCodeAt(0))
+  );
+}
+
 export default function AdminUsersPage() {
   const users = useQuery(api.admin.listUsers, { limit: 200 });
   const [search, setSearch] = useState("");
@@ -162,10 +171,28 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-xs font-mono">{user.detectedCountry?.toUpperCase() ?? "—"}</span>
+                      {user.detectedCountry ? (
+                        <span className="inline-flex items-center gap-2 text-xs">
+                          <span className="text-base leading-none">
+                            {countryCodeToFlag(user.detectedCountry) ?? "🏳️"}
+                          </span>
+                          <span className="font-mono">{user.detectedCountry.toUpperCase()}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs font-mono">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-4">
-                      <span className="text-xs font-mono">{user.pricingCountry?.toUpperCase() ?? "—"}</span>
+                      {user.pricingCountry ? (
+                        <span className="inline-flex items-center gap-2 text-xs">
+                          <span className="text-base leading-none">
+                            {countryCodeToFlag(user.pricingCountry) ?? "🏳️"}
+                          </span>
+                          <span className="font-mono">{user.pricingCountry.toUpperCase()}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs font-mono">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       {user.billing ? (
