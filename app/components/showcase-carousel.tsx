@@ -14,6 +14,7 @@ export function ShowcaseCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
   const lastInteractionRef = useRef(0);
+  const activeIndexRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -24,14 +25,28 @@ export function ShowcaseCarousel() {
     : 0;
 
   const scrollToIndex = useCallback(
-    (index: number, behavior: ScrollBehavior = "smooth", syncState = true) => {
+    (
+      index: number,
+      options?: {
+        behavior?: ScrollBehavior;
+        syncState?: boolean;
+        markInteraction?: boolean;
+      }
+    ) => {
       if (!images.length) return;
 
+      const {
+        behavior = "smooth",
+        syncState = true,
+        markInteraction = true,
+      } = options ?? {};
       const normalized = (index + images.length) % images.length;
       const node = cardRefs.current[normalized];
       if (!node) return;
 
-      lastInteractionRef.current = Date.now();
+      if (markInteraction) {
+        lastInteractionRef.current = Date.now();
+      }
       node.scrollIntoView({
         behavior,
         inline: "center",
@@ -48,10 +63,15 @@ export function ShowcaseCarousel() {
   const goPrev = () => scrollToIndex(currentIndex - 1);
 
   useEffect(() => {
+    activeIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, images.length);
 
     if (!images.length) return;
-    const node = cardRefs.current[currentIndex];
+    const initialIndex = activeIndexRef.current >= images.length ? 0 : activeIndexRef.current;
+    const node = cardRefs.current[initialIndex];
     if (node) {
       node.scrollIntoView({
         behavior: "auto",
@@ -59,7 +79,7 @@ export function ShowcaseCarousel() {
         block: "nearest",
       });
     }
-  }, [images.length, currentIndex]);
+  }, [images.length]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -107,11 +127,11 @@ export function ShowcaseCarousel() {
     const timer = setInterval(() => {
       const isRecentlyInteracted = Date.now() - lastInteractionRef.current < PAUSE_AFTER_INTERACTION_MS;
       if (isHovered || isRecentlyInteracted) return;
-      scrollToIndex(currentIndex + 1);
+      scrollToIndex(activeIndexRef.current + 1, { markInteraction: false });
     }, AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [currentIndex, isHovered, images.length, scrollToIndex]);
+  }, [isHovered, images.length, scrollToIndex]);
 
   if (!images.length) return null;
 
@@ -129,6 +149,9 @@ export function ShowcaseCarousel() {
           className="relative"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
+          onPointerDown={() => {
+            lastInteractionRef.current = Date.now();
+          }}
         >
           <button
             onClick={goPrev}
@@ -148,6 +171,12 @@ export function ShowcaseCarousel() {
           <div
             ref={scrollRef}
             dir="rtl"
+            onTouchStart={() => {
+              lastInteractionRef.current = Date.now();
+            }}
+            onWheel={() => {
+              lastInteractionRef.current = Date.now();
+            }}
             className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-1"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >

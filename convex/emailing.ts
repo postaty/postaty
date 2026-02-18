@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { FunctionReference } from "convex/server";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 
@@ -18,6 +19,31 @@ type MarketingTemplate = {
   html: string;
   text: string;
 };
+
+type ListRecipientsFunction = FunctionReference<
+  "query",
+  "internal",
+  {
+    audience: "all" | "paid" | "low_balance";
+    lowBalanceThreshold?: number;
+  },
+  Recipient[]
+>;
+
+type CreateSystemNotificationFunction = FunctionReference<
+  "mutation",
+  "internal",
+  {
+    clerkUserId: string;
+    title: string;
+    body: string;
+  },
+  void
+>;
+
+const listRecipientsFn = internal.emailing.listRecipients as unknown as ListRecipientsFunction;
+const createSystemNotificationFn =
+  internal.emailing.createSystemNotification as unknown as CreateSystemNotificationFunction;
 
 function getResendApiKey() {
   const key = process.env.RESEND_API_KEY;
@@ -406,7 +432,7 @@ export const sendMarketingCampaign = action({
   handler: async (ctx, args) => {
     await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
 
-    const recipients = await ctx.runQuery(internal.emailing.listRecipients, {
+    const recipients = await ctx.runQuery(listRecipientsFn, {
       audience: args.audience,
       lowBalanceThreshold: args.lowBalanceThreshold,
     });
@@ -449,7 +475,7 @@ export const sendMarketingCampaign = action({
         sent += 1;
 
         if (args.notifyInApp ?? true) {
-          await ctx.runMutation(internal.emailing.createSystemNotification, {
+          await ctx.runMutation(createSystemNotificationFn, {
             clerkUserId: recipient.clerkUserId,
             title: "رسالة جديدة من Postaty",
             body: "تم إرسال بريد جديد لك يحتوي على تحديثات وعروض مهمة.",
@@ -483,7 +509,7 @@ export const sendBalanceReminderCampaign = action({
     await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
 
     const threshold = args.threshold ?? DEFAULT_LOW_BALANCE_THRESHOLD;
-    const recipients = await ctx.runQuery(internal.emailing.listRecipients, {
+    const recipients = await ctx.runQuery(listRecipientsFn, {
       audience: "low_balance",
       lowBalanceThreshold: threshold,
     });
@@ -516,7 +542,7 @@ export const sendBalanceReminderCampaign = action({
           ],
         });
 
-        await ctx.runMutation(internal.emailing.createSystemNotification, {
+        await ctx.runMutation(createSystemNotificationFn, {
           clerkUserId: recipient.clerkUserId,
           title: "تنبيه الرصيد",
           body: `رصيدك الحالي ${recipient.totalRemaining}. يرجى الشحن لتجنب توقف التوليد.`,
