@@ -3,6 +3,7 @@
 import { useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +18,9 @@ import {
   Zap,
   Check,
   ArrowLeft,
+  Quote,
+  Star,
+  ShieldCheck,
   UtensilsCrossed,
   ShoppingCart,
   Store,
@@ -174,6 +178,84 @@ const CATEGORIES = [
   },
 ];
 
+const RESULTS_SHOWCASE = [
+  {
+    src: "/showcase/burger-stack.jpeg",
+    alt: "تصميم عرض برجر لمطعم",
+    badge: "مطاعم",
+    grid: "col-span-1 row-span-2 md:col-span-2 md:row-span-2",
+  },
+  {
+    src: "/showcase/supermarket-fruits.jpeg",
+    alt: "تصميم خصم فواكه لسوبرماركت",
+    badge: "سوبرماركت",
+    grid: "col-span-1 row-span-1",
+  },
+  {
+    src: "/showcase/book-promo.jpeg",
+    alt: "تصميم عرض منتجات",
+    badge: "منتجات",
+    grid: "col-span-1 row-span-1",
+  },
+  {
+    src: "/showcase/chicken-offer.jpeg",
+    alt: "تصميم عرض دجاج مقلي",
+    badge: "مطاعم",
+    grid: "col-span-1 row-span-1",
+  },
+  {
+    src: "/showcase/ramadan-platter.jpeg",
+    alt: "تصميم رمضاني لوجبة عائلية",
+    badge: "رمضان",
+    grid: "col-span-1 row-span-2",
+  },
+  {
+    src: "/showcase/skincare-promo.jpeg",
+    alt: "تصميم منتجات العناية بالبشرة",
+    badge: "تجميل",
+    grid: "col-span-1 row-span-1",
+  },
+  {
+    src: "/showcase/supermarket-basics.jpeg",
+    alt: "تصميم عروض السلع الأساسية",
+    badge: "سوبرماركت",
+    grid: "col-span-1 row-span-2",
+  },
+  {
+    src: "/showcase/ramadan-card.jpeg",
+    alt: "بطاقة عرض رمضانية",
+    badge: "موسمي",
+    grid: "col-span-1 row-span-1",
+  },
+] as const;
+
+const TRUST_LOGOS = [
+  "برجر البرو",
+  "Fresh Market",
+  "Glow Beauty",
+  "Daily Bites",
+  "Style Hub",
+  "Coffee Spot",
+] as const;
+
+const TESTIMONIALS = [
+  {
+    quote: "خلال أسبوع واحد تضاعف التفاعل لأن التصاميم صارت احترافية وثابتة الهوية.",
+    author: "سارة - متجر تجميل",
+    metric: "+240% تفاعل",
+  },
+  {
+    quote: "بدل انتظار المصمم يومين، صار عندنا 3 بوستات جاهزة بنفس اليوم.",
+    author: "أحمد - مطعم",
+    metric: "وقت أقل 5x",
+  },
+  {
+    quote: "العروض الأسبوعية صارت أوضح، والعميل يفهم الخصم من أول نظرة.",
+    author: "منى - سوبرماركت",
+    metric: "+31% طلبات",
+  },
+] as const;
+
 type HomeClientProps = {
   pricing: PricingSet;
   countryCode: string;
@@ -209,15 +291,15 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight">
-              بوسترات تبيع
+              صمّم إعلانك خلال ثوانٍ
               <br />
-              <span className="text-gradient">مش بس تصاميم</span>
+              <span className="text-gradient">بشكل يرفع المبيعات</span>
             </h1>
 
             <p className="text-lg text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              بوستاتي يصمم لك إعلانات احترافية لمطعمك أو متجرك في 30 ثانية.
+              بوستاتي يحول صورة منتجك إلى إعلان جاهز للنشر على السوشيال ميديا خلال 30 ثانية.
               <br className="hidden md:block" />
-              بدون مصمم، بدون خبرة.
+              بدون فريق تصميم، وبدون تعقيد.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
@@ -228,7 +310,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                       whileTap={TAP_SCALE}
                       className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-lg"
                     >
-                      ابدأ الآن
+                      ابدأ تصميمك الآن
                     </motion.button>
                   </SignInButton>
                 ) : (
@@ -236,7 +318,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                     href="/pricing"
                     className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all text-lg"
                   >
-                    ابدأ الآن
+                    ابدأ تصميمك الآن
                   </Link>
                 )
               ) : (
@@ -251,11 +333,22 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
               )}
 
               <a
-                href="#categories"
+                href="#results-showcase"
                 className="px-6 py-4 border border-card-border text-muted hover:text-foreground hover:border-primary/30 rounded-2xl font-bold transition-all"
               >
-                شوف أمثلة
+                شاهد النتائج
               </a>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2 text-xs text-muted">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-card-border bg-surface-1/70">
+                <ShieldCheck size={13} className="text-success" />
+                <span>هوية علامتك محفوظة</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-card-border bg-surface-1/70">
+                <Star size={13} className="text-warning" />
+                <span>جاهز للنشر فوراً</span>
+              </div>
             </div>
           </motion.div>
 
@@ -267,7 +360,136 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 2: SOCIAL PROOF BAR
+          SECTION 2: RESULTS SHOWCASE
+      ═══════════════════════════════════════════════════════ */}
+      <section id="results-showcase" className="py-14 md:py-20 px-4 border-b border-card-border">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 md:gap-12 items-center">
+          <AnimateOnScroll className="text-center lg:text-right">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-semibold mb-5">
+              <Sparkles size={14} />
+              <span>نماذج تم إنشاؤها فعلياً</span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-black leading-tight mb-5">
+              نتائج جاهزة للنشر
+              <br />
+              <span className="text-gradient">بجودة وكالة تسويق</span>
+            </h2>
+
+            <p className="text-muted text-base md:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 mb-8">
+              هذه أمثلة حقيقية من تصاميم تم إنتاجها ببوستاتي. نفس الجودة التي تشاهدها هنا
+              يمكنك إنشاؤها لعلامتك خلال دقائق.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 md:gap-4 max-w-xl mx-auto lg:mx-0">
+              <div className="rounded-2xl border border-card-border bg-surface-1/80 p-4">
+                <div className="text-2xl font-black text-foreground mb-1">+2,000</div>
+                <div className="text-xs md:text-sm text-muted">تصميم تم إنشاؤه</div>
+              </div>
+              <div className="rounded-2xl border border-card-border bg-surface-1/80 p-4">
+                <div className="text-2xl font-black text-foreground mb-1">30 ثانية</div>
+                <div className="text-xs md:text-sm text-muted">متوسط وقت التصميم</div>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-card-border bg-surface-1/80 p-4 md:p-5 max-w-xl mx-auto lg:mx-0">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold text-foreground">قبل / بعد باستخدام بوستاتي</p>
+                <span className="text-[11px] text-muted">نفس المنتج، نتيجة أقوى</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <article className="relative overflow-hidden rounded-xl border border-card-border">
+                  <Image
+                    src="/showcase/burger-stack.jpeg"
+                    alt="قبل - صورة المنتج"
+                    width={360}
+                    height={450}
+                    className="w-full h-36 object-cover grayscale brightness-90"
+                  />
+                  <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-black/60 text-white text-[10px] font-bold">
+                    قبل
+                  </div>
+                </article>
+                <article className="relative overflow-hidden rounded-xl border border-primary/30">
+                  <Image
+                    src="/showcase/burger-stack.jpeg"
+                    alt="بعد - إعلان جاهز بالنشر"
+                    width={360}
+                    height={450}
+                    className="w-full h-36 object-cover"
+                  />
+                  <div className="absolute top-2 right-2 px-2 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold">
+                    بعد
+                  </div>
+                </article>
+              </div>
+            </div>
+          </AnimateOnScroll>
+
+          <StaggerOnScroll className="grid grid-cols-2 md:grid-cols-4 auto-rows-[120px] md:auto-rows-[135px] gap-3 md:gap-4">
+            {RESULTS_SHOWCASE.map((item) => (
+              <motion.article
+                key={item.src}
+                variants={STAGGER_ITEM}
+                className={`relative overflow-hidden rounded-2xl border border-card-border bg-surface-1 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all ${item.grid}`}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 280px"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-sm text-[11px] font-bold text-white">
+                  {item.badge}
+                </div>
+              </motion.article>
+            ))}
+          </StaggerOnScroll>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 3: TRUST + TESTIMONIALS
+      ═══════════════════════════════════════════════════════ */}
+      <section className="py-10 md:py-14 px-4 border-b border-card-border">
+        <div className="max-w-7xl mx-auto">
+          <AnimateOnScroll className="text-center mb-6">
+            <p className="text-sm text-muted mb-4">يثق بنا أصحاب المشاريع في قطاعات مختلفة</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+              {TRUST_LOGOS.map((brand) => (
+                <div
+                  key={brand}
+                  className="px-4 py-2 rounded-xl border border-card-border bg-surface-1/70 text-sm font-semibold text-foreground/85"
+                >
+                  {brand}
+                </div>
+              ))}
+            </div>
+          </AnimateOnScroll>
+
+          <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+            {TESTIMONIALS.map((item) => (
+              <motion.article
+                key={item.author}
+                variants={STAGGER_ITEM}
+                className="rounded-2xl border border-card-border bg-surface-1/85 p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <Quote size={18} className="text-primary" />
+                  <span className="text-xs font-bold text-success">{item.metric}</span>
+                </div>
+                <p className="text-sm text-muted leading-relaxed mb-4">{item.quote}</p>
+                <p className="text-xs font-semibold text-foreground">{item.author}</p>
+              </motion.article>
+            ))}
+          </StaggerOnScroll>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          SECTION 4: SOCIAL PROOF BAR
       ═══════════════════════════════════════════════════════ */}
       <AnimateOnScroll>
         <section className="py-8 border-b border-card-border">
@@ -295,7 +517,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
       </AnimateOnScroll>
 
       {/* ═══════════════════════════════════════════════════════
-          SECTION 3: HOW IT WORKS
+          SECTION 5: HOW IT WORKS
       ═══════════════════════════════════════════════════════ */}
       <section className="py-16 md:py-24 px-4">
         <div className="max-w-5xl mx-auto">
