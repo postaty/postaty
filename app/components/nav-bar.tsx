@@ -9,6 +9,7 @@ import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ThemeToggle } from "./theme-toggle";
+import { NotificationBell } from "./notification-bell";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -114,7 +115,10 @@ function NavBarWithAuth() {
             {!isClerkLoaded ? (
               <Loader2 size={20} className="animate-spin text-muted" />
             ) : isClerkSignedIn ? (
+              <>
+              <NotificationBell />
               <CreditsBadge />
+              </>
             ) : (
               <div className="hidden sm:block">
                   <SignInButton>
@@ -171,10 +175,13 @@ function CreditsBadge() {
         className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-card-border hover:border-primary/50 transition-colors shrink-0"
       >
         {clerkUser?.imageUrl ? (
-          <img
+          <Image
             src={clerkUser.imageUrl}
             alt={clerkUser.fullName ?? "الملف الشخصي"}
-            className="w-full h-full object-cover"
+            fill
+            sizes="36px"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">

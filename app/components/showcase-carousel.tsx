@@ -1,73 +1,119 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+const AUTOPLAY_MS = 3800;
+const PAUSE_AFTER_INTERACTION_MS = 7000;
+
 export function ShowcaseCarousel() {
   const showcaseImages = useQuery(api.showcase.list);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const cardRefs = useRef<Array<HTMLElement | null>>([]);
+  const lastInteractionRef = useRef(0);
 
-  const updateScrollState = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    // RTL: scrollLeft is negative
-    const scrollLeft = Math.abs(el.scrollLeft);
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < maxScroll - 10);
-  };
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateScrollState, { passive: true });
-    updateScrollState();
-    return () => el.removeEventListener("scroll", updateScrollState);
-  }, [showcaseImages]);
+  const images = showcaseImages ?? [];
+  const currentIndex = images.length
+    ? ((activeIndex % images.length) + images.length) % images.length
+    : 0;
 
-  // Auto-scroll
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !showcaseImages?.length) return;
+  const scrollToIndex = useCallback(
+    (index: number, behavior: ScrollBehavior = "smooth", syncState = true) => {
+      if (!images.length) return;
 
-    let paused = false;
-    const interval = setInterval(() => {
-      if (paused) return;
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      const scrollLeft = Math.abs(el.scrollLeft);
-      if (scrollLeft >= maxScroll - 10) {
-        el.scrollTo({ left: 0, behavior: "smooth" });
-      } else {
-        // RTL: scroll in negative direction
-        el.scrollBy({ left: -300, behavior: "smooth" });
+      const normalized = (index + images.length) % images.length;
+      const node = cardRefs.current[normalized];
+      if (!node) return;
+
+      lastInteractionRef.current = Date.now();
+      node.scrollIntoView({
+        behavior,
+        inline: "center",
+        block: "nearest",
+      });
+      if (syncState) {
+        setActiveIndex(normalized);
       }
-    }, 4000);
+    },
+    [images.length]
+  );
 
-    const handleMouseEnter = () => { paused = true; };
-    const handleMouseLeave = () => { paused = false; };
-    el.addEventListener("mouseenter", handleMouseEnter);
-    el.addEventListener("mouseleave", handleMouseLeave);
+  const goNext = () => scrollToIndex(currentIndex + 1);
+  const goPrev = () => scrollToIndex(currentIndex - 1);
 
-    return () => {
-      clearInterval(interval);
-      el.removeEventListener("mouseenter", handleMouseEnter);
-      el.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, [showcaseImages]);
+  useEffect(() => {
+    cardRefs.current = cardRefs.current.slice(0, images.length);
 
-  const scroll = (direction: "left" | "right") => {
+    if (!images.length) return;
+    const node = cardRefs.current[currentIndex];
+    if (node) {
+      node.scrollIntoView({
+        behavior: "auto",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [images.length, currentIndex]);
+
+  useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
-    // RTL: "left" button scrolls content visually left (positive scrollBy)
-    const amount = direction === "left" ? 320 : -320;
-    el.scrollBy({ left: amount, behavior: "smooth" });
-  };
+    if (!el || !images.length) return;
 
-  if (!showcaseImages || showcaseImages.length === 0) return null;
+    let ticking = false;
+
+    const syncActiveFromScroll = () => {
+      const containerRect = el.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+
+      let nearestIndex = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      cardRefs.current.forEach((card, idx) => {
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        const cardCenter = rect.left + rect.width / 2;
+        const distance = Math.abs(cardCenter - containerCenter);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestIndex = idx;
+        }
+      });
+
+      setActiveIndex((prev) => (prev === nearestIndex ? prev : nearestIndex));
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(syncActiveFromScroll);
+    };
+
+    el.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [images.length]);
+
+  useEffect(() => {
+    if (!images.length) return;
+
+    const timer = setInterval(() => {
+      const isRecentlyInteracted = Date.now() - lastInteractionRef.current < PAUSE_AFTER_INTERACTION_MS;
+      if (isHovered || isRecentlyInteracted) return;
+      scrollToIndex(currentIndex + 1);
+    }, AUTOPLAY_MS);
+
+    return () => clearInterval(timer);
+  }, [currentIndex, isHovered, images.length, scrollToIndex]);
+
+  if (!images.length) return null;
 
   return (
     <section className="py-16 md:py-24 px-4 border-t border-card-border">
@@ -79,41 +125,47 @@ export function ShowcaseCarousel() {
           <p className="text-muted text-lg">تصاميم حقيقية تم إنشاؤها بالذكاء الاصطناعي</p>
         </div>
 
-        <div className="relative group">
-          {/* Navigation buttons */}
-          {canScrollRight && (
-            <button
-              onClick={() => scroll("right")}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full flex items-center justify-center text-muted hover:text-foreground shadow-lg opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2"
-            >
-              <ChevronRight size={20} />
-            </button>
-          )}
-          {canScrollLeft && (
-            <button
-              onClick={() => scroll("left")}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full flex items-center justify-center text-muted hover:text-foreground shadow-lg opacity-0 group-hover:opacity-100 transition-opacity translate-x-2"
-            >
-              <ChevronLeft size={20} />
-            </button>
-          )}
+        <div
+          className="relative"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <button
+            onClick={goPrev}
+            aria-label="السابق"
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full items-center justify-center text-muted hover:text-foreground shadow-lg"
+          >
+            <ChevronRight size={20} />
+          </button>
+          <button
+            onClick={goNext}
+            aria-label="التالي"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full items-center justify-center text-muted hover:text-foreground shadow-lg"
+          >
+            <ChevronLeft size={20} />
+          </button>
 
-          {/* Scrollable row */}
           <div
             ref={scrollRef}
-            className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-4"
+            dir="rtl"
+            className="flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 px-1"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {showcaseImages.map((img) => (
-              <div
+            {images.map((img, idx) => (
+              <article
                 key={img._id}
-                className="flex-shrink-0 w-[260px] md:w-[300px] snap-start"
+                ref={(node) => {
+                  cardRefs.current[idx] = node;
+                }}
+                className="flex-shrink-0 w-[250px] md:w-[300px] snap-center"
               >
                 <div className="relative rounded-2xl overflow-hidden border border-card-border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-surface-1">
                   {img.url ? (
-                    <img
+                    <Image
                       src={img.url}
                       alt={img.title || "Showcase poster"}
+                      width={600}
+                      height={600}
                       className="w-full aspect-square object-cover"
                       loading="lazy"
                     />
@@ -122,7 +174,7 @@ export function ShowcaseCarousel() {
                       Loading...
                     </div>
                   )}
-                  {/* Category badge */}
+
                   {img.category && (
                     <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full">
                       {img.category}
@@ -132,7 +184,18 @@ export function ShowcaseCarousel() {
                 {img.title && (
                   <p className="mt-2 text-sm text-muted text-center font-medium truncate">{img.title}</p>
                 )}
-              </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-2 flex items-center justify-center gap-1.5">
+            {images.map((img, idx) => (
+              <button
+                key={`dot-${img._id}`}
+                onClick={() => scrollToIndex(idx)}
+                aria-label={`انتقل إلى العنصر ${idx + 1}`}
+                className={`h-2.5 rounded-full transition-all ${idx === currentIndex ? "w-6 bg-primary" : "w-2.5 bg-card-border hover:bg-muted"}`}
+              />
             ))}
           </div>
         </div>

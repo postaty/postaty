@@ -18,6 +18,7 @@ import type * as credits from "../credits.js";
 import type * as debug from "../debug.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
 import type * as organizations from "../organizations.js";
 import type * as posterJobs from "../posterJobs.js";
 import type * as posterTemplates from "../posterTemplates.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   debug: typeof debug;
   generations: typeof generations;
   http: typeof http;
+  notifications: typeof notifications;
   organizations: typeof organizations;
   posterJobs: typeof posterJobs;
   posterTemplates: typeof posterTemplates;
