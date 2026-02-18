@@ -20,6 +20,7 @@ import {
   Shield,
   ImageIcon,
   Tag,
+  Mail,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ const ADMIN_NAV = [
   { href: "/admin/support", label: "الدعم الفني", icon: LifeBuoy },
   { href: "/admin/feedback", label: "التقييمات", icon: ThumbsUp },
   { href: "/admin/showcase", label: "المعرض", icon: ImageIcon },
+  { href: "/admin/emails", label: "البريد", icon: Mail },
 ] as const;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
