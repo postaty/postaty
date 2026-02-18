@@ -282,7 +282,9 @@ export default function AdminEmailsPage() {
 
       <section className="bg-surface-1 border border-card-border rounded-2xl p-5 space-y-3">
         <h2 className="font-bold text-lg">محتوى البريد</h2>
-        <p className="text-xs text-muted">يمكنك استخدام `{{name}}` داخل النص ليتم استبداله باسم المستخدم عند الإرسال.</p>
+        <p className="text-xs text-muted">
+          يمكنك استخدام <code>{"{{name}}"}</code> داخل النص ليتم استبداله باسم المستخدم عند الإرسال.
+        </p>
 
         <div>
           <label className="block text-sm font-medium mb-1">الموضوع *</label>

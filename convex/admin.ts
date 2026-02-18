@@ -252,6 +252,51 @@ export const listSubscriptions = query({
   },
 });
 
+// ── Delete Billing Record ─────────────────────────────────────────
+
+export const deleteBillingRecord = mutation({
+  args: {
+    billingId: v.id("billing"),
+  },
+  handler: async (ctx, args) => {
+    const { clerkUserId } = await requireAdmin(ctx);
+
+    const billing = await ctx.db.get(args.billingId);
+    if (!billing) throw new Error("Billing record not found");
+
+    // Prevent deleting records with active Stripe subscriptions
+    if (billing.stripeSubscriptionId && (billing.status === "active" || billing.status === "trialing")) {
+      throw new Error("Cannot delete a billing record with an active Stripe subscription. Cancel the subscription first.");
+    }
+
+    await ctx.db.delete(args.billingId);
+
+    // Audit log
+    const adminUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkUserId))
+      .first();
+    if (adminUser) {
+      const org = await ctx.db.query("organizations").first();
+      if (org) {
+        await ctx.db.insert("audit_logs", {
+          orgId: org._id,
+          userId: adminUser._id,
+          action: "delete_billing_record",
+          resourceType: "billing",
+          resourceId: args.billingId,
+          metadata: JSON.stringify({
+            clerkUserId: billing.clerkUserId,
+            planKey: billing.planKey,
+            status: billing.status,
+          }),
+          createdAt: Date.now(),
+        });
+      }
+    }
+  },
+});
+
 // ── Feedback (Likes/Dislikes) ──────────────────────────────────────
 
 export const submitFeedback = mutation({
@@ -625,7 +670,7 @@ export const bootstrapAdmin = mutation({
     }
 
     // Find or create the user record
-    let user = await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_clerkId", (q) => q.eq("clerkId", clerkUserId))
       .first();

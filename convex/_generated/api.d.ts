@@ -16,6 +16,7 @@ import type * as billing from "../billing.js";
 import type * as brandKits from "../brandKits.js";
 import type * as credits from "../credits.js";
 import type * as debug from "../debug.js";
+import type * as emailing from "../emailing.js";
 import type * as generations from "../generations.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   brandKits: typeof brandKits;
   credits: typeof credits;
   debug: typeof debug;
+  emailing: typeof emailing;
   generations: typeof generations;
   http: typeof http;
   notifications: typeof notifications;

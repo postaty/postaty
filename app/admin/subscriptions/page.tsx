@@ -1,7 +1,9 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useState } from "react";
 import {
   CreditCard,
   Loader2,
@@ -10,6 +12,7 @@ import {
   AlertTriangle,
   XCircle,
   Users,
+  Trash2,
 } from "lucide-react";
 
 const PLAN_LABELS: Record<string, string> = {
@@ -29,6 +32,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; 
 
 export default function AdminSubscriptionsPage() {
   const data = useQuery(api.admin.listSubscriptions, {});
+  const deleteBilling = useMutation(api.admin.deleteBillingRecord);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   if (data === undefined) {
     return (
@@ -39,6 +44,18 @@ export default function AdminSubscriptionsPage() {
   }
 
   const { subscriptions, summary } = data;
+
+  const handleDelete = async (billingId: Id<"billing">) => {
+    if (!confirm("هل أنت متأكد من حذف هذا السجل؟")) return;
+    setDeletingId(billingId);
+    try {
+      await deleteBilling({ billingId });
+    } catch (err: any) {
+      alert(err.message ?? "فشل الحذف");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div>
@@ -70,6 +87,7 @@ export default function AdminSubscriptionsPage() {
                   <th className="text-right py-3 px-4 font-medium text-muted">الأرصدة الشهرية</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">إضافي</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الفترة الحالية</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">إجراء</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,6 +128,20 @@ export default function AdminSubscriptionsPage() {
                             {new Date(sub.currentPeriodEnd).toLocaleDateString("ar-SA")}
                           </>
                         ) : "—"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => handleDelete(sub._id as Id<"billing">)}
+                          disabled={deletingId === sub._id}
+                          className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+                          title="حذف"
+                        >
+                          {deletingId === sub._id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                        </button>
                       </td>
                     </tr>
                   );
