@@ -10,7 +10,6 @@ import {
   Sparkles,
   Upload,
   Download,
-  Brain,
   Languages,
   Palette,
   Smartphone,
@@ -50,9 +49,9 @@ const STEPS = [
     bg: "bg-primary/10",
   },
   {
-    icon: Brain,
-    title: "الذكاء الاصطناعي يبدع",
-    description: "خوارزميتنا تختار الألوان والتخطيط والنصوص تلقائياً",
+    icon: Sparkles,
+    title: "بوستاتي يبدع لك",
+    description: "بوستاتي يختار الألوان والتخطيط والنصوص تلقائياً",
     color: "text-accent",
     bg: "bg-accent/10",
   },
@@ -68,8 +67,8 @@ const STEPS = [
 // ─── Features ──────────────────────────────────────────────
 const FEATURES = [
   {
-    icon: Brain,
-    title: "ذكاء اصطناعي متقدم",
+    icon: Sparkles,
+    title: "تقنية ذكية متقدمة",
     description: "يفهم منتجك ويختار التصميم المناسب",
   },
   {
@@ -206,7 +205,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold">
               <Sparkles size={14} />
-              <span>مدعوم بالذكاء الاصطناعي</span>
+              <span>مدعوم بتقنية بوستاتي</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight">

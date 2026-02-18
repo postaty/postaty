@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: "/brand-kit", label: "هويتي", icon: Palette },
   // Center FAB is handled separately
   { href: "/templates", label: "القوالب", icon: LayoutTemplate },
-  { href: "/settings", label: "إعدادات", icon: Settings, disabled: true },
+  { href: "/settings", label: "إعدادات", icon: Settings },
 ] as const;
 
 export function BottomDock() {

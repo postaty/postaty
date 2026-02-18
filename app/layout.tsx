@@ -31,9 +31,45 @@ const notoKufiArabic = localFont({
   ],
 });
 
+const FALLBACK_SITE_URL = "https://postaty.com";
+const metadataBase = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? FALLBACK_SITE_URL);
+  } catch {
+    return new URL(FALLBACK_SITE_URL);
+  }
+})();
+
+const metadataTitle = "مولد منشورات السوشيال ميديا | Postaty";
+const metadataDescription = "أنشئ منشورات احترافية لعروضك على السوشيال ميديا خلال دقائق";
+
 export const metadata: Metadata = {
-  title: "مولد منشورات السوشيال ميديا",
-  description: "أنشئ منشورات احترافية لعروضك على السوشيال ميديا",
+  metadataBase,
+  title: metadataTitle,
+  description: metadataDescription,
+  openGraph: {
+    type: "website",
+    locale: "ar_AR",
+    siteName: "Postaty",
+    title: metadataTitle,
+    description: metadataDescription,
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Postaty - AI social media post generator",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: metadataTitle,
+    description: metadataDescription,
+    site: "@postatyapp",
+    creator: "@postatyapp",
+    images: ["/twitter-image.png"],
+  },
 };
 
 export default function RootLayout({
