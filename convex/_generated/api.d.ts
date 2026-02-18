@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as aiUsage from "../aiUsage.js";
 import type * as auditLogs from "../auditLogs.js";
+import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
 import type * as brandKits from "../brandKits.js";
 import type * as credits from "../credits.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   aiUsage: typeof aiUsage;
   auditLogs: typeof auditLogs;
+  auth: typeof auth;
   billing: typeof billing;
   brandKits: typeof brandKits;
   credits: typeof credits;

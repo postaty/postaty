@@ -79,7 +79,7 @@ function CreatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
-  const { orgId, userId } = useDevIdentity();
+  const { orgId, isLoading: isIdentityLoading } = useDevIdentity();
 
   // State
   const [category, setCategory] = useState<Category | null>(null);
@@ -114,7 +114,7 @@ function CreatePageContent() {
 
   const defaultBrandKit = useQuery(
     api.brandKits.getDefault,
-    isAuthenticated ? { orgId } : "skip"
+    isAuthenticated && orgId ? {} : "skip"
   );
 
   const brandKitPromptData: BrandKitPromptData | undefined = defaultBrandKit
@@ -220,8 +220,6 @@ function CreatePageContent() {
   ) => {
     try {
       const generationId = await createGeneration({
-        orgId,
-        userId,
         brandKitId: defaultBrandKit?._id,
         category: data.category,
         businessName: getBusinessName(data),
@@ -287,8 +285,6 @@ function CreatePageContent() {
 
     try {
       await savePosterTemplate({
-        orgId,
-        userId,
         name: result.designName,
         nameAr: result.designNameAr,
         description: result.designName,
@@ -305,7 +301,7 @@ function CreatePageContent() {
     }
   };
 
-  if (isAuthLoading) {
+  if (isAuthLoading || (isAuthenticated && isIdentityLoading)) {
     return <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center">
             <div className="h-12 w-12 bg-surface-2 rounded-full mb-4"></div>

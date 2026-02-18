@@ -5,13 +5,20 @@ import { api } from "@/convex/_generated/api";
 import { useDevIdentity } from "@/hooks/use-dev-identity";
 import { BrandKitForm } from "./brand-kit-form";
 import { Palette, Loader2 } from "lucide-react";
+import { SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
+
+const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export default function BrandKitPage() {
-  const { orgId } = useDevIdentity();
-  const existingKit = useQuery(api.brandKits.getDefault, { orgId });
+  const { isLoading: isIdentityLoading, isAuthenticated } = useDevIdentity();
+  const existingKit = useQuery(
+    api.brandKits.getDefault,
+    isAuthenticated ? {} : "skip"
+  );
 
   // Show loading while query initializes (undefined = loading, null = no kit)
-  const isLoading = existingKit === undefined;
+  const isLoading = isIdentityLoading || (isAuthenticated && existingKit === undefined);
 
   return (
     <main className="min-h-screen py-12 px-4 relative overflow-hidden bg-grid-pattern">
@@ -36,11 +43,25 @@ export default function BrandKitPage() {
           <div className="flex justify-center py-20">
             <Loader2 size={32} className="animate-spin text-primary" />
           </div>
+        ) : !isAuthenticated ? (
+          <div className="text-center py-16">
+            <p className="text-muted mb-6">سجل الدخول لإدارة هوية علامتك التجارية</p>
+            {AUTH_ENABLED ? (
+              <SignInButton forceRedirectUrl="/brand-kit">
+                <button className="px-6 py-3 bg-primary text-white rounded-xl font-bold">
+                  تسجيل الدخول
+                </button>
+              </SignInButton>
+            ) : (
+              <Link href="/create" className="px-6 py-3 bg-primary text-white rounded-xl font-bold inline-block">
+                ابدأ الآن
+              </Link>
+            )}
+          </div>
         ) : (
           <div className="glass-card p-6 md:p-8">
             <BrandKitForm
               existingKit={existingKit ?? undefined}
-              orgId={orgId}
             />
           </div>
         )}

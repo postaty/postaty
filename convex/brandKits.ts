@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireCurrentUser } from "./auth";
 
 const paletteValidator = v.object({
   primary: v.string(),
@@ -11,7 +12,6 @@ const paletteValidator = v.object({
 
 export const save = mutation({
   args: {
-    orgId: v.id("organizations"),
     name: v.string(),
     logoStorageId: v.optional(v.id("_storage")),
     palette: paletteValidator,
@@ -23,11 +23,12 @@ export const save = mutation({
     isDefault: v.boolean(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     // If setting as default, unset any existing defaults for this org
     if (args.isDefault) {
       const existing = await ctx.db
         .query("brand_kits")
-        .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+        .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
         .filter((q) => q.eq(q.field("isDefault"), true))
         .collect();
 
@@ -38,6 +39,7 @@ export const save = mutation({
 
     return await ctx.db.insert("brand_kits", {
       ...args,
+      orgId: currentUser.orgId,
       styleSeed: undefined,
       updatedAt: Date.now(),
     });
@@ -59,9 +61,11 @@ export const update = mutation({
     isDefault: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const { brandKitId, ...updates } = args;
     const kit = await ctx.db.get(brandKitId);
     if (!kit) throw new Error("Brand kit not found");
+    if (kit.orgId !== currentUser.orgId) throw new Error("Unauthorized");
 
     // If setting as default, unset any existing defaults for this org
     if (updates.isDefault) {
@@ -93,8 +97,10 @@ export const update = mutation({
 export const remove = mutation({
   args: { brandKitId: v.id("brand_kits") },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const kit = await ctx.db.get(args.brandKitId);
     if (!kit) throw new Error("Brand kit not found");
+    if (kit.orgId !== currentUser.orgId) throw new Error("Unauthorized");
 
     // Delete logo from storage if it exists
     if (kit.logoStorageId) {
@@ -108,8 +114,10 @@ export const remove = mutation({
 export const get = query({
   args: { brandKitId: v.id("brand_kits") },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const kit = await ctx.db.get(args.brandKitId);
     if (!kit) return null;
+    if (kit.orgId !== currentUser.orgId) throw new Error("Unauthorized");
 
     const logoUrl = kit.logoStorageId
       ? await ctx.storage.getUrl(kit.logoStorageId)
@@ -120,11 +128,12 @@ export const get = query({
 });
 
 export const getDefault = query({
-  args: { orgId: v.id("organizations") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await requireCurrentUser(ctx);
     const kit = await ctx.db
       .query("brand_kits")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
       .filter((q) => q.eq(q.field("isDefault"), true))
       .first();
 
@@ -139,11 +148,12 @@ export const getDefault = query({
 });
 
 export const listByOrg = query({
-  args: { orgId: v.id("organizations") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await requireCurrentUser(ctx);
     const kits = await ctx.db
       .query("brand_kits")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
       .collect();
 
     return Promise.all(
@@ -163,6 +173,11 @@ export const setStyleSeed = mutation({
     styleSeed: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+    const kit = await ctx.db.get(args.brandKitId);
+    if (!kit) throw new Error("Brand kit not found");
+    if (kit.orgId !== currentUser.orgId) throw new Error("Unauthorized");
+
     await ctx.db.patch(args.brandKitId, {
       styleSeed: args.styleSeed,
       updatedAt: Date.now(),

@@ -1,12 +1,11 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { requireCurrentUser } from "./auth";
 
 // ── Save a design as a reusable template ────────────────────────────
 
 export const save = mutation({
   args: {
-    orgId: v.id("organizations"),
-    userId: v.id("users"),
     name: v.string(),
     nameAr: v.string(),
     description: v.string(),
@@ -24,9 +23,10 @@ export const save = mutation({
     isPublic: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const templateId = await ctx.db.insert("poster_templates", {
-      orgId: args.orgId,
-      userId: args.userId,
+      orgId: currentUser.orgId,
+      userId: currentUser._id,
       name: args.name,
       nameAr: args.nameAr,
       description: args.description,
@@ -121,12 +121,12 @@ export const incrementUsage = mutation({
 export const remove = mutation({
   args: {
     templateId: v.id("poster_templates"),
-    orgId: v.id("organizations"),
   },
-  handler: async (ctx, { templateId, orgId }) => {
+  handler: async (ctx, { templateId }) => {
+    const currentUser = await requireCurrentUser(ctx);
     const template = await ctx.db.get(templateId);
     if (!template) throw new Error("Template not found");
-    if (template.orgId !== orgId) throw new Error("Unauthorized");
+    if (template.orgId !== currentUser.orgId) throw new Error("Unauthorized");
 
     if (template.previewStorageId) {
       await ctx.storage.delete(template.previewStorageId);

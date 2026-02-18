@@ -75,7 +75,7 @@ function NavBarWithAuth() {
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative w-9 h-9 transition-transform duration-300 group-hover:rotate-12">
               <Image
-                src="/logo-symbol.png"
+                src="/icon_logo_svg.svg"
                 alt="Postaty Symbol"
                 fill
                 className="object-contain"
@@ -174,7 +174,7 @@ function NavBarNoAuth() {
           <Link href="/" className="flex items-center gap-2 group">
             <div className="relative w-9 h-9 transition-transform duration-300 group-hover:rotate-12">
               <Image
-                src="/logo-symbol.png"
+                src="/icon_logo_svg.svg"
                 alt="Postaty Symbol"
                 fill
                 className="object-contain"

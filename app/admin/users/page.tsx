@@ -30,18 +30,38 @@ const STATUS_LABELS: Record<string, string> = {
 export default function AdminUsersPage() {
   const users = useQuery(api.admin.listUsers, { limit: 200 });
   const [search, setSearch] = useState("");
+  const [countryFilter, setCountryFilter] = useState<"all" | string>("all");
+
+  const countryOptions = useMemo(() => {
+    if (!users) return [];
+    const values = new Set<string>();
+    for (const user of users) {
+      if (user.detectedCountry) values.add(user.detectedCountry.toUpperCase());
+      if (user.pricingCountry) values.add(user.pricingCountry.toUpperCase());
+    }
+    return Array.from(values).sort();
+  }, [users]);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
-    if (!search.trim()) return users;
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      const matchesSearch =
+        !q ||
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        (u.billing?.planKey ?? "").includes(q)
-    );
-  }, [users, search]);
+        (u.billing?.planKey ?? "").toLowerCase().includes(q) ||
+        (u.detectedCountry ?? "").toLowerCase().includes(q) ||
+        (u.pricingCountry ?? "").toLowerCase().includes(q);
+
+      const matchesCountry =
+        countryFilter === "all" ||
+        (u.detectedCountry ?? "").toUpperCase() === countryFilter ||
+        (u.pricingCountry ?? "").toUpperCase() === countryFilter;
+
+      return matchesSearch && matchesCountry;
+    });
+  }, [users, search, countryFilter]);
 
   if (users === undefined) {
     return (
@@ -61,16 +81,30 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="بحث بالاسم أو البريد..."
-          className="w-full pr-12 pl-4 py-3 bg-surface-1 border border-card-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-        />
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <div className="relative md:col-span-2">
+          <Search size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="بحث بالاسم أو البريد أو الدولة..."
+            className="w-full pr-12 pl-4 py-3 bg-surface-1 border border-card-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+        <select
+          value={countryFilter}
+          onChange={(e) => setCountryFilter(e.target.value)}
+          className="w-full px-3 py-3 bg-surface-1 border border-card-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          <option value="all">كل الدول</option>
+          {countryOptions.map((country) => (
+            <option key={country} value={country}>
+              {country}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Users Table */}
@@ -84,6 +118,8 @@ export default function AdminUsersPage() {
                   <th className="text-right py-3 px-4 font-medium text-muted">الدور</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الخطة</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الحالة</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">الدولة (كشف)</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">دولة التسعير</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الأرصدة</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">التوليدات</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">تكلفة AI</th>
@@ -124,6 +160,12 @@ export default function AdminUsersPage() {
                       }`}>
                         {STATUS_LABELS[user.billing?.status ?? "none"]}
                       </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-xs font-mono">{user.detectedCountry?.toUpperCase() ?? "—"}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="text-xs font-mono">{user.pricingCountry?.toUpperCase() ?? "—"}</span>
                     </td>
                     <td className="py-3 px-4">
                       {user.billing ? (

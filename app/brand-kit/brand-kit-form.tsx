@@ -57,10 +57,9 @@ interface BrandKitFormProps {
     dontRules: string[];
     isDefault: boolean;
   };
-  orgId: Id<"organizations">;
 }
 
-export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
+export function BrandKitForm({ existingKit }: BrandKitFormProps) {
   const [name, setName] = useState(existingKit?.name ?? "");
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(
@@ -217,7 +216,6 @@ export function BrandKitForm({ existingKit, orgId }: BrandKitFormProps) {
         });
       } else {
         await saveBrandKit({
-          orgId,
           name: name.trim(),
           logoStorageId,
           palette,

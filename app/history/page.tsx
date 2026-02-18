@@ -9,6 +9,10 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Category } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { SignInButton } from "@clerk/nextjs";
+import Link from "next/link";
+
+const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 const HISTORY_FILTERS: Array<{ value: "all" | Category; label: string }> = [
   { value: "all", label: "الكل" },
@@ -21,7 +25,7 @@ const HISTORY_FILTERS: Array<{ value: "all" | Category; label: string }> = [
 ];
 
 export default function HistoryPage() {
-  const { userId, orgId } = useDevIdentity();
+  const { isLoading: isIdentityLoading, isAuthenticated } = useDevIdentity();
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
   const [selectedCategory, setSelectedCategory] = useState<"all" | Category>("all");
   const categoryFilter = selectedCategory === "all" ? undefined : selectedCategory;
@@ -29,7 +33,9 @@ export default function HistoryPage() {
   // User-specific query
   const generations = useQuery(
     api.generations.listByUser,
-    viewMode === "list" ? { userId, limit: 50, category: categoryFilter } : "skip"
+    isAuthenticated && viewMode === "list"
+      ? { limit: 50, category: categoryFilter }
+      : "skip"
   );
 
   return (
@@ -101,11 +107,26 @@ export default function HistoryPage() {
         </div>
 
         {/* Content */}
-        {viewMode === "gallery" ? (
-          <PosterGallery orgId={orgId} category={categoryFilter} />
+        {!isAuthenticated && !isIdentityLoading ? (
+          <div className="text-center py-16">
+            <p className="text-muted mb-6">سجّل الدخول لعرض السجل</p>
+            {AUTH_ENABLED ? (
+              <SignInButton forceRedirectUrl="/history">
+                <button className="px-6 py-3 bg-primary text-white rounded-xl font-bold">
+                  تسجيل الدخول
+                </button>
+              </SignInButton>
+            ) : (
+              <Link href="/create" className="px-6 py-3 bg-primary text-white rounded-xl font-bold inline-block">
+                ابدأ الآن
+              </Link>
+            )}
+          </div>
+        ) : viewMode === "gallery" ? (
+          <PosterGallery category={categoryFilter} />
         ) : (
           <div className="max-w-5xl mx-auto space-y-4">
-            {generations === undefined ? (
+            {isIdentityLoading || generations === undefined ? (
               <div className="flex justify-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>

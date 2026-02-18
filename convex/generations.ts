@@ -1,6 +1,7 @@
 import { mutation, query, internalMutation } from "./_generated/server";
 import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
+import { requireCurrentUser } from "./auth";
 
 const categoryValidator = v.union(
   v.literal("restaurant"),
@@ -22,8 +23,6 @@ const statusValidator = v.union(
 
 export const create = mutation({
   args: {
-    orgId: v.id("organizations"),
-    userId: v.id("users"),
     brandKitId: v.optional(v.id("brand_kits")),
     templateId: v.optional(v.id("templates")),
     category: categoryValidator,
@@ -34,6 +33,7 @@ export const create = mutation({
     creditsCharged: v.number(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const outputs = args.formats.map((format) => ({
       format,
       storageId: undefined,
@@ -42,8 +42,8 @@ export const create = mutation({
     }));
 
     return await ctx.db.insert("generations", {
-      orgId: args.orgId,
-      userId: args.userId,
+      orgId: currentUser.orgId,
+      userId: currentUser._id,
       brandKitId: args.brandKitId,
       templateId: args.templateId,
       category: args.category,
@@ -67,6 +67,11 @@ export const updateStatus = mutation({
     durationMs: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+    const generation = await ctx.db.get(args.generationId);
+    if (!generation) throw new Error("Generation not found");
+    if (generation.userId !== currentUser._id) throw new Error("Unauthorized");
+
     await ctx.db.patch(args.generationId, {
       status: args.status,
       ...(args.error !== undefined && { error: args.error }),
@@ -81,6 +86,11 @@ export const updatePrompt = mutation({
     promptUsed: v.string(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+    const generation = await ctx.db.get(args.generationId);
+    if (!generation) throw new Error("Generation not found");
+    if (generation.userId !== currentUser._id) throw new Error("Unauthorized");
+
     await ctx.db.patch(args.generationId, {
       promptUsed: args.promptUsed,
     });
@@ -96,8 +106,10 @@ export const updateOutput = mutation({
     height: v.number(),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const generation = await ctx.db.get(args.generationId);
     if (!generation) throw new Error("Generation not found");
+    if (generation.userId !== currentUser._id) throw new Error("Unauthorized");
 
     const outputs = generation.outputs.map((output) =>
       output.format === args.format
@@ -117,8 +129,10 @@ export const updateOutput = mutation({
 export const get = query({
   args: { generationId: v.id("generations") },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const generation = await ctx.db.get(args.generationId);
     if (!generation) return null;
+    if (generation.userId !== currentUser._id) throw new Error("Unauthorized");
 
     const outputs = await Promise.all(
       generation.outputs.map(async (output) => ({
@@ -135,15 +149,15 @@ export const get = query({
 
 export const listByOrg = query({
   args: {
-    orgId: v.id("organizations"),
     limit: v.optional(v.number()),
     category: v.optional(categoryValidator),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const limit = args.limit ?? 20;
     const baseQuery = ctx.db
       .query("generations")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
       .order("desc");
 
     const generations = args.category
@@ -169,14 +183,14 @@ export const listByOrg = query({
 // Paginated query for infinite scroll
 export const listByOrgPaginated = query({
   args: {
-    orgId: v.id("organizations"),
     category: v.optional(categoryValidator),
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const baseQuery = ctx.db
       .query("generations")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
       .order("desc");
 
     const results = args.category
@@ -208,15 +222,15 @@ export const listByOrgPaginated = query({
 
 export const listByUser = query({
   args: {
-    userId: v.id("users"),
     limit: v.optional(v.number()),
     category: v.optional(categoryValidator),
   },
   handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
     const limit = args.limit ?? 20;
     const baseQuery = ctx.db
       .query("generations")
-      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .withIndex("by_userId", (q) => q.eq("userId", currentUser._id))
       .order("desc");
 
     const generations = args.category
@@ -240,11 +254,12 @@ export const listByUser = query({
 });
 
 export const countActiveByOrg = query({
-  args: { orgId: v.id("organizations") },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
+    const currentUser = await requireCurrentUser(ctx);
     const active = await ctx.db
       .query("generations")
-      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .withIndex("by_orgId", (q) => q.eq("orgId", currentUser.orgId))
       .filter((q) =>
         q.or(
           q.eq(q.field("status"), "queued"),
@@ -301,6 +316,7 @@ export const list = query({
 
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
+    await requireCurrentUser(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
@@ -308,6 +324,7 @@ export const generateUploadUrl = mutation({
 export const getStorageUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
+    await requireCurrentUser(ctx);
     return await ctx.storage.getUrl(args.storageId);
   },
 });

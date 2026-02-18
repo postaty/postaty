@@ -13,7 +13,7 @@ export function SignInForm() {
       <div className="flex flex-col items-center gap-4 mb-8">
         <Link href="/" className="hover:opacity-80 transition-opacity">
           <Image
-            src="/full-logo.png"
+            src="/name_logo_svg.svg"
             alt="Postaty Logo"
             width={180}
             height={50}

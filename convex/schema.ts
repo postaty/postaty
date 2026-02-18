@@ -20,6 +20,17 @@ export default defineSchema(
       businessCategory: v.optional(v.string()),
       brandColors: v.optional(v.array(v.string())),
       logoStorageId: v.optional(v.id("_storage")),
+      detectedCountry: v.optional(v.string()),
+      pricingCountry: v.optional(v.string()),
+      countrySource: v.optional(
+        v.union(
+          v.literal("vercel_geo"),
+          v.literal("billing_address"),
+          v.literal("manual")
+        )
+      ),
+      countryLockedAt: v.optional(v.number()),
+      lastSeenAt: v.optional(v.number()),
       createdAt: v.number(),
     })
       .index("by_clerkId", ["clerkId"])
