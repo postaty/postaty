@@ -47,6 +47,8 @@ const metadataBase = (() => {
 
 const metadataTitle = "مولد منشورات السوشيال ميديا | Postaty";
 const metadataDescription = "أنشئ منشورات احترافية لعروضك على السوشيال ميديا خلال دقائق";
+const openGraphImageUrl = new URL("/opengraph-image.png", metadataBase).toString();
+const twitterImageUrl = new URL("/twitter-image.png", metadataBase).toString();
 
 export const metadata: Metadata = {
   metadataBase,
@@ -64,7 +66,7 @@ export const metadata: Metadata = {
     description: metadataDescription,
     images: [
       {
-        url: "https://www.postaty.com/opengraph-image.png",
+        url: openGraphImageUrl,
         width: 1200,
         height: 630,
         alt: "Postaty - AI social media post generator",
@@ -77,7 +79,7 @@ export const metadata: Metadata = {
     description: metadataDescription,
     site: "@postatyapp",
     creator: "@postatyapp",
-    images: ["https://www.postaty.com/twitter-image.png"],
+    images: [twitterImageUrl],
   },
 };
 
