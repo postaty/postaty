@@ -8,16 +8,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Sparkles, LayoutGrid, LogIn } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
 
 // Components
 import { CategorySelector } from "../components/category-selector";
-import { RestaurantForm } from "../components/forms/restaurant-form";
-import { SupermarketForm } from "../components/forms/supermarket-form";
-import { EcommerceForm } from "../components/forms/ecommerce-form";
-import { ServicesForm } from "../components/forms/services-form";
-import { FashionForm } from "../components/forms/fashion-form";
-import { BeautyForm } from "../components/forms/beauty-form";
-import dynamic from "next/dynamic";
 
 // Types & Libs
 import type { Category, PostFormData, PosterResult, PosterGenStep } from "@/lib/types";
@@ -32,10 +26,48 @@ const PosterGrid = dynamic(
   () => import("../components/poster-grid").then((mod) => mod.PosterGrid)
 );
 
+const RestaurantForm = dynamic(
+  () => import("../components/forms/restaurant-form").then((mod) => mod.RestaurantForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+const SupermarketForm = dynamic(
+  () => import("../components/forms/supermarket-form").then((mod) => mod.SupermarketForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+const EcommerceForm = dynamic(
+  () => import("../components/forms/ecommerce-form").then((mod) => mod.EcommerceForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+const ServicesForm = dynamic(
+  () => import("../components/forms/services-form").then((mod) => mod.ServicesForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+const FashionForm = dynamic(
+  () => import("../components/forms/fashion-form").then((mod) => mod.FashionForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+const BeautyForm = dynamic(
+  () => import("../components/forms/beauty-form").then((mod) => mod.BeautyForm),
+  { loading: () => <FormLoadingFallback /> }
+);
+
 const ALL_CATEGORIES: Category[] = ["restaurant", "supermarket", "ecommerce", "services", "fashion", "beauty"];
 
 function getNowMs(): number {
   return Date.now();
+}
+
+function FormLoadingFallback() {
+  return (
+    <div className="rounded-2xl border border-card-border bg-surface-1 p-8">
+      <div className="animate-pulse space-y-4">
+        <div className="h-5 w-1/3 rounded bg-surface-2" />
+        <div className="h-11 rounded bg-surface-2" />
+        <div className="h-11 rounded bg-surface-2" />
+        <div className="h-40 rounded bg-surface-2" />
+      </div>
+    </div>
+  );
 }
 
 function getBusinessName(data: PostFormData): string {

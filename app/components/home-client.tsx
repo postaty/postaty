@@ -3,6 +3,7 @@
 import { useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -24,14 +25,20 @@ import {
   Shirt,
 } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
-import { HeroVisual } from "./hero-visual";
-import { ShowcaseCarousel } from "./showcase-carousel";
 import { AnimateOnScroll, StaggerOnScroll } from "./animate-on-scroll";
 import { STAGGER_ITEM, TAP_SCALE } from "@/lib/animation";
 import type { PricingSet } from "@/lib/country-pricing";
 import { formatPrice } from "@/lib/country-pricing";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+const HeroVisual = dynamic(
+  () => import("./hero-visual").then((mod) => mod.HeroVisual),
+  { loading: () => <div className="w-full max-w-xs lg:max-w-sm aspect-[3/4] rounded-3xl bg-surface-2 animate-pulse" /> }
+);
+const ShowcaseCarousel = dynamic(
+  () => import("./showcase-carousel").then((mod) => mod.ShowcaseCarousel),
+  { loading: () => null }
+);
 
 // ─── How It Works Steps ────────────────────────────────────
 const STEPS = [

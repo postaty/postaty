@@ -13,18 +13,8 @@ const notoKufiArabic = localFont({
   display: "swap",
   src: [
     {
-      path: "./fonts/NotoKufiArabic-300.ttf",
-      weight: "300",
-      style: "normal",
-    },
-    {
       path: "./fonts/NotoKufiArabic-400.ttf",
       weight: "400",
-      style: "normal",
-    },
-    {
-      path: "./fonts/NotoKufiArabic-500.ttf",
-      weight: "500",
       style: "normal",
     },
     {
@@ -35,11 +25,6 @@ const notoKufiArabic = localFont({
     {
       path: "./fonts/NotoKufiArabic-700.ttf",
       weight: "700",
-      style: "normal",
-    },
-    {
-      path: "./fonts/NotoKufiArabic-800.ttf",
-      weight: "800",
       style: "normal",
     },
   ],

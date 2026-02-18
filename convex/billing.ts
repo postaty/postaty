@@ -861,7 +861,16 @@ export const addAddonCredits = internalMutation({
           .withIndex("by_stripeEventId", (q) => q.eq("stripeEventId", args.stripeEventId))
           .first()
       : null;
+    const existingByCheckoutSessionId = args.stripeCheckoutSessionId
+      ? await ctx.db
+          .query("creditLedger")
+          .filter((q) =>
+            q.eq(q.field("stripeCheckoutSessionId"), args.stripeCheckoutSessionId)
+          )
+          .first()
+      : null;
     if (existingByEventId) return existingByEventId._id;
+    if (existingByCheckoutSessionId) return existingByCheckoutSessionId._id;
 
     const byCustomer = await ctx.db
       .query("billing")
@@ -1176,10 +1185,56 @@ export const getCheckoutSessionStatus = action({
   args: { sessionId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    extractClerkUserId(identity);
+    const clerkUserId = extractClerkUserId(identity);
 
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(args.sessionId);
+    const stripeCustomerId = toStripeString(session.customer as string | null);
+
+    // Reconcile billing from the checkout session so credits reflect immediately
+    // even if webhook delivery is delayed.
+    if (session.status === "complete" && stripeCustomerId) {
+      const existingBilling = await ctx.runQuery(internal.billing.getBillingByClerkUserId, {
+        clerkUserId,
+      });
+      if (existingBilling?.stripeCustomerId && existingBilling.stripeCustomerId !== stripeCustomerId) {
+        throw new Error("Checkout session customer does not match current user");
+      }
+
+      if (session.mode === "subscription" && typeof session.subscription === "string") {
+        const subscription = (await stripe.subscriptions.retrieve(
+          session.subscription
+        )) as unknown as StripeSubscriptionShape;
+        const planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
+        if (planKey) {
+          await upsertFromSubscriptionEvent(ctx, {
+            clerkUserId,
+            stripeCustomerId,
+            stripeSubscriptionId: subscription.id,
+            planKey,
+            status: subscription.status,
+            currentPeriodStart: subscription.current_period_start
+              ? subscription.current_period_start * 1000
+              : undefined,
+            currentPeriodEnd: subscription.current_period_end
+              ? subscription.current_period_end * 1000
+              : undefined,
+          });
+        }
+      }
+
+      if (session.mode === "payment") {
+        const addonCredits = Number(session.metadata?.addonCredits ?? "0");
+        if (addonCredits > 0) {
+          await ctx.runMutation(internal.billing.addAddonCredits, {
+            stripeCustomerId,
+            clerkUserId,
+            credits: addonCredits,
+            stripeCheckoutSessionId: session.id,
+          });
+        }
+      }
+    }
 
     return {
       status: session.status,

@@ -3,10 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Palette, Clock, Zap, Plus, Loader2, Settings } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { Palette, Clock, Plus, Loader2, Settings, Coins } from "lucide-react";
+import { SignInButton, useAuth, UserButton } from "@clerk/nextjs";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -33,28 +32,9 @@ export function NavBar() {
 function NavBarWithAuth() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexLoading } = useConvexAuth();
   const { isLoaded: isClerkLoaded, userId } = useAuth();
 
   const isClerkSignedIn = Boolean(userId);
-  const initializeBilling = useMutation(api.billing.initializeBillingForCurrentUser);
-  const didInitBilling = useRef(false);
-
-  const creditState = useQuery(
-    api.billing.getCreditState,
-    isConvexAuthenticated ? {} : "skip"
-  );
-
-  useEffect(() => {
-    if (!isConvexAuthenticated || !isClerkSignedIn || didInitBilling.current) return;
-    if (creditState !== null) return;
-
-    didInitBilling.current = true;
-    void initializeBilling().catch((error) => {
-      didInitBilling.current = false;
-      console.error("Failed to initialize billing:", error);
-    });
-  }, [creditState, initializeBilling, isClerkSignedIn, isConvexAuthenticated]);
 
   const handleGenerateClick = () => {
     if (!isClerkLoaded) return;
@@ -127,27 +107,10 @@ function NavBarWithAuth() {
               <span>إنشاء جديد</span>
             </button>
 
-            {!isClerkLoaded || (isClerkSignedIn && isConvexLoading) ? (
+            {!isClerkLoaded ? (
               <Loader2 size={20} className="animate-spin text-muted" />
             ) : isClerkSignedIn ? (
-              <>
-                <div className="hidden sm:flex items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20 text-xs font-semibold shadow-sm">
-                  <Zap size={14} className="fill-primary text-primary animate-pulse" />
-                  <span>
-                    {isConvexLoading
-                      ? "جاري التحميل..."
-                      : !isConvexAuthenticated
-                        ? "مشكلة مزامنة الجلسة"
-                        : creditState === undefined
-                          ? "جاري التحميل..."
-                          : creditState === null
-                            ? "0 رصيد"
-                            : `${creditState.totalRemaining} رصيد`}
-                  </span>
-                </div>
-
-                <UserButton afterSignOutUrl="/" />
-              </>
+              <CreditsBadge />
             ) : (
               <div className="hidden sm:block">
                   <SignInButton>
@@ -161,6 +124,28 @@ function NavBarWithAuth() {
         </div>
       </div>
     </nav>
+  );
+}
+
+function CreditsBadge() {
+  const creditState = useQuery(api.billing.getCreditState);
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/checkout?addon=addon_5"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-2/60 border border-card-border text-sm font-bold transition-all hover:bg-surface-2 hover:border-primary/30 group"
+      >
+        <Coins size={14} className="text-amber-500" />
+        <span className="text-foreground tabular-nums">
+          {creditState?.totalRemaining ?? "—"}
+        </span>
+        <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+          شحن+
+        </span>
+      </Link>
+      <UserButton />
+    </div>
   );
 }
 
