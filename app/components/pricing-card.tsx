@@ -51,7 +51,6 @@ export type PricingCardProps = {
   planKey: PlanKey;
   monthlyPrice: number;
   firstMonthPrice: number;
-  currencySymbol: string;
   isPopular?: boolean;
   ctaButton: React.ReactNode;
 };
@@ -60,7 +59,6 @@ export function PricingCard({
   planKey,
   monthlyPrice,
   firstMonthPrice,
-  currencySymbol,
   isPopular,
   ctaButton,
 }: PricingCardProps) {
@@ -88,14 +86,14 @@ export function PricingCard({
         {PLAN_LABELS[planKey]}
       </div>
       <div className="text-4xl font-black mb-1">
-        {formatPrice(monthlyPrice, currencySymbol)}{" "}
+        {formatPrice(monthlyPrice)}{" "}
         <span className="text-lg text-muted font-medium">/شهر</span>
       </div>
       <p className="text-muted text-sm mb-1">
-        الشهر الأول: {formatPrice(firstMonthPrice, currencySymbol)}
+        الشهر الأول: {formatPrice(firstMonthPrice)}
       </p>
       <p className="text-muted text-xs mb-6 opacity-75">
-        ثم {formatPrice(monthlyPrice, currencySymbol)} شهرياً
+        ثم {formatPrice(monthlyPrice)} شهرياً
       </p>
       <ul className="space-y-3 mb-8">
         {features.map((item, i) => (

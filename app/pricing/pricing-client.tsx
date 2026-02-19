@@ -1,8 +1,10 @@
 "use client";
 
+import { useQuery } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
 import { SignInButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { api } from "@/convex/_generated/api";
 import type { PricingSet } from "@/lib/country-pricing";
 import { PricingCard } from "@/app/components/pricing-card";
 import { ArrowLeft, Zap, Loader2 } from "lucide-react";
@@ -13,18 +15,16 @@ const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 type PlanKey = "starter" | "growth" | "dominant";
 
 type PricingClientProps = {
+  countryCode: string;
   fallbackPricing: PricingSet;
 };
 
-export default function PricingClient({ fallbackPricing }: PricingClientProps) {
+export default function PricingClient({ countryCode, fallbackPricing }: PricingClientProps) {
   const router = useRouter();
+  const convexPricing = useQuery(api.stripeAdmin.getCountryPricing, { countryCode });
 
-  const prices = {
-    symbol: fallbackPricing.symbol,
-    starter: fallbackPricing.starter,
-    growth: fallbackPricing.growth,
-    dominant: fallbackPricing.dominant,
-  };
+  // Build pricing from Convex data or static fallback — always USD
+  const prices = buildPrices(convexPricing, fallbackPricing);
 
   return (
     <main className="min-h-screen relative pt-8 pb-16 px-4 md:pt-16 md:pb-24">
@@ -54,7 +54,6 @@ export default function PricingClient({ fallbackPricing }: PricingClientProps) {
               planKey={planKey}
               monthlyPrice={prices[planKey].monthly}
               firstMonthPrice={prices[planKey].firstMonth}
-              currencySymbol={prices.symbol}
               isPopular={planKey === "growth"}
               ctaButton={
                 <PlanCTA planKey={planKey} isPopular={planKey === "growth"} router={router} />
@@ -84,6 +83,46 @@ export default function PricingClient({ fallbackPricing }: PricingClientProps) {
       </div>
     </main>
   );
+}
+
+function buildPrices(
+  convexPricing: Array<{
+    planKey: string;
+    monthlyAmountCents: number;
+    firstMonthAmountCents: number;
+    currencySymbol: string;
+  }> | undefined,
+  fallback: PricingSet
+): {
+  starter: { monthly: number; firstMonth: number };
+  growth: { monthly: number; firstMonth: number };
+  dominant: { monthly: number; firstMonth: number };
+} {
+  if (!convexPricing || convexPricing.length === 0) {
+    return {
+      starter: fallback.starter,
+      growth: fallback.growth,
+      dominant: fallback.dominant,
+    };
+  }
+
+  const result = {
+    starter: fallback.starter,
+    growth: fallback.growth,
+    dominant: fallback.dominant,
+  };
+
+  for (const row of convexPricing) {
+    const key = row.planKey as PlanKey;
+    if (key in result) {
+      result[key] = {
+        monthly: row.monthlyAmountCents / 100,
+        firstMonth: row.firstMonthAmountCents / 100,
+      };
+    }
+  }
+
+  return result;
 }
 
 function PlanCTA({

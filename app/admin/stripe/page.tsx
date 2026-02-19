@@ -992,8 +992,8 @@ function CountryPricingTab() {
       await updateCountryPricingAction({
         countryCode: row.countryCode,
         planKey: row.planKey,
-        currency: row.currency,
-        currencySymbol: row.currencySymbol,
+        currency: "USD",
+        currencySymbol: "$",
         monthlyAmountCents: Math.round(parseFloat(editValues.monthlyAmountCents) * 100),
         firstMonthAmountCents: Math.round(parseFloat(editValues.firstMonthAmountCents) * 100),
         isActive: row.isActive,
@@ -1036,7 +1036,7 @@ function CountryPricingTab() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-xs" dir="ltr">
-                        {row.currencySymbol} {row.currency}
+                        $ USD
                       </td>
                       <td className="py-3 px-4">
                         {editingRow === row._id ? (
@@ -1051,7 +1051,7 @@ function CountryPricingTab() {
                             dir="ltr"
                           />
                         ) : (
-                          <span dir="ltr">{row.currencySymbol}{(row.monthlyAmountCents / 100).toFixed(2)}</span>
+                          <span dir="ltr">${(row.monthlyAmountCents / 100).toFixed(2)}</span>
                         )}
                       </td>
                       <td className="py-3 px-4">
@@ -1067,7 +1067,7 @@ function CountryPricingTab() {
                             dir="ltr"
                           />
                         ) : (
-                          <span dir="ltr">{row.currencySymbol}{(row.firstMonthAmountCents / 100).toFixed(2)}</span>
+                          <span dir="ltr">${(row.firstMonthAmountCents / 100).toFixed(2)}</span>
                         )}
                       </td>
                       <td className="py-3 px-4">

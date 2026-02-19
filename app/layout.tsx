@@ -32,23 +32,23 @@ const notoKufiArabic = localFont({
   ],
 });
 
-const FALLBACK_SITE_URL = "https://www.postaty.com";
+const SITE_URL = "https://www.postaty.com";
 const metadataBase = (() => {
   try {
     const configuredUrl =
       process.env.NEXT_PUBLIC_SITE_URL ??
       process.env.SITE_URL ??
-      FALLBACK_SITE_URL;
+      SITE_URL;
     return new URL(configuredUrl);
   } catch {
-    return new URL(FALLBACK_SITE_URL);
+    return new URL(SITE_URL);
   }
 })();
 
 const metadataTitle = "مولد منشورات السوشيال ميديا | Postaty";
-const metadataDescription = "أنشئ منشورات احترافية لعروضك على السوشيال ميديا خلال دقائق";
-const openGraphImageUrl = new URL("/opengraph-image.png", metadataBase).toString();
-const twitterImageUrl = new URL("/twitter-image.png", metadataBase).toString();
+const metadataDescription =
+  "أنشئ منشورات احترافية لعروضك على السوشيال ميديا خلال دقائق";
+const ogImageUrl = `${SITE_URL}/opengraph-image.png`;
 
 export const metadata: Metadata = {
   metadataBase,
@@ -59,16 +59,17 @@ export const metadata: Metadata = {
   description: metadataDescription,
   openGraph: {
     type: "website",
-    url: "/",
+    url: SITE_URL,
     locale: "ar_AR",
     siteName: "Postaty",
     title: metadataTitle,
     description: metadataDescription,
     images: [
       {
-        url: openGraphImageUrl,
+        url: ogImageUrl,
         width: 1200,
         height: 630,
+        type: "image/png",
         alt: "Postaty - AI social media post generator",
       },
     ],
@@ -79,7 +80,19 @@ export const metadata: Metadata = {
     description: metadataDescription,
     site: "@postatyapp",
     creator: "@postatyapp",
-    images: [twitterImageUrl],
+    images: [
+      {
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: "Postaty - AI social media post generator",
+      },
+    ],
+  },
+  other: {
+    "og:image:width": "1200",
+    "og:image:height": "630",
+    "og:image:type": "image/png",
   },
 };
 
@@ -96,9 +109,7 @@ export default function RootLayout({
         {clerkPublishableKey ? <AuthSync /> : null}
         <AccountStatusGate>
           <NavBar />
-          <main className="pb-20 md:pb-0 min-h-screen">
-            {children}
-          </main>
+          <main className="pb-20 md:pb-0 min-h-screen">{children}</main>
           <Footer />
           <BottomDock />
         </AccountStatusGate>
@@ -108,6 +119,14 @@ export default function RootLayout({
 
   return (
     <html lang="ar" dir="rtl">
+      <head>
+        {/* Hardcoded OG meta tags as fallback for WhatsApp/Facebook crawlers */}
+        <meta property="og:image" content={ogImageUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/png" />
+        <meta name="twitter:image" content={ogImageUrl} />
+      </head>
       <body className={`${notoKufiArabic.variable} antialiased`}>
         {clerkPublishableKey ? (
           <ClerkProvider publishableKey={clerkPublishableKey}>

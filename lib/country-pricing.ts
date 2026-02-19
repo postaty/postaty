@@ -5,12 +5,13 @@ export type PlanPricing = {
 
 export type PricingSet = {
   currency: "USD";
-  symbol: string;
+  symbol: "$";
   starter: PlanPricing;
   growth: PlanPricing;
   dominant: PlanPricing;
 };
 
+/** Default USD pricing (used when no country-specific override exists) */
 const USD_PRICING: PricingSet = {
   currency: "USD",
   symbol: "$",
@@ -19,11 +20,17 @@ const USD_PRICING: PricingSet = {
   dominant: { monthly: 27, firstMonth: 19 },
 };
 
-export function getPricing(): PricingSet {
+export function normalizeCountry(country?: string | null) {
+  if (!country) return "US";
+  return country.toUpperCase();
+}
+
+/** Static fallback — always USD. Admin overrides come from Convex. */
+export function getPricingForCountry(_country?: string | null): PricingSet {
   return USD_PRICING;
 }
 
-export function formatPrice(value: number, symbol: string) {
-  if (Number.isInteger(value)) return `${symbol}${value}`;
-  return `${symbol}${value.toFixed(1)}`;
+export function formatPrice(value: number) {
+  if (Number.isInteger(value)) return `$${value}`;
+  return `$${value.toFixed(1)}`;
 }
