@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/hooks/use-locale";
+import { PasswordInput } from "./password-input";
 
 export function SignInForm() {
   const { t } = useLocale();
@@ -30,7 +31,10 @@ export function SignInForm() {
       </div>
 
       <SignIn.Root>
+        {/* Step 1: Start — email + password */}
         <SignIn.Step name="start" className="space-y-4 w-full">
+          <Clerk.GlobalError className="block text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-center" />
+
           <div className="grid grid-cols-2 gap-3">
             <Clerk.Connection
               name="google"
@@ -78,12 +82,13 @@ export function SignInForm() {
           <Clerk.Field name="password" className="flex flex-col gap-1.5">
             <div className="flex items-center justify-between">
               <Clerk.Label className="text-sm font-medium text-foreground">{t("كلمة المرور", "Password")}</Clerk.Label>
+              <SignIn.Action navigate="forgot-password" asChild>
+                <button type="button" className="text-xs text-primary hover:text-primary-hover hover:underline transition-colors">
+                  {t("نسيت كلمة المرور؟", "Forgot password?")}
+                </button>
+              </SignIn.Action>
             </div>
-            <Clerk.Input
-              type="password"
-              className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
-              placeholder="••••••••"
-            />
+            <PasswordInput />
             <Clerk.FieldError className="text-xs text-danger mt-1" />
           </Clerk.Field>
 
@@ -96,11 +101,154 @@ export function SignInForm() {
           </SignIn.Action>
 
           <div className="pt-4 text-center text-sm text-muted-foreground">
-            {t("ليس لديك حساب؟", "Don’t have an account?")} {" "}
+            {t("ليس لديك حساب؟", "Don't have an account?")} {" "}
             <Link href="/sign-up" className="text-primary hover:text-primary-hover font-medium hover:underline transition-colors">
               {t("أنشئ حساباً جديداً", "Create one")}
             </Link>
           </div>
+        </SignIn.Step>
+
+        {/* Step 2: Verifications — handles email code (Client Trust) and password reset code */}
+        <SignIn.Step name="verifications" className="space-y-4 w-full">
+          <Clerk.GlobalError className="block text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-center" />
+
+          {/* Email code verification (triggered by Client Trust on new devices) */}
+          <SignIn.Strategy name="email_code">
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold text-foreground">{t("تحقق من بريدك", "Check your email")}</h2>
+              <p className="text-sm text-muted-foreground text-center">
+                {t("أرسلنا رمز تحقق إلى بريدك الإلكتروني.", "We sent a verification code to your email.")}
+              </p>
+            </div>
+
+            <Clerk.Field name="code" className="flex flex-col gap-1.5">
+              <Clerk.Label className="text-sm font-medium text-foreground">{t("رمز التحقق", "Verification code")}</Clerk.Label>
+              <Clerk.Input
+                type="otp"
+                className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center tracking-widest"
+                placeholder="000000"
+              />
+              <Clerk.FieldError className="text-xs text-danger mt-1" />
+            </Clerk.Field>
+
+            <SignIn.Action submit asChild>
+              <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
+                <Clerk.Loading>
+                  {(isLoading) => isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("تحقق", "Verify")}
+                </Clerk.Loading>
+              </button>
+            </SignIn.Action>
+
+            <div className="flex items-center justify-between pt-2">
+              <SignIn.Action resend asChild>
+                <button type="button" className="text-xs text-primary hover:text-primary-hover hover:underline transition-colors">
+                  {t("إعادة إرسال الرمز", "Resend code")}
+                </button>
+              </SignIn.Action>
+              <SignIn.Action navigate="previous" asChild>
+                <button type="button" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">
+                  {t("رجوع", "Go back")}
+                </button>
+              </SignIn.Action>
+            </div>
+          </SignIn.Strategy>
+
+          {/* Password reset code verification */}
+          <SignIn.Strategy name="reset_password_email_code">
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <h2 className="text-xl font-bold text-foreground">{t("تحقق من بريدك", "Check your email")}</h2>
+              <p className="text-sm text-muted-foreground text-center">
+                {t("أرسلنا رمز إعادة تعيين كلمة المرور إلى بريدك.", "We sent a password reset code to your email.")}
+              </p>
+            </div>
+
+            <Clerk.Field name="code" className="flex flex-col gap-1.5">
+              <Clerk.Label className="text-sm font-medium text-foreground">{t("رمز التحقق", "Reset code")}</Clerk.Label>
+              <Clerk.Input
+                type="otp"
+                className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 text-center tracking-widest"
+                placeholder="000000"
+              />
+              <Clerk.FieldError className="text-xs text-danger mt-1" />
+            </Clerk.Field>
+
+            <SignIn.Action submit asChild>
+              <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
+                <Clerk.Loading>
+                  {(isLoading) => isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("تحقق", "Verify")}
+                </Clerk.Loading>
+              </button>
+            </SignIn.Action>
+
+            <div className="flex items-center justify-between pt-2">
+              <SignIn.Action resend asChild>
+                <button type="button" className="text-xs text-primary hover:text-primary-hover hover:underline transition-colors">
+                  {t("إعادة إرسال الرمز", "Resend code")}
+                </button>
+              </SignIn.Action>
+              <SignIn.Action navigate="previous" asChild>
+                <button type="button" className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors">
+                  {t("رجوع", "Go back")}
+                </button>
+              </SignIn.Action>
+            </div>
+          </SignIn.Strategy>
+        </SignIn.Step>
+
+        {/* Step 3: Forgot password — triggers the reset email */}
+        <SignIn.Step name="forgot-password" className="space-y-4 w-full">
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <h2 className="text-xl font-bold text-foreground">{t("نسيت كلمة المرور؟", "Forgot your password?")}</h2>
+            <p className="text-sm text-muted-foreground text-center">
+              {t("سنرسل لك رمز تحقق لإعادة تعيين كلمة المرور.", "We'll send you a verification code to reset your password.")}
+            </p>
+          </div>
+
+          <SignIn.SupportedStrategy name="reset_password_email_code">
+            <SignIn.Action submit asChild>
+              <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
+                <Clerk.Loading>
+                  {(isLoading) => isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("إرسال رمز إعادة التعيين", "Send reset code")}
+                </Clerk.Loading>
+              </button>
+            </SignIn.Action>
+          </SignIn.SupportedStrategy>
+
+          <SignIn.Action navigate="previous" asChild>
+            <button type="button" className="w-full text-center text-xs text-muted-foreground hover:text-foreground hover:underline transition-colors pt-2">
+              {t("العودة لتسجيل الدخول", "Back to sign in")}
+            </button>
+          </SignIn.Action>
+        </SignIn.Step>
+
+        {/* Step 4: Reset password — enter new password */}
+        <SignIn.Step name="reset-password" className="space-y-4 w-full">
+          <div className="flex flex-col items-center gap-2 mb-4">
+            <h2 className="text-xl font-bold text-foreground">{t("إعادة تعيين كلمة المرور", "Reset your password")}</h2>
+            <p className="text-sm text-muted-foreground text-center">
+              {t("أدخل كلمة المرور الجديدة.", "Enter your new password.")}
+            </p>
+          </div>
+
+          <Clerk.Field name="password" className="flex flex-col gap-1.5">
+            <Clerk.Label className="text-sm font-medium text-foreground">{t("كلمة المرور الجديدة", "New password")}</Clerk.Label>
+            <PasswordInput />
+            <Clerk.FieldError className="text-xs text-danger mt-1" />
+          </Clerk.Field>
+
+          <Clerk.Field name="confirmPassword" className="flex flex-col gap-1.5">
+            <Clerk.Label className="text-sm font-medium text-foreground">{t("تأكيد كلمة المرور", "Confirm password")}</Clerk.Label>
+            <PasswordInput />
+            <Clerk.FieldError className="text-xs text-danger mt-1" />
+          </Clerk.Field>
+
+          <SignIn.Action submit asChild>
+            <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
+              <Clerk.Loading>
+                {(isLoading) => isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("إعادة تعيين كلمة المرور", "Reset password")}
+              </Clerk.Loading>
+            </button>
+          </SignIn.Action>
         </SignIn.Step>
       </SignIn.Root>
     </div>

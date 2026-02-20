@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useLocale } from "@/hooks/use-locale";
+import { PasswordInput } from "./password-input";
 
 export function SignUpForm() {
   const { t } = useLocale();
@@ -31,6 +32,8 @@ export function SignUpForm() {
 
       <SignUp.Root>
         <SignUp.Step name="start" className="space-y-4 w-full">
+          <Clerk.GlobalError className="block text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-center" />
+
           <div className="grid grid-cols-2 gap-3">
             <Clerk.Connection name="google" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-surface-2 hover:bg-surface-3 text-foreground rounded-xl border border-card-border transition-all duration-200 font-medium text-sm">
               <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -59,6 +62,20 @@ export function SignUpForm() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <Clerk.Field name="firstName" className="flex flex-col gap-1.5">
+              <Clerk.Label className="text-sm font-medium text-foreground">{t("الاسم الأول", "First name")}</Clerk.Label>
+              <Clerk.Input type="text" className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" placeholder={t("أحمد", "Ahmed")} />
+              <Clerk.FieldError className="text-xs text-danger mt-1" />
+            </Clerk.Field>
+
+            <Clerk.Field name="lastName" className="flex flex-col gap-1.5">
+              <Clerk.Label className="text-sm font-medium text-foreground">{t("الاسم الأخير", "Last name")}</Clerk.Label>
+              <Clerk.Input type="text" className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" placeholder={t("محمد", "Mohamed")} />
+              <Clerk.FieldError className="text-xs text-danger mt-1" />
+            </Clerk.Field>
+          </div>
+
           <Clerk.Field name="emailAddress" className="flex flex-col gap-1.5">
             <Clerk.Label className="text-sm font-medium text-foreground">{t("البريد الإلكتروني", "Email")}</Clerk.Label>
             <Clerk.Input type="email" className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" placeholder="name@example.com" />
@@ -67,9 +84,21 @@ export function SignUpForm() {
 
           <Clerk.Field name="password" className="flex flex-col gap-1.5">
             <Clerk.Label className="text-sm font-medium text-foreground">{t("كلمة المرور", "Password")}</Clerk.Label>
-            <Clerk.Input type="password" className="px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200" placeholder="••••••••" />
+            <PasswordInput />
             <Clerk.FieldError className="text-xs text-danger mt-1" />
+            <p className="text-xs text-muted-foreground">
+              {t("8 أحرف على الأقل", "Min 8 characters")}
+            </p>
           </Clerk.Field>
+
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            {t("بإنشاء حساب، أنت توافق على", "By creating an account, you agree to our")}{" "}
+            <Link href="/terms" className="text-primary hover:underline" target="_blank">{t("شروط الاستخدام", "Terms of Service")}</Link>
+            {" "}{t("و", "and")}{" "}
+            <Link href="/privacy" className="text-primary hover:underline" target="_blank">{t("سياسة الخصوصية", "Privacy Policy")}</Link>
+          </p>
+
+          <SignUp.Captcha className="empty:hidden" />
 
           <SignUp.Action submit asChild>
             <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2">
@@ -94,6 +123,8 @@ export function SignUpForm() {
               {t("أرسلنا رمز التحقق إلى بريدك الإلكتروني. الرجاء إدخاله للمتابعة.", "We sent a verification code to your email. Enter it to continue.")}
             </p>
           </div>
+
+          <Clerk.GlobalError className="block text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-center" />
 
           <SignUp.Strategy name="email_code">
             <Clerk.Field name="code" className="flex flex-col gap-1.5">
