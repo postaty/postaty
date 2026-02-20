@@ -34,13 +34,13 @@ const nextConfig: NextConfig = {
 
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://js.stripe.com",
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://*.clerk.com https://js.stripe.com https://challenges.cloudflare.com`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       `img-src 'self' data: blob: https://*.convex.cloud https://*.convex.site https://img.clerk.com https://*.clerk.accounts.dev https://*.clerk.com${devImgSrc}`,
       "font-src 'self' https://fonts.gstatic.com",
-      `connect-src 'self' data: https://*.convex.cloud wss://*.convex.cloud https://*.convex.site wss://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://clerk-telemetry.com https://fonts.googleapis.com https://fonts.gstatic.com https://api.stripe.com${devConnectSrc}`,
+      `connect-src 'self' data: https://*.convex.cloud wss://*.convex.cloud https://*.convex.site wss://*.convex.site https://*.clerk.accounts.dev https://*.clerk.com https://clerk-telemetry.com https://fonts.googleapis.com https://fonts.gstatic.com https://api.stripe.com https://challenges.cloudflare.com${devConnectSrc}`,
       "worker-src 'self' blob:",
-      "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://js.stripe.com https://hooks.stripe.com",
+      "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://js.stripe.com https://hooks.stripe.com https://challenges.cloudflare.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

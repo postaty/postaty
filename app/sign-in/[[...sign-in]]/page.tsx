@@ -1,11 +1,27 @@
 "use client";
 
+import { useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { HeroVisual } from "@/app/components/hero-visual";
 import { SignInForm } from "@/app/components/auth/sign-in-form";
 import { useLocale } from "@/hooks/use-locale";
 
 export default function SignInPage() {
   const { t } = useLocale();
+  const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  // While checking auth or redirecting, show nothing
+  if (!isLoaded || isSignedIn) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex w-full">

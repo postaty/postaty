@@ -30,7 +30,7 @@ export function SignInForm() {
         </p>
       </div>
 
-      <SignIn.Root>
+      <SignIn.Root fallbackRedirectUrl="/">
         {/* Step 1: Start — email + password */}
         <SignIn.Step name="start" className="space-y-4 w-full">
           <Clerk.GlobalError className="block text-sm text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-center" />
@@ -251,6 +251,7 @@ export function SignInForm() {
           </SignIn.Action>
         </SignIn.Step>
       </SignIn.Root>
+      <div id="clerk-captcha" />
     </div>
   );
 }

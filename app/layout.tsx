@@ -136,7 +136,11 @@ export default async function RootLayout({
       <body className={`${notoKufiArabic.variable} antialiased`}>
         <LocaleProvider locale={locale}>
           {clerkPublishableKey ? (
-            <ClerkProvider publishableKey={clerkPublishableKey}>
+            <ClerkProvider
+              publishableKey={clerkPublishableKey}
+              signInFallbackRedirectUrl="/"
+              signUpFallbackRedirectUrl="/"
+            >
               {appShell}
             </ClerkProvider>
           ) : (
