@@ -4,91 +4,93 @@ import { UtensilsCrossed, ShoppingCart, Store, Wrench, Shirt, Sparkles, ArrowLef
 import { motion } from "framer-motion";
 import { STAGGER_ITEM, TAP_SCALE } from "@/lib/animation";
 import type { Category } from "@/lib/types";
+import { useLocale } from "@/hooks/use-locale";
 
 interface CategorySelectorProps {
   onSelect: (category: Category) => void;
 }
 
-const categories: {
-  id: Category;
-  label: string;
-  icon: typeof UtensilsCrossed;
-  description: string;
-  gradient: string;
-  glow: string;
-  border: string;
-  iconBg: string;
-  iconColor: string;
-}[] = [
-  {
-    id: "restaurant",
-    label: "مطاعم وكافيهات",
-    icon: UtensilsCrossed,
-    description: "صمم بوسترات لوجباتك وعروضك المميزة بلمسة شهية.",
-    gradient: "from-orange-500 to-red-500",
-    glow: "shadow-orange-500/20",
-    border: "border-orange-500/15 hover:border-orange-500/40",
-    iconBg: "bg-orange-500/10",
-    iconColor: "text-orange-400",
-  },
-  {
-    id: "supermarket",
-    label: "سوبر ماركت",
-    icon: ShoppingCart,
-    description: "عروض المنتجات والخصومات الأسبوعية بتصاميم ملفتة.",
-    gradient: "from-emerald-400 to-teal-500",
-    glow: "shadow-emerald-500/20",
-    border: "border-emerald-500/15 hover:border-emerald-500/40",
-    iconBg: "bg-emerald-500/10",
-    iconColor: "text-emerald-400",
-  },
-  {
-    id: "ecommerce",
-    label: "متاجر إلكترونية",
-    icon: Store,
-    description: "روّج لمنتجات متجرك الإلكتروني وزد مبيعاتك.",
-    gradient: "from-violet-500 to-fuchsia-500",
-    glow: "shadow-violet-500/20",
-    border: "border-violet-500/15 hover:border-violet-500/40",
-    iconBg: "bg-violet-500/10",
-    iconColor: "text-violet-400",
-  },
-  {
-    id: "services",
-    label: "خدمات",
-    icon: Wrench,
-    description: "إعلانات احترافية لخدمات الصيانة والتنظيف والاستشارات.",
-    gradient: "from-blue-500 to-cyan-500",
-    glow: "shadow-blue-500/20",
-    border: "border-blue-500/15 hover:border-blue-500/40",
-    iconBg: "bg-blue-500/10",
-    iconColor: "text-blue-400",
-  },
-  {
-    id: "fashion",
-    label: "أزياء وموضة",
-    icon: Shirt,
-    description: "تصاميم أنيقة لعلامتك في عالم الأزياء والإكسسوارات.",
-    gradient: "from-pink-500 to-rose-500",
-    glow: "shadow-pink-500/20",
-    border: "border-pink-500/15 hover:border-pink-500/40",
-    iconBg: "bg-pink-500/10",
-    iconColor: "text-pink-400",
-  },
-  {
-    id: "beauty",
-    label: "تجميل وعناية",
-    icon: Sparkles,
-    description: "بوسترات جذابة لصالونات التجميل ومنتجات العناية.",
-    gradient: "from-fuchsia-400 to-purple-500",
-    glow: "shadow-fuchsia-500/20",
-    border: "border-fuchsia-500/15 hover:border-fuchsia-500/40",
-    iconBg: "bg-fuchsia-500/10",
-    iconColor: "text-fuchsia-400",
-  },
-];
-
 export function CategorySelector({ onSelect }: CategorySelectorProps) {
+  const { locale, t } = useLocale();
+  const categories: {
+    id: Category;
+    label: string;
+    icon: typeof UtensilsCrossed;
+    description: string;
+    gradient: string;
+    glow: string;
+    border: string;
+    iconBg: string;
+    iconColor: string;
+  }[] = [
+    {
+      id: "restaurant",
+      label: t("مطاعم وكافيهات", "Restaurants & Cafes"),
+      icon: UtensilsCrossed,
+      description: t("صمم بوسترات لوجباتك وعروضك المميزة بلمسة شهية.", "Design delicious-looking posters for your meals and special offers."),
+      gradient: "from-orange-500 to-red-500",
+      glow: "shadow-orange-500/20",
+      border: "border-orange-500/15 hover:border-orange-500/40",
+      iconBg: "bg-orange-500/10",
+      iconColor: "text-orange-400",
+    },
+    {
+      id: "supermarket",
+      label: t("سوبر ماركت", "Supermarkets"),
+      icon: ShoppingCart,
+      description: t("عروض المنتجات والخصومات الأسبوعية بتصاميم ملفتة.", "Promote products and weekly discounts with eye-catching visuals."),
+      gradient: "from-emerald-400 to-teal-500",
+      glow: "shadow-emerald-500/20",
+      border: "border-emerald-500/15 hover:border-emerald-500/40",
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-400",
+    },
+    {
+      id: "ecommerce",
+      label: t("متاجر إلكترونية", "E-commerce"),
+      icon: Store,
+      description: t("روّج لمنتجات متجرك الإلكتروني وزد مبيعاتك.", "Promote your online store products and boost sales."),
+      gradient: "from-violet-500 to-fuchsia-500",
+      glow: "shadow-violet-500/20",
+      border: "border-violet-500/15 hover:border-violet-500/40",
+      iconBg: "bg-violet-500/10",
+      iconColor: "text-violet-400",
+    },
+    {
+      id: "services",
+      label: t("خدمات", "Services"),
+      icon: Wrench,
+      description: t("إعلانات احترافية لخدمات الصيانة والتنظيف والاستشارات.", "Professional ads for maintenance, cleaning, and consulting services."),
+      gradient: "from-blue-500 to-cyan-500",
+      glow: "shadow-blue-500/20",
+      border: "border-blue-500/15 hover:border-blue-500/40",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-400",
+    },
+    {
+      id: "fashion",
+      label: t("أزياء وموضة", "Fashion"),
+      icon: Shirt,
+      description: t("تصاميم أنيقة لعلامتك في عالم الأزياء والإكسسوارات.", "Elegant designs for your fashion and accessories brand."),
+      gradient: "from-pink-500 to-rose-500",
+      glow: "shadow-pink-500/20",
+      border: "border-pink-500/15 hover:border-pink-500/40",
+      iconBg: "bg-pink-500/10",
+      iconColor: "text-pink-400",
+    },
+    {
+      id: "beauty",
+      label: t("تجميل وعناية", "Beauty & Care"),
+      icon: Sparkles,
+      description: t("بوسترات جذابة لصالونات التجميل ومنتجات العناية.", "Attractive posters for salons and beauty care products."),
+      gradient: "from-fuchsia-400 to-purple-500",
+      glow: "shadow-fuchsia-500/20",
+      border: "border-fuchsia-500/15 hover:border-fuchsia-500/40",
+      iconBg: "bg-fuchsia-500/10",
+      iconColor: "text-fuchsia-400",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
       {categories.map((cat) => {
@@ -99,18 +101,15 @@ export function CategorySelector({ onSelect }: CategorySelectorProps) {
             variants={STAGGER_ITEM}
             whileTap={TAP_SCALE}
             onClick={() => onSelect(cat.id)}
-            className={`group relative bg-surface-1 border ${cat.border} rounded-[2rem] p-8 text-right transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cat.glow} overflow-hidden`}
+            className={`group relative bg-surface-1 border ${cat.border} rounded-[2rem] p-8 ${locale === "ar" ? "text-right" : "text-left"} transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cat.glow} overflow-hidden`}
           >
-            {/* Hover Gradient Overlay */}
             <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
 
             <div className="relative z-10 flex flex-col h-full">
-              {/* Icon Container */}
               <div className={`w-14 h-14 ${cat.iconBg} rounded-2xl flex items-center justify-center mb-6`}>
                 <Icon size={28} className={cat.iconColor} />
               </div>
 
-              {/* Text Content */}
               <h3 className="text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
                 {cat.label}
               </h3>
@@ -118,14 +117,12 @@ export function CategorySelector({ onSelect }: CategorySelectorProps) {
                 {cat.description}
               </p>
 
-              {/* CTA Indicator */}
               <div className={`flex items-center text-sm font-bold ${cat.iconColor} group-hover:gap-3 gap-2 transition-all duration-300`}>
-                <span>ابدأ التصميم</span>
+                <span>{t("ابدأ التصميم", "Start design")}</span>
                 <ArrowLeft size={16} />
               </div>
             </div>
 
-            {/* Decorative Circle */}
             <div className={`absolute -bottom-8 -left-8 w-32 h-32 bg-gradient-to-tr ${cat.gradient} opacity-5 rounded-full blur-2xl group-hover:opacity-10 group-hover:scale-150 transition-all duration-700`} />
           </motion.button>
         );

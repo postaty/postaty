@@ -11,13 +11,14 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 // ── Slide Data ─────────────────────────────────────────────────────
 
 interface Slide {
   icon: LucideIcon;
-  title: string;
-  subtitle: string;
+  title: { ar: string; en: string };
+  subtitle: { ar: string; en: string };
   gradient: string;
   accentColor: string;
 }
@@ -25,43 +26,43 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     icon: Wand2,
-    title: "تحليل بيانات العرض",
-    subtitle: "نقرأ تفاصيل منتجك ونفهم هوية علامتك التجارية",
+    title: { ar: "تحليل بيانات العرض", en: "Analyzing your offer details" },
+    subtitle: { ar: "نقرأ تفاصيل منتجك ونفهم هوية علامتك التجارية", en: "We read your product details and understand your brand identity" },
     gradient: "from-violet-500 to-indigo-600",
     accentColor: "rgb(139 92 246)",
   },
   {
     icon: Palette,
-    title: "اختيار الألوان والأنماط",
-    subtitle: "نصمم لوحة ألوان متناسقة تعكس هوية علامتك",
+    title: { ar: "اختيار الألوان والأنماط", en: "Choosing colors and styles" },
+    subtitle: { ar: "نصمم لوحة ألوان متناسقة تعكس هوية علامتك", en: "We craft a consistent palette that reflects your brand" },
     gradient: "from-pink-500 to-rose-600",
     accentColor: "rgb(236 72 153)",
   },
   {
     icon: Type,
-    title: "صياغة النصوص الإبداعية",
-    subtitle: "نكتب نصوص تسويقية مؤثرة تجذب عملاءك",
+    title: { ar: "صياغة النصوص الإبداعية", en: "Writing creative copy" },
+    subtitle: { ar: "نكتب نصوص تسويقية مؤثرة تجذب عملاءك", en: "We write persuasive marketing copy that attracts customers" },
     gradient: "from-amber-500 to-orange-600",
     accentColor: "rgb(245 158 11)",
   },
   {
     icon: ImageIcon,
-    title: "معالجة الصور بالذكاء الاصطناعي",
-    subtitle: "نحسّن جودة صور المنتج ونضبط الإضاءة والتباين",
+    title: { ar: "معالجة الصور بالذكاء الاصطناعي", en: "AI image processing" },
+    subtitle: { ar: "نحسّن جودة صور المنتج ونضبط الإضاءة والتباين", en: "We enhance product images and adjust lighting and contrast" },
     gradient: "from-emerald-500 to-teal-600",
     accentColor: "rgb(16 185 129)",
   },
   {
     icon: LayoutGrid,
-    title: "بناء التصميم النهائي",
-    subtitle: "نرتب العناصر بشكل احترافي متوازن وجذاب",
+    title: { ar: "بناء التصميم النهائي", en: "Building final layout" },
+    subtitle: { ar: "نرتب العناصر بشكل احترافي متوازن وجذاب", en: "We arrange elements in a professional, balanced composition" },
     gradient: "from-blue-500 to-cyan-600",
     accentColor: "rgb(59 130 246)",
   },
   {
     icon: Sparkles,
-    title: "إضافة اللمسات السحرية",
-    subtitle: "نضيف التأثيرات البصرية المميزة واللمسات الأخيرة",
+    title: { ar: "إضافة اللمسات السحرية", en: "Adding magic touches" },
+    subtitle: { ar: "نضيف التأثيرات البصرية المميزة واللمسات الأخيرة", en: "We add standout visual effects and final polish" },
     gradient: "from-fuchsia-500 to-purple-600",
     accentColor: "rgb(217 70 239)",
   },
@@ -390,6 +391,7 @@ function ProgressRing({
 // ── Main Component ─────────────────────────────────────────────────
 
 export function LoadingSlideshow() {
+  const { t } = useLocale();
   const [activeSlide, setActiveSlide] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
@@ -432,10 +434,10 @@ export function LoadingSlideshow() {
             </div>
             <div>
               <p className="text-sm font-bold text-foreground">
-                جاري التصميم...
+                {t("جاري التصميم...", "Generating design...")}
               </p>
               <p className="text-xs text-muted-foreground">
-                {elapsed > 0 && `${elapsed} ثانية`}
+                {elapsed > 0 && `${elapsed} ${t("ثانية", "sec")}`}
               </p>
             </div>
           </div>
@@ -521,10 +523,10 @@ export function LoadingSlideshow() {
               className="text-center space-y-2"
             >
               <h3 className="text-lg font-bold text-foreground">
-                {slide.title}
+                {t(slide.title.ar, slide.title.en)}
               </h3>
               <p className="text-sm text-muted leading-relaxed">
-                {slide.subtitle}
+                {t(slide.subtitle.ar, slide.subtitle.en)}
               </p>
             </motion.div>
           </AnimatePresence>

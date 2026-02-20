@@ -32,6 +32,7 @@ import { AnimateOnScroll, StaggerOnScroll } from "./animate-on-scroll";
 import { STAGGER_ITEM, TAP_SCALE } from "@/lib/animation";
 import type { PricingSet } from "@/lib/country-pricing";
 import { formatPrice } from "@/lib/country-pricing";
+import type { AppLocale } from "@/lib/i18n";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 const HeroVisual = dynamic(
@@ -39,26 +40,34 @@ const HeroVisual = dynamic(
   { loading: () => <div className="w-full max-w-xs lg:max-w-sm aspect-[3/4] rounded-3xl bg-surface-2 animate-pulse" /> }
 );
 
-// ─── How It Works Steps ────────────────────────────────────
 const STEPS = [
   {
     icon: Upload,
-    title: "ارفع صورة منتجك",
-    description: "ارفع صورة الوجبة أو المنتج من جوالك",
+    title: { ar: "ارفع صورة منتجك", en: "Upload your product image" },
+    description: {
+      ar: "ارفع صورة الوجبة أو المنتج من جوالك",
+      en: "Upload a meal or product image from your phone",
+    },
     color: "text-primary",
     bg: "bg-primary/10",
   },
   {
     icon: Sparkles,
-    title: "بوستاتي يبدع لك",
-    description: "بوستاتي يختار الألوان والتخطيط والنصوص تلقائياً",
+    title: { ar: "بوستاتي يبدع لك", en: "Postaty builds it for you" },
+    description: {
+      ar: "بوستاتي يختار الألوان والتخطيط والنصوص تلقائياً",
+      en: "Postaty picks colors, layout, and copy automatically",
+    },
     color: "text-accent",
     bg: "bg-accent/10",
   },
   {
     icon: Download,
-    title: "حمّل وانشر فوراً",
-    description: "جاهز للنشر على انستجرام وفيسبوك وواتساب",
+    title: { ar: "حمّل وانشر فوراً", en: "Download and publish instantly" },
+    description: {
+      ar: "جاهز للنشر على انستجرام وفيسبوك وواتساب",
+      en: "Ready for Instagram, Facebook, and WhatsApp",
+    },
     color: "text-success",
     bg: "bg-success/10",
   },
@@ -68,33 +77,33 @@ const STEPS = [
 const FEATURES = [
   {
     icon: Sparkles,
-    title: "تقنية ذكية متقدمة",
-    description: "يفهم منتجك ويختار التصميم المناسب",
+    title: { ar: "تقنية ذكية متقدمة", en: "Advanced AI technology" },
+    description: { ar: "يفهم منتجك ويختار التصميم المناسب", en: "Understands your product and picks the right design" },
   },
   {
     icon: Languages,
-    title: "عربي 100%",
-    description: "نصوص وخطوط عربية احترافية",
+    title: { ar: "عربي 100%", en: "Arabic & English ready" },
+    description: { ar: "نصوص وخطوط عربية احترافية", en: "Professional bilingual copy and typography" },
   },
   {
     icon: Palette,
-    title: "هوية علامتك التجارية",
-    description: "لوجو وألوانك في كل تصميم",
+    title: { ar: "هوية علامتك التجارية", en: "Brand identity built-in" },
+    description: { ar: "لوجو وألوانك في كل تصميم", en: "Your logo and colors in every design" },
   },
   {
     icon: Smartphone,
-    title: "6 أحجام جاهزة",
-    description: "انستجرام، فيسبوك، واتساب، وأكثر",
+    title: { ar: "6 أحجام جاهزة", en: "6 ready-made formats" },
+    description: { ar: "انستجرام، فيسبوك، واتساب، وأكثر", en: "Instagram, Facebook, WhatsApp, and more" },
   },
   {
     icon: ImageIcon,
-    title: "جودة عالية HD",
-    description: "جاهز للطباعة والنشر الرقمي",
+    title: { ar: "جودة عالية HD", en: "High-quality HD" },
+    description: { ar: "جاهز للطباعة والنشر الرقمي", en: "Ready for print and digital publishing" },
   },
   {
     icon: Zap,
-    title: "أسرع من أي مصمم",
-    description: "30 ثانية مقابل أيام انتظار",
+    title: { ar: "أسرع من أي مصمم", en: "Faster than any designer" },
+    description: { ar: "30 ثانية مقابل أيام انتظار", en: "30 seconds instead of days of waiting" },
   },
 ];
 
@@ -103,9 +112,12 @@ const CATEGORIES = [
   {
     id: "restaurant" as const,
     icon: UtensilsCrossed,
-    title: "مطاعم وكافيهات",
-    subtitle: "عروض تفتح الشهية",
-    bullets: ["بوسترات وجبات احترافية", "عروض رمضان والمناسبات", "تصاميم تزيد الطلبات"],
+    title: { ar: "مطاعم وكافيهات", en: "Restaurants & Cafes" },
+    subtitle: { ar: "عروض تفتح الشهية", en: "Appetizing offers that convert" },
+    bullets: {
+      ar: ["بوسترات وجبات احترافية", "عروض رمضان والمناسبات", "تصاميم تزيد الطلبات"],
+      en: ["Professional food posters", "Ramadan and seasonal campaigns", "Designs that boost orders"],
+    },
     gradient: "from-orange-500 to-red-500",
     glow: "shadow-orange-500/20",
     border: "border-orange-500/20 hover:border-orange-500/40",
@@ -115,9 +127,12 @@ const CATEGORIES = [
   {
     id: "supermarket" as const,
     icon: ShoppingCart,
-    title: "سوبر ماركت",
-    subtitle: "عروض أسبوعية تجذب الزبائن",
-    bullets: ["عروض المنتجات المتعددة", "تصاميم عروض الأسبوع", "بوسترات الخصومات"],
+    title: { ar: "سوبر ماركت", en: "Supermarkets" },
+    subtitle: { ar: "عروض أسبوعية تجذب الزبائن", en: "Weekly offers that attract shoppers" },
+    bullets: {
+      ar: ["عروض المنتجات المتعددة", "تصاميم عروض الأسبوع", "بوسترات الخصومات"],
+      en: ["Multi-product promotions", "Weekly deals creatives", "Discount-focused posters"],
+    },
     gradient: "from-emerald-400 to-teal-500",
     glow: "shadow-emerald-500/20",
     border: "border-emerald-500/20 hover:border-emerald-500/40",
@@ -127,9 +142,12 @@ const CATEGORIES = [
   {
     id: "ecommerce" as const,
     icon: Store,
-    title: "متاجر إلكترونية",
-    subtitle: "إعلانات تزيد مبيعاتك",
-    bullets: ["بوسترات منتجات جذابة", "إعلانات خصومات حصرية", "تصاميم سوشيال ميديا"],
+    title: { ar: "متاجر إلكترونية", en: "E-commerce stores" },
+    subtitle: { ar: "إعلانات تزيد مبيعاتك", en: "Ads that increase sales" },
+    bullets: {
+      ar: ["بوسترات منتجات جذابة", "إعلانات خصومات حصرية", "تصاميم سوشيال ميديا"],
+      en: ["Eye-catching product posters", "Exclusive discount ads", "Social-ready creatives"],
+    },
     gradient: "from-violet-500 to-fuchsia-500",
     glow: "shadow-violet-500/20",
     border: "border-violet-500/20 hover:border-violet-500/40",
@@ -139,9 +157,12 @@ const CATEGORIES = [
   {
     id: "services" as const,
     icon: Wrench,
-    title: "خدمات",
-    subtitle: "إعلانات احترافية لخدماتك",
-    bullets: ["صيانة وتنظيف واستشارات", "تصاميم تبني الثقة", "بوسترات بتفاصيل الخدمة"],
+    title: { ar: "خدمات", en: "Services" },
+    subtitle: { ar: "إعلانات احترافية لخدماتك", en: "Professional ads for your services" },
+    bullets: {
+      ar: ["صيانة وتنظيف واستشارات", "تصاميم تبني الثقة", "بوسترات بتفاصيل الخدمة"],
+      en: ["Maintenance, cleaning, and consulting", "Trust-building visuals", "Service-detail posters"],
+    },
     gradient: "from-blue-500 to-cyan-500",
     glow: "shadow-blue-500/20",
     border: "border-blue-500/20 hover:border-blue-500/40",
@@ -151,9 +172,12 @@ const CATEGORIES = [
   {
     id: "fashion" as const,
     icon: Shirt,
-    title: "أزياء وموضة",
-    subtitle: "تصاميم أنيقة لعلامتك",
-    bullets: ["بوسترات ملابس وإكسسوارات", "عروض مقاسات وألوان", "تصاميم بطابع مجلات الموضة"],
+    title: { ar: "أزياء وموضة", en: "Fashion & Apparel" },
+    subtitle: { ar: "تصاميم أنيقة لعلامتك", en: "Elegant visuals for your brand" },
+    bullets: {
+      ar: ["بوسترات ملابس وإكسسوارات", "عروض مقاسات وألوان", "تصاميم بطابع مجلات الموضة"],
+      en: ["Clothing and accessories posters", "Size and color promotions", "Magazine-style layouts"],
+    },
     gradient: "from-pink-500 to-rose-500",
     glow: "shadow-pink-500/20",
     border: "border-pink-500/20 hover:border-pink-500/40",
@@ -163,9 +187,12 @@ const CATEGORIES = [
   {
     id: "beauty" as const,
     icon: Sparkles,
-    title: "تجميل وعناية",
-    subtitle: "بوسترات جذابة لصالونك",
-    bullets: ["خدمات تجميل وسبا", "منتجات عناية بالبشرة", "عروض حجوزات وجلسات"],
+    title: { ar: "تجميل وعناية", en: "Beauty & Care" },
+    subtitle: { ar: "بوسترات جذابة لصالونك", en: "Attractive creatives for your salon" },
+    bullets: {
+      ar: ["خدمات تجميل وسبا", "منتجات عناية بالبشرة", "عروض حجوزات وجلسات"],
+      en: ["Beauty and spa services", "Skincare product promotions", "Booking and session offers"],
+    },
     gradient: "from-fuchsia-400 to-purple-500",
     glow: "shadow-fuchsia-500/20",
     border: "border-fuchsia-500/20 hover:border-fuchsia-500/40",
@@ -177,89 +204,109 @@ const CATEGORIES = [
 const RESULTS_SHOWCASE = [
   {
     src: "/showcase/burger-stack.jpeg",
-    alt: "تصميم عرض برجر لمطعم",
-    badge: "مطاعم",
+    alt: { ar: "تصميم عرض برجر لمطعم", en: "Burger offer design for a restaurant" },
+    badge: { ar: "مطاعم", en: "Restaurants" },
     grid: "col-span-1 row-span-2 md:col-span-2 md:row-span-2",
   },
   {
     src: "/showcase/supermarket-fruits.jpeg",
-    alt: "تصميم خصم فواكه لسوبرماركت",
-    badge: "سوبرماركت",
+    alt: { ar: "تصميم خصم فواكه لسوبرماركت", en: "Fruit discount design for a supermarket" },
+    badge: { ar: "سوبرماركت", en: "Supermarket" },
     grid: "col-span-1 row-span-1",
   },
   {
     src: "/showcase/book-promo.jpeg",
-    alt: "تصميم عرض منتجات",
-    badge: "منتجات",
+    alt: { ar: "تصميم عرض منتجات", en: "Product promotion design" },
+    badge: { ar: "منتجات", en: "Products" },
     grid: "col-span-1 row-span-1",
   },
   {
     src: "/showcase/chicken-offer.jpeg",
-    alt: "تصميم عرض دجاج مقلي",
-    badge: "مطاعم",
+    alt: { ar: "تصميم عرض دجاج مقلي", en: "Fried chicken offer design" },
+    badge: { ar: "مطاعم", en: "Restaurants" },
     grid: "col-span-1 row-span-1",
   },
   {
     src: "/showcase/ramadan-platter.jpeg",
-    alt: "تصميم رمضاني لوجبة عائلية",
-    badge: "رمضان",
+    alt: { ar: "تصميم رمضاني لوجبة عائلية", en: "Ramadan family meal campaign design" },
+    badge: { ar: "رمضان", en: "Ramadan" },
     grid: "col-span-1 row-span-2",
   },
   {
     src: "/showcase/skincare-promo.jpeg",
-    alt: "تصميم منتجات العناية بالبشرة",
-    badge: "تجميل",
+    alt: { ar: "تصميم منتجات العناية بالبشرة", en: "Skincare products campaign design" },
+    badge: { ar: "تجميل", en: "Beauty" },
     grid: "col-span-1 row-span-1",
   },
   {
     src: "/showcase/supermarket-basics.jpeg",
-    alt: "تصميم عروض السلع الأساسية",
-    badge: "سوبرماركت",
+    alt: { ar: "تصميم عروض السلع الأساسية", en: "Essentials promotion design for supermarket" },
+    badge: { ar: "سوبرماركت", en: "Supermarket" },
     grid: "col-span-1 row-span-2",
   },
   {
     src: "/showcase/ramadan-card.jpeg",
-    alt: "بطاقة عرض رمضانية",
-    badge: "موسمي",
+    alt: { ar: "بطاقة عرض رمضانية", en: "Seasonal Ramadan campaign card" },
+    badge: { ar: "موسمي", en: "Seasonal" },
     grid: "col-span-1 row-span-1",
   },
 ] as const;
 
-const TRUST_LOGOS = [
-  "برجر البرو",
-  "Fresh Market",
-  "Glow Beauty",
-  "Daily Bites",
-  "Style Hub",
-  "Coffee Spot",
-] as const;
+const TRUST_LOGOS = {
+  ar: ["برجر البرو", "Fresh Market", "Glow Beauty", "Daily Bites", "Style Hub", "Coffee Spot"],
+  en: ["Burger Pro", "Fresh Market", "Glow Beauty", "Daily Bites", "Style Hub", "Coffee Spot"],
+} as const;
 
 const TESTIMONIALS = [
   {
-    quote: "خلال أسبوع واحد تضاعف التفاعل لأن التصاميم صارت احترافية وثابتة الهوية.",
-    author: "سارة - متجر تجميل",
-    metric: "+240% تفاعل",
+    quote: {
+      ar: "خلال أسبوع واحد تضاعف التفاعل لأن التصاميم صارت احترافية وثابتة الهوية.",
+      en: "Engagement doubled in one week because our posts became professional and consistent.",
+    },
+    author: { ar: "سارة - متجر تجميل", en: "Sarah - Beauty Store" },
+    metric: { ar: "+240% تفاعل", en: "+240% engagement" },
   },
   {
-    quote: "بدل انتظار المصمم يومين، صار عندنا 3 بوستات جاهزة بنفس اليوم.",
-    author: "أحمد - مطعم",
-    metric: "وقت أقل 5x",
+    quote: {
+      ar: "بدل انتظار المصمم يومين، صار عندنا 3 بوستات جاهزة بنفس اليوم.",
+      en: "Instead of waiting two days for a designer, we now get 3 posts in the same day.",
+    },
+    author: { ar: "أحمد - مطعم", en: "Ahmed - Restaurant" },
+    metric: { ar: "وقت أقل 5x", en: "5x less time" },
   },
   {
-    quote: "العروض الأسبوعية صارت أوضح، والعميل يفهم الخصم من أول نظرة.",
-    author: "منى - سوبرماركت",
-    metric: "+31% طلبات",
+    quote: {
+      ar: "العروض الأسبوعية صارت أوضح، والعميل يفهم الخصم من أول نظرة.",
+      en: "Weekly offers are now clearer, and customers understand the discount at first glance.",
+    },
+    author: { ar: "منى - سوبرماركت", en: "Mona - Supermarket" },
+    metric: { ar: "+31% طلبات", en: "+31% orders" },
   },
 ] as const;
 
 type HomeClientProps = {
   pricing: PricingSet;
   countryCode: string;
+  locale: AppLocale;
 };
 
-export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
+export default function HomeClient({ pricing, countryCode, locale }: HomeClientProps) {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+  const starterFeatures =
+    locale === "ar"
+      ? ["10 تصاميم ذكية شهرياً", "1–2 محتوى أسبوعياً", "حجم تصدير واحد", "نصوص تسويقية أساسية", "تنزيل HD", "معرض بسيط"]
+      : ["10 AI designs/month", "1-2 weekly posts", "One export format", "Basic marketing copy", "HD download", "Simple gallery"];
+  const growthFeatures =
+    locale === "ar"
+      ? ["25 تصميماً ذكياً شهرياً", "3–4 محتوى أسبوعياً", "3 أحجام تصدير (بوست، ستوري، واتس)", "نصوص تسويقية قوية", "الهوية التجارية محفوظة", "تنزيل حزمة كاملة", "معرض منظم"]
+      : ["25 AI designs/month", "3-4 weekly posts", "3 export formats (post, story, WhatsApp)", "High-converting copy", "Saved brand identity", "Full pack download", "Organized gallery"];
+  const dominantFeatures =
+    locale === "ar"
+      ? ["50 تصميماً ذكياً شهرياً", "محتوى يومي تقريباً", "توليد موجه بالأهداف", "عبارات تحويل ذكية", "جميع الأحجام مُصَدَّرة تلقائياً", "أرشيف متقدم", "توليد بأولوية", "مرشحات محتوى ذكية"]
+      : ["50 AI designs/month", "Near-daily content", "Goal-based generation", "Smart conversion copy", "Auto-export all formats", "Advanced archive", "Priority generation", "Smart content filters"];
+  void countryCode;
 
   return (
     <main className="min-h-screen relative overflow-x-clip pb-32 md:pb-0">
@@ -283,19 +330,22 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold">
               <Sparkles size={14} />
-              <span>مدعوم بتقنية بوستاتي</span>
+              <span>{t("مدعوم بتقنية بوستاتي", "Powered by Postaty AI")}</span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight">
-              صمّم إعلانك خلال ثوانٍ
+              {t("صمّم إعلانك خلال ثوانٍ", "Design your ad in seconds")}
               <br />
-              <span className="text-gradient">بشكل يرفع المبيعات</span>
+              <span className="text-gradient">{t("بشكل يرفع المبيعات", "Built to increase sales")}</span>
             </h1>
 
             <p className="text-lg text-muted max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              بوستاتي يحول صورة منتجك إلى إعلان جاهز للنشر على السوشيال ميديا خلال 30 ثانية.
+              {t(
+                "بوستاتي يحول صورة منتجك إلى إعلان جاهز للنشر على السوشيال ميديا خلال 30 ثانية.",
+                "Postaty turns your product image into a social-ready ad in just 30 seconds."
+              )}
               <br className="hidden md:block" />
-              بدون فريق تصميم، وبدون تعقيد.
+              {t("بدون فريق تصميم، وبدون تعقيد.", "No design team needed and no complexity.")}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
@@ -306,7 +356,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                       whileTap={TAP_SCALE}
                       className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-lg"
                     >
-                      ابدأ تصميمك الآن
+                      {t("ابدأ تصميمك الآن", "Start Designing Now")}
                     </motion.button>
                   </SignInButton>
                 ) : (
@@ -314,7 +364,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                     href="/pricing"
                     className="px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all text-lg"
                   >
-                    ابدأ تصميمك الآن
+                    {t("ابدأ تصميمك الآن", "Start Designing Now")}
                   </Link>
                 )
               ) : (
@@ -324,7 +374,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all text-lg"
                 >
                   <Plus size={22} />
-                  <span>تصميم جديد</span>
+                  <span>{t("تصميم جديد", "Create New Design")}</span>
                 </motion.button>
               )}
 
@@ -332,18 +382,18 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                 href="#results-showcase"
                 className="px-6 py-4 border border-card-border text-muted hover:text-foreground hover:border-primary/30 rounded-2xl font-bold transition-all"
               >
-                شاهد النتائج
+                {t("شاهد النتائج", "View Results")}
               </a>
             </div>
 
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2 text-xs text-muted">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-card-border bg-surface-1/70">
                 <ShieldCheck size={13} className="text-success" />
-                <span>هوية علامتك محفوظة</span>
+                <span>{t("هوية علامتك محفوظة", "Your brand identity stays consistent")}</span>
               </div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-card-border bg-surface-1/70">
                 <Star size={13} className="text-warning" />
-                <span>جاهز للنشر فوراً</span>
+                <span>{t("جاهز للنشر فوراً", "Ready to publish instantly")}</span>
               </div>
             </div>
           </motion.div>
@@ -363,14 +413,16 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
           <AnimateOnScroll className="text-center mb-10 md:mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-semibold mb-5">
               <Sparkles size={14} />
-              <span>نماذج تم إنشاؤها فعلياً</span>
+              <span>{t("نماذج تم إنشاؤها فعلياً", "Real designs generated with Postaty")}</span>
             </div>
             <h2 className="text-3xl md:text-5xl font-black leading-tight mb-4">
-              نتائج جاهزة للنشر <span className="text-gradient">بجودة احترافية</span>
+              {t("نتائج جاهزة للنشر", "Publish-ready results")} <span className="text-gradient">{t("بجودة احترافية", "with professional quality")}</span>
             </h2>
              <p className="text-muted text-base md:text-lg max-w-2xl mx-auto">
-              هذه أمثلة حقيقية من تصاميم تم إنتاجها ببوستاتي. نفس الجودة التي تشاهدها هنا
-              يمكنك إنشاؤها لعلامتك خلال دقائق.
+              {t(
+                "هذه أمثلة حقيقية من تصاميم تم إنتاجها ببوستاتي. نفس الجودة التي تشاهدها هنا يمكنك إنشاؤها لعلامتك خلال دقائق.",
+                "These are real examples generated by Postaty. You can create the same quality for your brand in minutes."
+              )}
             </p>
           </AnimateOnScroll>
 
@@ -384,20 +436,20 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                viewport={{ once: true }}
             >
                <div className="z-10 relative">
-                 <h3 className="text-xl font-bold mb-2">تحول فوري للصور</h3>
-                 <p className="text-muted text-sm">من صورة جوال عادية إلى بوستر إعلاني متكامل في ثوانٍ</p>
+                 <h3 className="text-xl font-bold mb-2">{t("تحول فوري للصور", "Instant image transformation")}</h3>
+                 <p className="text-muted text-sm">{t("من صورة جوال عادية إلى بوستر إعلاني متكامل في ثوانٍ", "From a casual phone shot to a complete ad poster in seconds")}</p>
                </div>
                
                <div className="absolute inset-0 mt-20 px-6 pb-6 flex items-end justify-center">
                   {/* Before/After Visual */}
                   <div className="relative w-full h-full flex gap-2 items-end">
                       <div className="flex-1 h-[80%] relative rounded-xl overflow-hidden border border-card-border/50 rotate-[-3deg] translate-y-4 group-hover:translate-y-2 group-hover:rotate-[-5deg] transition-all duration-500 shadow-lg">
-                         <Image src="/showcase/shawrma.jpeg" alt="Before" fill className="object-cover grayscale" />
-                         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">قبل</div>
+                         <Image src="/showcase/shawrma.jpeg" alt={t("قبل", "Before")} fill className="object-cover grayscale" />
+                         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">{t("قبل", "Before")}</div>
                       </div>
                       <div className="flex-1 h-full relative rounded-xl overflow-hidden border border-primary/30 rotate-[2deg] z-10 shadow-2xl group-hover:scale-105 transition-all duration-500">
-                         <Image src="/showcase/image.png" alt="After" fill className="object-cover" />
-                         <div className="absolute top-2 right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded">بعد</div>
+                         <Image src="/showcase/image.png" alt={t("بعد", "After")} fill className="object-cover" />
+                         <div className="absolute top-2 right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded">{t("بعد", "After")}</div>
                       </div>
                   </div>
                </div>
@@ -413,7 +465,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
             >
                 <div className="absolute inset-0 bg-primary/5 opacity-0 hover:opacity-100 transition-opacity" />
                 <h3 className="text-4xl md:text-5xl font-black text-foreground mb-2">+2k</h3>
-                <p className="text-muted text-sm font-medium">تصميم تم إنشاؤه</p>
+                <p className="text-muted text-sm font-medium">{t("تصميم تم إنشاؤه", "Designs generated")}</p>
             </motion.div>
 
             {/* 3. Showcase Image 1 */}
@@ -424,9 +476,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                viewport={{ once: true }}
                transition={{ delay: 0.2 }}
             >
-               <Image src={RESULTS_SHOWCASE[1].src} alt={RESULTS_SHOWCASE[1].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src={RESULTS_SHOWCASE[1].src} alt={RESULTS_SHOWCASE[1].alt[locale]} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-                <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[1].badge}</span>
+                <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[1].badge[locale]}</span>
             </motion.div>
 
             {/* 4. Stat Card 2 */}
@@ -438,8 +490,8 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                transition={{ delay: 0.3 }}
             >
                 <Zap size={32} className="text-primary mb-3" />
-                <h3 className="text-2xl font-bold mb-1">30 ثانية</h3>
-                <p className="text-muted text-sm">متوسط وقت التصميم</p>
+                <h3 className="text-2xl font-bold mb-1">{t("30 ثانية", "30 sec")}</h3>
+                <p className="text-muted text-sm">{t("متوسط وقت التصميم", "Average design time")}</p>
             </motion.div>
 
 
@@ -451,9 +503,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                viewport={{ once: true }}
                transition={{ delay: 0.4 }}
             >
-               <Image src={RESULTS_SHOWCASE[4].src} alt={RESULTS_SHOWCASE[4].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src={RESULTS_SHOWCASE[4].src} alt={RESULTS_SHOWCASE[4].alt[locale]} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-               <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[4].badge}</span>
+               <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[4].badge[locale]}</span>
             </motion.div>
 
              {/* 6. Text/CTA Card */}
@@ -465,12 +517,12 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                transition={{ delay: 0.5 }}
             >
                <div className="relative z-10">
-                   <h3 className="text-xl font-bold mb-1">جرب بنفسك الآن</h3>
-                   <p className="text-muted text-sm">لا يحتاج بطاقة ائتمان للتجربة</p>
+                   <h3 className="text-xl font-bold mb-1">{t("جرب بنفسك الآن", "Try it yourself now")}</h3>
+                   <p className="text-muted text-sm">{t("لا يحتاج بطاقة ائتمان للتجربة", "No credit card required to try")}</p>
                </div>
                <div className="relative z-10">
                    <Link href="/create" className="flex items-center gap-2 bg-surface-1 text-foreground px-5 py-2.5 rounded-xl font-bold hover:scale-105 transition-transform shadow-sm">
-                      <span>اصنع بوستر</span>
+                      <span>{t("اصنع بوستر", "Create Poster")}</span>
                       <ArrowLeft size={16} />
                    </Link>
                </div>
@@ -488,9 +540,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                viewport={{ once: true }}
                transition={{ delay: 0.6 }}
             >
-               <Image src={RESULTS_SHOWCASE[6].src} alt={RESULTS_SHOWCASE[6].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src={RESULTS_SHOWCASE[6].src} alt={RESULTS_SHOWCASE[6].alt[locale]} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
-               <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[6].badge}</span>
+               <span className="absolute bottom-4 right-4 text-white font-bold text-sm">{RESULTS_SHOWCASE[6].badge[locale]}</span>
             </motion.div>
 
           </div>
@@ -503,9 +555,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
       <section className="py-10 md:py-14 px-4 border-b border-card-border">
         <div className="max-w-7xl mx-auto">
           <AnimateOnScroll className="text-center mb-6">
-            <p className="text-sm text-muted mb-4">يثق بنا أصحاب المشاريع في قطاعات مختلفة</p>
+            <p className="text-sm text-muted mb-4">{t("يثق بنا أصحاب المشاريع في قطاعات مختلفة", "Trusted by business owners across multiple industries")}</p>
             <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-              {TRUST_LOGOS.map((brand) => (
+              {TRUST_LOGOS[locale].map((brand) => (
                 <div
                   key={brand}
                   className="px-4 py-2 rounded-xl border border-card-border bg-surface-1/70 text-sm font-semibold text-foreground/85"
@@ -519,16 +571,16 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
           <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
             {TESTIMONIALS.map((item) => (
               <motion.article
-                key={item.author}
+                key={item.author.en}
                 variants={STAGGER_ITEM}
                 className="rounded-2xl border border-card-border bg-surface-1/85 p-5"
               >
                 <div className="flex items-center justify-between mb-3">
                   <Quote size={18} className="text-primary" />
-                  <span className="text-xs font-bold text-success">{item.metric}</span>
+                  <span className="text-xs font-bold text-success">{item.metric[locale]}</span>
                 </div>
-                <p className="text-sm text-muted leading-relaxed mb-4">{item.quote}</p>
-                <p className="text-xs font-semibold text-foreground">{item.author}</p>
+                <p className="text-sm text-muted leading-relaxed mb-4">{item.quote[locale]}</p>
+                <p className="text-xs font-semibold text-foreground">{item.author[locale]}</p>
               </motion.article>
             ))}
           </StaggerOnScroll>
@@ -547,17 +599,17 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   <div key={i} className="w-8 h-8 rounded-full bg-surface-2 border-2 border-background" />
                 ))}
               </div>
-              <span className="text-sm text-muted font-medium">+500 مطعم ومتجر يستخدم Postaty</span>
+              <span className="text-sm text-muted font-medium">{t("+500 مطعم ومتجر يستخدم Postaty", "500+ restaurants and stores use Postaty")}</span>
             </div>
             <div className="h-6 w-px bg-card-border hidden md:block" />
             <div className="flex items-center gap-2 text-sm text-muted">
               <Sparkles size={14} className="text-primary" />
-              <span className="font-bold text-foreground">2,000+</span> تصميم تم إنشاؤه
+              <span className="font-bold text-foreground">2,000+</span> {t("تصميم تم إنشاؤه", "designs generated")}
             </div>
             <div className="h-6 w-px bg-card-border hidden md:block" />
             <div className="flex items-center gap-2 text-sm text-muted">
               <Zap size={14} className="text-primary" />
-              متوسط <span className="font-bold text-foreground">30 ثانية</span> للتصميم
+              {t("متوسط", "Average")} <span className="font-bold text-foreground">{t("30 ثانية", "30 seconds")}</span> {t("للتصميم", "per design")}
             </div>
           </div>
         </section>
@@ -570,9 +622,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
         <div className="max-w-5xl mx-auto">
           <AnimateOnScroll className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black mb-4">
-              3 خطوات فقط — <span className="text-gradient">وإعلانك جاهز</span>
+              {t("3 خطوات فقط —", "Only 3 steps -")} <span className="text-gradient">{t("وإعلانك جاهز", "and your ad is ready")}</span>
             </h2>
-            <p className="text-muted text-lg">من الصورة للبوستر الاحترافي في ثوانٍ</p>
+            <p className="text-muted text-lg">{t("من الصورة للبوستر الاحترافي في ثوانٍ", "From image to pro poster in seconds")}</p>
           </AnimateOnScroll>
 
           <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -592,8 +644,8 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   <div className={`w-14 h-14 ${step.bg} rounded-2xl flex items-center justify-center mx-auto mb-5`}>
                     <Icon size={28} className={step.color} />
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                  <p className="text-muted text-sm leading-relaxed">{step.description}</p>
+                  <h3 className="text-xl font-bold mb-2">{step.title[locale]}</h3>
+                  <p className="text-muted text-sm leading-relaxed">{step.description[locale]}</p>
 
                   {/* Connector arrow (desktop only) */}
                   {idx < STEPS.length - 1 && (
@@ -615,9 +667,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
         <div className="max-w-6xl mx-auto">
           <AnimateOnScroll className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black mb-4">
-              مهما كان نشاطك — <span className="text-gradient">عندنا الحل</span>
+              {t("مهما كان نشاطك —", "Whatever your business -")} <span className="text-gradient">{t("عندنا الحل", "we have the solution")}</span>
             </h2>
-            <p className="text-muted text-lg">تصاميم مخصصة حسب نوع عملك</p>
+            <p className="text-muted text-lg">{t("تصاميم مخصصة حسب نوع عملك", "Tailored creatives for your business type")}</p>
           </AnimateOnScroll>
 
           <StaggerOnScroll className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -628,19 +680,19 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   key={cat.id}
                   variants={STAGGER_ITEM}
                   onClick={() => router.push(`/create?category=${cat.id}`)}
-                  className={`relative group cursor-pointer bg-surface-1 border ${cat.border} rounded-2xl p-8 text-right transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cat.glow} overflow-hidden`}
+                  className={`relative group cursor-pointer bg-surface-1 border ${cat.border} rounded-2xl p-8 ${locale === "ar" ? "text-right" : "text-left"} transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cat.glow} overflow-hidden`}
                 >
                   {/* Icon */}
                   <div className={`w-14 h-14 ${cat.iconBg} rounded-2xl flex items-center justify-center mb-5`}>
                     <Icon size={28} className={cat.iconColor} />
                   </div>
 
-                  <h3 className="text-2xl font-bold mb-1">{cat.title}</h3>
-                  <p className="text-muted text-sm mb-5">{cat.subtitle}</p>
+                  <h3 className="text-2xl font-bold mb-1">{cat.title[locale]}</h3>
+                  <p className="text-muted text-sm mb-5">{cat.subtitle[locale]}</p>
 
                   {/* Bullet points */}
                   <ul className="space-y-2 mb-6">
-                    {cat.bullets.map((bullet, i) => (
+                    {cat.bullets[locale].map((bullet, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-muted">
                         <Check size={14} className={cat.iconColor} />
                         <span>{bullet}</span>
@@ -650,7 +702,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
 
                   {/* CTA */}
                   <div className={`flex items-center gap-2 text-sm font-bold ${cat.iconColor} group-hover:gap-3 transition-all`}>
-                    <span>ابدأ التصميم</span>
+                    <span>{t("ابدأ التصميم", "Start design")}</span>
                     <ArrowLeft size={14} />
                   </div>
 
@@ -670,9 +722,9 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
         <div className="max-w-5xl mx-auto">
           <AnimateOnScroll className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black mb-4">
-              ليش Postaty <span className="text-gradient">أحسن من المصمم؟</span>
+              {t("ليش Postaty", "Why Postaty")} <span className="text-gradient">{t("أحسن من المصمم؟", "is better than hiring a designer?")}</span>
             </h2>
-            <p className="text-muted text-lg">كل اللي تحتاجه في أداة واحدة</p>
+            <p className="text-muted text-lg">{t("كل اللي تحتاجه في أداة واحدة", "Everything you need in one tool")}</p>
           </AnimateOnScroll>
 
           <StaggerOnScroll className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -687,8 +739,8 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
                     <Icon size={20} className="text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold mb-1">{feature.title}</h3>
-                  <p className="text-muted text-sm">{feature.description}</p>
+                  <h3 className="text-lg font-bold mb-1">{feature.title[locale]}</h3>
+                  <p className="text-muted text-sm">{feature.description[locale]}</p>
                 </motion.div>
               );
             })}
@@ -703,10 +755,10 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
         <div className="max-w-6xl mx-auto">
           <AnimateOnScroll className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-black mb-4">
-              اختر خطتك — <span className="text-gradient">الشهر الأول مخفض</span>
+              {t("اختر خطتك —", "Choose your plan -")} <span className="text-gradient">{t("الشهر الأول مخفض", "first month discounted")}</span>
             </h2>
             <p className="text-muted text-lg">
-              جميع الخطط مع ضمان استرجاع الأموال 30 يوم
+              {t("جميع الخطط مع ضمان استرجاع الأموال 30 يوم", "All plans include a 30-day money-back guarantee")}
             </p>
           </AnimateOnScroll>
 
@@ -716,26 +768,19 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
               variants={STAGGER_ITEM}
               className="bg-surface-1 border border-card-border rounded-2xl p-8"
             >
-              <div className="text-sm font-bold text-muted mb-2">مبتدي</div>
+              <div className="text-sm font-bold text-muted mb-2">{t("مبتدي", "Starter")}</div>
               <div className="text-4xl font-black mb-1">
                 {formatPrice(pricing.starter.monthly)}{" "}
-                <span className="text-lg text-muted font-medium">/شهر</span>
+                <span className="text-lg text-muted font-medium">{t("/شهر", "/month")}</span>
               </div>
               <p className="text-muted text-sm mb-1">
-                الشهر الأول: {formatPrice(pricing.starter.firstMonth)}
+                {t("الشهر الأول:", "First month:")} {formatPrice(pricing.starter.firstMonth)}
               </p>
               <p className="text-muted text-xs mb-6 opacity-75">
-                ثم {formatPrice(pricing.starter.monthly)} شهرياً
+                {t("ثم", "Then")} {formatPrice(pricing.starter.monthly)} {t("شهرياً", "monthly")}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "10 تصاميم ذكية شهرياً",
-                  "1–2 محتوى أسبوعياً",
-                  "حجم تصدير واحد",
-                  "نصوص تسويقية أساسية",
-                  "تنزيل HD",
-                  "معرض بسيط"
-                ].map((item, i) => (
+                {starterFeatures.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <Check size={14} className="text-success" />
                     <span>{item}</span>
@@ -746,17 +791,17 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                 AUTH_ENABLED ? (
                   <SignInButton forceRedirectUrl="/checkout?plan=starter">
                     <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                      اشترك الآن
+                      {t("اشترك الآن", "Subscribe now")}
                     </button>
                   </SignInButton>
                 ) : (
                   <Link href="/checkout?plan=starter" className="block w-full py-3 border border-card-border rounded-xl font-bold text-foreground text-center hover:bg-surface-2 transition-colors">
-                    اشترك الآن
+                    {t("اشترك الآن", "Subscribe now")}
                   </Link>
                 )
               ) : (
                 <button onClick={() => router.push("/checkout?plan=starter")} className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                  اشترك الآن
+                  {t("اشترك الآن", "Subscribe now")}
                 </button>
               )}
             </motion.div>
@@ -767,29 +812,21 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
               className="bg-surface-1 border-2 border-primary/30 rounded-2xl p-8 relative"
             >
               <div className="absolute -top-3 right-6 bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                الأكثر شعبية
+                {t("الأكثر شعبية", "Most popular")}
               </div>
-              <div className="text-sm font-bold text-primary mb-2">نمو</div>
+              <div className="text-sm font-bold text-primary mb-2">{t("نمو", "Growth")}</div>
               <div className="text-4xl font-black mb-1">
                 {formatPrice(pricing.growth.monthly)}{" "}
-                <span className="text-lg text-muted font-medium">/شهر</span>
+                <span className="text-lg text-muted font-medium">{t("/شهر", "/month")}</span>
               </div>
               <p className="text-muted text-sm mb-1">
-                الشهر الأول: {formatPrice(pricing.growth.firstMonth)}
+                {t("الشهر الأول:", "First month:")} {formatPrice(pricing.growth.firstMonth)}
               </p>
               <p className="text-muted text-xs mb-6 opacity-75">
-                ثم {formatPrice(pricing.growth.monthly)} شهرياً
+                {t("ثم", "Then")} {formatPrice(pricing.growth.monthly)} {t("شهرياً", "monthly")}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "25 تصميماً ذكياً شهرياً",
-                  "3–4 محتوى أسبوعياً",
-                  "3 أحجام تصدير (بوست، ستوري، واتس)",
-                  "نصوص تسويقية قوية",
-                  "الهوية التجارية محفوظة",
-                  "تنزيل حزمة كاملة",
-                  "معرض منظم"
-                ].map((item, i) => (
+                {growthFeatures.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <Check size={14} className="text-primary" />
                     <span>{item}</span>
@@ -800,17 +837,17 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                 AUTH_ENABLED ? (
                   <SignInButton forceRedirectUrl="/checkout?plan=growth">
                     <button className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold hover:shadow-lg hover:shadow-primary/25 transition-all">
-                      اشترك الآن
+                      {t("اشترك الآن", "Subscribe now")}
                     </button>
                   </SignInButton>
                 ) : (
                   <Link href="/checkout?plan=growth" className="block w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold text-center hover:shadow-lg hover:shadow-primary/25 transition-all">
-                    اشترك الآن
+                    {t("اشترك الآن", "Subscribe now")}
                   </Link>
                 )
               ) : (
                 <button onClick={() => router.push("/checkout?plan=growth")} className="w-full py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold hover:shadow-lg hover:shadow-primary/25 transition-all">
-                  اشترك الآن
+                  {t("اشترك الآن", "Subscribe now")}
                 </button>
               )}
             </motion.div>
@@ -820,28 +857,19 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
               variants={STAGGER_ITEM}
               className="bg-surface-1 border border-card-border rounded-2xl p-8"
             >
-              <div className="text-sm font-bold text-muted mb-2">هيمنة</div>
+              <div className="text-sm font-bold text-muted mb-2">{t("هيمنة", "Dominant")}</div>
               <div className="text-4xl font-black mb-1">
                 {formatPrice(pricing.dominant.monthly)}{" "}
-                <span className="text-lg text-muted font-medium">/شهر</span>
+                <span className="text-lg text-muted font-medium">{t("/شهر", "/month")}</span>
               </div>
               <p className="text-muted text-sm mb-1">
-                الشهر الأول: {formatPrice(pricing.dominant.firstMonth)}
+                {t("الشهر الأول:", "First month:")} {formatPrice(pricing.dominant.firstMonth)}
               </p>
               <p className="text-muted text-xs mb-6 opacity-75">
-                ثم {formatPrice(pricing.dominant.monthly)} شهرياً
+                {t("ثم", "Then")} {formatPrice(pricing.dominant.monthly)} {t("شهرياً", "monthly")}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  "50 تصميماً ذكياً شهرياً",
-                  "محتوى يومي تقريباً",
-                  "توليد موجه بالأهداف",
-                  "عبارات تحويل ذكية",
-                  "جميع الأحجام مُصَدَّرة تلقائياً",
-                  "أرشيف متقدم",
-                  "توليد بأولوية",
-                  "مرشحات محتوى ذكية"
-                ].map((item, i) => (
+                {dominantFeatures.map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-sm">
                     <Check size={14} className="text-accent" />
                     <span>{item}</span>
@@ -852,17 +880,17 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                 AUTH_ENABLED ? (
                   <SignInButton forceRedirectUrl="/checkout?plan=dominant">
                     <button className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                      اشترك الآن
+                      {t("اشترك الآن", "Subscribe now")}
                     </button>
                   </SignInButton>
                 ) : (
                   <Link href="/checkout?plan=dominant" className="block w-full py-3 border border-card-border rounded-xl font-bold text-foreground text-center hover:bg-surface-2 transition-colors">
-                    اشترك الآن
+                    {t("اشترك الآن", "Subscribe now")}
                   </Link>
                 )
               ) : (
                 <button onClick={() => router.push("/checkout?plan=dominant")} className="w-full py-3 border border-card-border rounded-xl font-bold text-foreground hover:bg-surface-2 transition-colors">
-                  اشترك الآن
+                  {t("اشترك الآن", "Subscribe now")}
                 </button>
               )}
             </motion.div>
@@ -882,19 +910,19 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
         <AnimateOnScroll className="max-w-3xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-8">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            أكثر من 500 صاحب مشروع بدأوا معنا
+            {t("أكثر من 500 صاحب مشروع بدأوا معنا", "More than 500 business owners started with us")}
           </div>
 
           <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
-            وقتك أغلى من إنك
+            {t("وقتك أغلى من إنك", "Your time is too valuable to")}
             <br />
-            <span className="text-gradient">تصمم بوستر بنفسك</span>
+            <span className="text-gradient">{t("تصمم بوستر بنفسك", "design posters manually")}</span>
           </h2>
           <p className="text-muted text-lg md:text-xl mb-4 max-w-xl mx-auto leading-relaxed">
-            بدل ما تدفع لمصمم وتنتظر أيام، خلّي بوستاتي يطلع لك تصميم احترافي في ثوانٍ.
+            {t("بدل ما تدفع لمصمم وتنتظر أيام، خلّي بوستاتي يطلع لك تصميم احترافي في ثوانٍ.", "Instead of paying a designer and waiting days, let Postaty generate pro designs in seconds.")}
           </p>
           <p className="text-muted/60 text-sm mb-10">
-            اشتراك شهري مرن · إلغاء في أي وقت
+            {t("اشتراك شهري مرن · إلغاء في أي وقت", "Flexible monthly subscription · Cancel anytime")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -905,7 +933,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                     whileTap={TAP_SCALE}
                     className="px-10 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold text-lg shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all"
                   >
-                    اشترك وابدأ الآن
+                    {t("اشترك وابدأ الآن", "Subscribe and start now")}
                   </motion.button>
                 </SignInButton>
               ) : (
@@ -913,7 +941,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                   href="/pricing"
                   className="inline-block px-10 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold text-lg shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all"
                 >
-                  اشترك وابدأ الآن
+                  {t("اشترك وابدأ الآن", "Subscribe and start now")}
                 </Link>
               )
             ) : (
@@ -922,7 +950,7 @@ export default function HomeClient({ pricing, countryCode }: HomeClientProps) {
                 onClick={() => router.push("/create")}
                 className="px-10 py-4 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold text-lg shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all"
               >
-                صمم بوسترك الآن
+                {t("صمم بوسترك الآن", "Create your poster now")}
               </motion.button>
             )}
           </div>

@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { Download, Loader2 } from "lucide-react";
 import { FORMAT_CONFIGS } from "@/lib/constants";
 import type { OutputFormat } from "@/lib/types";
+import { useLocale } from "@/hooks/use-locale";
 
 interface DownloadButtonProps {
   captureRef: RefObject<HTMLDivElement | null>;
@@ -12,6 +13,7 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ captureRef, format }: DownloadButtonProps) {
+  const { t } = useLocale();
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,7 @@ export function DownloadButton({ captureRef, format }: DownloadButtonProps) {
 
     // Validate element dimensions
     if (element.offsetWidth === 0 || element.offsetHeight === 0) {
-      setError("تعذر تحديد أبعاد التصميم. يرجى المحاولة مرة أخرى.");
+      setError(t("تعذر تحديد أبعاد التصميم. يرجى المحاولة مرة أخرى.", "Unable to detect design dimensions. Please try again."));
       return;
     }
 
@@ -50,7 +52,7 @@ export function DownloadButton({ captureRef, format }: DownloadButtonProps) {
       link.click();
     } catch (err) {
       console.error("Download failed:", err);
-      setError("حدث خطأ أثناء تحميل البوستر. يرجى المحاولة مرة أخرى.");
+      setError(t("حدث خطأ أثناء تحميل البوستر. يرجى المحاولة مرة أخرى.", "An error occurred while downloading the poster. Please try again."));
     } finally {
       setDownloading(false);
     }
@@ -66,12 +68,12 @@ export function DownloadButton({ captureRef, format }: DownloadButtonProps) {
         {downloading ? (
           <>
             <Loader2 size={20} className="animate-spin" />
-            جاري التحميل...
+            {t("جاري التحميل...", "Downloading...")}
           </>
         ) : (
           <>
             <Download size={20} />
-            تحميل البوستر
+            {t("تحميل البوستر", "Download poster")}
           </>
         )}
       </button>

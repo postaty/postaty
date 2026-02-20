@@ -2,43 +2,77 @@
 
 import { Check } from "lucide-react";
 import { formatPrice } from "@/lib/country-pricing";
+import type { AppLocale } from "@/lib/i18n";
 
 type PlanKey = "starter" | "growth" | "dominant";
 
-const PLAN_FEATURES: Record<PlanKey, string[]> = {
-  starter: [
-    "10 تصاميم ذكية شهرياً",
-    "1–2 محتوى أسبوعياً",
-    "حجم تصدير واحد",
-    "نصوص تسويقية أساسية",
-    "تنزيل HD",
-    "معرض بسيط",
-  ],
-  growth: [
-    "25 تصميماً ذكياً شهرياً",
-    "3–4 محتوى أسبوعياً",
-    "3 أحجام تصدير (بوست، ستوري، واتس)",
-    "نصوص تسويقية قوية",
-    "الهوية التجارية محفوظة",
-    "تنزيل حزمة كاملة",
-    "معرض منظم",
-  ],
-  dominant: [
-    "50 تصميماً ذكياً شهرياً",
-    "محتوى يومي تقريباً",
-    "توليد موجه بالأهداف",
-    "عبارات تحويل ذكية",
-    "جميع الأحجام مُصَدَّرة تلقائياً",
-    "أرشيف متقدم",
-    "توليد بأولوية",
-    "مرشحات محتوى ذكية",
-  ],
+const PLAN_FEATURES: Record<PlanKey, { ar: string[]; en: string[] }> = {
+  starter: {
+    ar: [
+      "10 تصاميم ذكية شهرياً",
+      "1–2 محتوى أسبوعياً",
+      "حجم تصدير واحد",
+      "نصوص تسويقية أساسية",
+      "تنزيل HD",
+      "معرض بسيط",
+    ],
+    en: [
+      "10 AI designs/month",
+      "1-2 weekly content pieces",
+      "One export size",
+      "Basic marketing copy",
+      "HD download",
+      "Simple gallery",
+    ],
+  },
+  growth: {
+    ar: [
+      "25 تصميماً ذكياً شهرياً",
+      "3–4 محتوى أسبوعياً",
+      "3 أحجام تصدير (بوست، ستوري، واتس)",
+      "نصوص تسويقية قوية",
+      "الهوية التجارية محفوظة",
+      "تنزيل حزمة كاملة",
+      "معرض منظم",
+    ],
+    en: [
+      "25 AI designs/month",
+      "3-4 weekly content pieces",
+      "3 export sizes (Post, Story, WhatsApp)",
+      "High-converting marketing copy",
+      "Saved brand identity",
+      "Full pack download",
+      "Organized gallery",
+    ],
+  },
+  dominant: {
+    ar: [
+      "50 تصميماً ذكياً شهرياً",
+      "محتوى يومي تقريباً",
+      "توليد موجه بالأهداف",
+      "عبارات تحويل ذكية",
+      "جميع الأحجام مُصَدَّرة تلقائياً",
+      "أرشيف متقدم",
+      "توليد بأولوية",
+      "مرشحات محتوى ذكية",
+    ],
+    en: [
+      "50 AI designs/month",
+      "Near-daily content",
+      "Goal-based generation",
+      "Smart conversion copy",
+      "Automatic export for all sizes",
+      "Advanced archive",
+      "Priority generation",
+      "Smart content filters",
+    ],
+  },
 };
 
-const PLAN_LABELS: Record<PlanKey, string> = {
-  starter: "مبتدي",
-  growth: "نمو",
-  dominant: "هيمنة",
+const PLAN_LABELS: Record<PlanKey, { ar: string; en: string }> = {
+  starter: { ar: "مبتدي", en: "Starter" },
+  growth: { ar: "نمو", en: "Growth" },
+  dominant: { ar: "هيمنة", en: "Dominant" },
 };
 
 const CHECK_COLORS: Record<PlanKey, string> = {
@@ -52,6 +86,7 @@ export type PricingCardProps = {
   monthlyPrice: number;
   firstMonthPrice: number;
   isPopular?: boolean;
+  locale: AppLocale;
   ctaButton: React.ReactNode;
 };
 
@@ -60,9 +95,10 @@ export function PricingCard({
   monthlyPrice,
   firstMonthPrice,
   isPopular,
+  locale,
   ctaButton,
 }: PricingCardProps) {
-  const features = PLAN_FEATURES[planKey];
+  const features = PLAN_FEATURES[planKey][locale];
   const checkColor = CHECK_COLORS[planKey];
 
   return (
@@ -75,7 +111,7 @@ export function PricingCard({
     >
       {isPopular && (
         <div className="absolute -top-3 right-6 bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-          الأكثر شعبية
+          {locale === "ar" ? "الأكثر شعبية" : "Most popular"}
         </div>
       )}
       <div
@@ -83,17 +119,17 @@ export function PricingCard({
           isPopular ? "text-primary" : "text-muted"
         }`}
       >
-        {PLAN_LABELS[planKey]}
+        {PLAN_LABELS[planKey][locale]}
       </div>
       <div className="text-4xl font-black mb-1">
         {formatPrice(monthlyPrice)}{" "}
-        <span className="text-lg text-muted font-medium">/شهر</span>
+        <span className="text-lg text-muted font-medium">{locale === "ar" ? "/شهر" : "/month"}</span>
       </div>
       <p className="text-muted text-sm mb-1">
-        الشهر الأول: {formatPrice(firstMonthPrice)}
+        {locale === "ar" ? "الشهر الأول" : "First month"}: {formatPrice(firstMonthPrice)}
       </p>
       <p className="text-muted text-xs mb-6 opacity-75">
-        ثم {formatPrice(monthlyPrice)} شهرياً
+        {locale === "ar" ? "ثم" : "Then"} {formatPrice(monthlyPrice)} {locale === "ar" ? "شهرياً" : "monthly"}
       </p>
       <ul className="space-y-3 mb-8">
         {features.map((item, i) => (

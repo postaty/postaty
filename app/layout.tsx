@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "./components/convex-provider";
@@ -8,6 +9,8 @@ import { ScrollToTop } from "./components/scroll-to-top";
 import { AuthSync } from "./components/auth-sync";
 import { Footer } from "./components/footer";
 import { AccountStatusGate } from "./components/account-status-gate";
+import { LocaleProvider } from "./components/locale-provider";
+import { isRtlLocale, LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n";
 import "./globals.css";
 
 const notoKufiArabic = localFont({
@@ -96,11 +99,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const dir = isRtlLocale(locale) ? "rtl" : "ltr";
   const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const appShell = (
     <>
@@ -108,9 +114,9 @@ export default function RootLayout({
       <ConvexClientProvider>
         {clerkPublishableKey ? <AuthSync /> : null}
         <AccountStatusGate>
-          <NavBar />
+          <NavBar locale={locale} />
           <main className="pb-20 md:pb-0 min-h-screen">{children}</main>
-          <Footer />
+          <Footer locale={locale} />
           <BottomDock />
         </AccountStatusGate>
       </ConvexClientProvider>
@@ -118,7 +124,7 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="ar" dir="rtl">
+    <html lang={locale} dir={dir}>
       <head>
         {/* Hardcoded OG meta tags as fallback for WhatsApp/Facebook crawlers */}
         <meta property="og:image" content={ogImageUrl} />
@@ -128,13 +134,15 @@ export default function RootLayout({
         <meta name="twitter:image" content={ogImageUrl} />
       </head>
       <body className={`${notoKufiArabic.variable} antialiased`}>
-        {clerkPublishableKey ? (
-          <ClerkProvider publishableKey={clerkPublishableKey}>
-            {appShell}
-          </ClerkProvider>
-        ) : (
-          appShell
-        )}
+        <LocaleProvider locale={locale}>
+          {clerkPublishableKey ? (
+            <ClerkProvider publishableKey={clerkPublishableKey}>
+              {appShell}
+            </ClerkProvider>
+          ) : (
+            appShell
+          )}
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { GenerationResult } from "@/lib/types";
 import { PosterPreview } from "./poster-preview";
+import { useLocale } from "@/hooks/use-locale";
 
 interface GenerationViewProps {
   step: "crafting-prompt" | "generating-images" | "complete" | "error";
@@ -21,40 +22,39 @@ interface GenerationViewProps {
   error?: string;
 }
 
-const GENERATION_STEPS = [
-  { icon: Wand2, label: "تحليل بيانات العرض", sublabel: "فهم تفاصيل المنتج والعرض" },
-  { icon: Palette, label: "اختيار الألوان والتصميم", sublabel: "تصميم هوية بصرية جذابة" },
-  { icon: Type, label: "كتابة النصوص الإبداعية", sublabel: "صياغة نص تسويقي مؤثر" },
-  { icon: ImageIcon, label: "معالجة الصور", sublabel: "تحسين جودة صور المنتج" },
-  { icon: LayoutGrid, label: "تنسيق البوستر", sublabel: "ترتيب العناصر بشكل احترافي" },
-  { icon: Sparkles, label: "اللمسات النهائية", sublabel: "إضافة تأثيرات بصرية مميزة" },
-];
-
-const TIPS = [
-  "البوسترات المصممة باحترافية تزيد التفاعل بنسبة 80%",
-  "الألوان الدافئة تجذب انتباه المتسوقين أكثر",
-  "العروض المحدودة الوقت تحقق مبيعات أعلى بـ 3 أضعاف",
-  "صور المنتجات عالية الجودة تزيد الثقة لدى العملاء",
-  "إضافة السعر القديم مع الجديد يبرز قيمة العرض",
-];
-
 function SkeletonLoader() {
+  const { t } = useLocale();
   const [activeStep, setActiveStep] = useState(0);
   const [tipIndex, setTipIndex] = useState(0);
+  const generationSteps = [
+    { icon: Wand2, label: t("تحليل بيانات العرض", "Analyzing offer details"), sublabel: t("فهم تفاصيل المنتج والعرض", "Understanding product and offer details") },
+    { icon: Palette, label: t("اختيار الألوان والتصميم", "Choosing colors and style"), sublabel: t("تصميم هوية بصرية جذابة", "Crafting an attractive visual identity") },
+    { icon: Type, label: t("كتابة النصوص الإبداعية", "Writing creative copy"), sublabel: t("صياغة نص تسويقي مؤثر", "Composing persuasive marketing text") },
+    { icon: ImageIcon, label: t("معالجة الصور", "Processing images"), sublabel: t("تحسين جودة صور المنتج", "Enhancing product image quality") },
+    { icon: LayoutGrid, label: t("تنسيق البوستر", "Arranging poster layout"), sublabel: t("ترتيب العناصر بشكل احترافي", "Organizing elements professionally") },
+    { icon: Sparkles, label: t("اللمسات النهائية", "Final touches"), sublabel: t("إضافة تأثيرات بصرية مميزة", "Adding standout visual effects") },
+  ];
+  const tips = [
+    t("البوسترات المصممة باحترافية تزيد التفاعل بنسبة 80%", "Professionally designed posters can increase engagement by up to 80%"),
+    t("الألوان الدافئة تجذب انتباه المتسوقين أكثر", "Warm colors draw more shopper attention"),
+    t("العروض المحدودة الوقت تحقق مبيعات أعلى بـ 3 أضعاف", "Limited-time offers can drive up to 3x higher sales"),
+    t("صور المنتجات عالية الجودة تزيد الثقة لدى العملاء", "High-quality product images build customer trust"),
+    t("إضافة السعر القديم مع الجديد يبرز قيمة العرض", "Showing old and new prices highlights offer value"),
+  ];
 
   useEffect(() => {
     const stepInterval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % GENERATION_STEPS.length);
+      setActiveStep((prev) => (prev + 1) % generationSteps.length);
     }, 3000);
     return () => clearInterval(stepInterval);
-  }, []);
+  }, [generationSteps.length]);
 
   useEffect(() => {
     const tipInterval = setInterval(() => {
-      setTipIndex((prev) => (prev + 1) % TIPS.length);
+      setTipIndex((prev) => (prev + 1) % tips.length);
     }, 5000);
     return () => clearInterval(tipInterval);
-  }, []);
+  }, [tips.length]);
 
   return (
     <div className="space-y-8">
@@ -105,7 +105,7 @@ function SkeletonLoader() {
 
       {/* Step progress */}
       <div className="max-w-md mx-auto space-y-3">
-        {GENERATION_STEPS.map((s, i) => {
+        {generationSteps.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === activeStep;
           const isDone = i < activeStep;
@@ -148,7 +148,7 @@ function SkeletonLoader() {
       {/* Tips */}
       <div className="text-center">
         <p className="text-sm text-muted transition-all duration-500" key={tipIndex}>
-          <span className="text-accent">*</span> {TIPS[tipIndex]}
+          <span className="text-accent">*</span> {tips[tipIndex]}
         </p>
       </div>
     </div>
@@ -156,6 +156,7 @@ function SkeletonLoader() {
 }
 
 export function GenerationView({ step, results, error }: GenerationViewProps) {
+  const { t } = useLocale();
   const isLoading = step === "crafting-prompt" || step === "generating-images";
 
   return (
@@ -165,7 +166,7 @@ export function GenerationView({ step, results, error }: GenerationViewProps) {
       {step === "complete" && (
         <div className="flex items-center justify-center gap-3 py-4">
           <CheckCircle2 size={24} className="text-success" />
-          <span className="text-lg font-medium">تم إنشاء البوسترات بنجاح!</span>
+          <span className="text-lg font-medium">{t("تم إنشاء البوسترات بنجاح!", "Posters were generated successfully!")}</span>
         </div>
       )}
 
@@ -173,7 +174,7 @@ export function GenerationView({ step, results, error }: GenerationViewProps) {
         <>
           <div className="flex items-center justify-center gap-3 py-4">
             <XCircle size={24} className="text-danger" />
-            <span className="text-lg font-medium">حدث خطأ</span>
+            <span className="text-lg font-medium">{t("حدث خطأ", "An error occurred")}</span>
           </div>
           {error && (
             <div className="bg-danger/10 border border-danger/30 rounded-xl p-4 text-center text-danger">

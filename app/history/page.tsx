@@ -11,26 +11,36 @@ import type { Category } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { useLocale } from "@/hooks/use-locale";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
-const HISTORY_FILTERS: Array<{ value: "all" | Category; label: string }> = [
-  { value: "all", label: "الكل" },
-  { value: "restaurant", label: CATEGORY_LABELS.restaurant },
-  { value: "supermarket", label: CATEGORY_LABELS.supermarket },
-  { value: "ecommerce", label: CATEGORY_LABELS.ecommerce },
-  { value: "services", label: CATEGORY_LABELS.services },
-  { value: "fashion", label: CATEGORY_LABELS.fashion },
-  { value: "beauty", label: CATEGORY_LABELS.beauty },
-];
+const CATEGORY_LABELS_EN: Record<Category, string> = {
+  restaurant: "Restaurants & Cafes",
+  supermarket: "Supermarkets",
+  ecommerce: "E-commerce",
+  services: "Services",
+  fashion: "Fashion",
+  beauty: "Beauty & Care",
+};
 
 export default function HistoryPage() {
   const { isLoading: isIdentityLoading, isAuthenticated } = useDevIdentity();
+  const { locale, t } = useLocale();
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
   const [selectedCategory, setSelectedCategory] = useState<"all" | Category>("all");
   const categoryFilter = selectedCategory === "all" ? undefined : selectedCategory;
 
-  // User-specific query
+  const HISTORY_FILTERS: Array<{ value: "all" | Category; label: string }> = [
+    { value: "all", label: t("الكل", "All") },
+    { value: "restaurant", label: locale === "ar" ? CATEGORY_LABELS.restaurant : CATEGORY_LABELS_EN.restaurant },
+    { value: "supermarket", label: locale === "ar" ? CATEGORY_LABELS.supermarket : CATEGORY_LABELS_EN.supermarket },
+    { value: "ecommerce", label: locale === "ar" ? CATEGORY_LABELS.ecommerce : CATEGORY_LABELS_EN.ecommerce },
+    { value: "services", label: locale === "ar" ? CATEGORY_LABELS.services : CATEGORY_LABELS_EN.services },
+    { value: "fashion", label: locale === "ar" ? CATEGORY_LABELS.fashion : CATEGORY_LABELS_EN.fashion },
+    { value: "beauty", label: locale === "ar" ? CATEGORY_LABELS.beauty : CATEGORY_LABELS_EN.beauty },
+  ];
+
   const generations = useQuery(
     api.generations.listByUser,
     isAuthenticated && viewMode === "list"
@@ -48,18 +58,17 @@ export default function HistoryPage() {
           <div className="inline-flex items-center justify-center gap-3 mb-4 bg-surface-1/80 backdrop-blur-sm px-6 py-2 rounded-full border border-card-border shadow-sm animate-fade-in-up">
             <Clock size={24} className="text-primary" />
             <span className="text-foreground font-semibold tracking-wide text-sm">
-              سجل الإنشاءات
+              {t("سجل الإنشاءات", "Generation history")}
             </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-foreground animate-gradient-flow">
-            معرض البوسترات
+            {t("معرض البوسترات", "Poster gallery")}
           </h1>
           <p className="text-muted text-lg max-w-xl mx-auto leading-relaxed font-light">
-            عرض جميع البوسترات التي تم إنشاؤها سابقاً
+            {t("عرض جميع البوسترات التي تم إنشاؤها سابقاً", "View all posters generated previously")}
           </p>
         </div>
 
-        {/* View Mode Toggle */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex bg-surface-1/80 backdrop-blur-sm rounded-xl border border-card-border shadow-sm p-1">
             <button
@@ -71,7 +80,7 @@ export default function HistoryPage() {
               }`}
             >
               <Grid3x3 size={16} />
-              معرض
+              {t("معرض", "Gallery")}
             </button>
             <button
               onClick={() => setViewMode("list")}
@@ -82,12 +91,11 @@ export default function HistoryPage() {
               }`}
             >
               <List size={16} />
-              قائمة
+              {t("قائمة", "List")}
             </button>
           </div>
         </div>
 
-        {/* Category Filter */}
         <div className="flex justify-center mb-8">
           <div className="inline-flex flex-wrap justify-center gap-2 bg-surface-1/80 backdrop-blur-sm rounded-xl border border-card-border shadow-sm p-2">
             {HISTORY_FILTERS.map((filter) => (
@@ -106,19 +114,18 @@ export default function HistoryPage() {
           </div>
         </div>
 
-        {/* Content */}
         {!isAuthenticated && !isIdentityLoading ? (
           <div className="text-center py-16">
-            <p className="text-muted mb-6">سجّل الدخول لعرض السجل</p>
+            <p className="text-muted mb-6">{t("سجّل الدخول لعرض السجل", "Sign in to view your history")}</p>
             {AUTH_ENABLED ? (
               <SignInButton forceRedirectUrl="/history">
                 <button className="px-6 py-3 bg-primary text-white rounded-xl font-bold">
-                  تسجيل الدخول
+                  {t("تسجيل الدخول", "Sign in")}
                 </button>
               </SignInButton>
             ) : (
               <Link href="/create" className="px-6 py-3 bg-primary text-white rounded-xl font-bold inline-block">
-                ابدأ الآن
+                {t("ابدأ الآن", "Start now")}
               </Link>
             )}
           </div>
@@ -132,7 +139,7 @@ export default function HistoryPage() {
               </div>
             ) : generations.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-muted">لا توجد إنشاءات بعد</p>
+                <p className="text-muted">{t("لا توجد إنشاءات بعد", "No generations yet")}</p>
               </div>
             ) : (
               generations.map((gen) => (

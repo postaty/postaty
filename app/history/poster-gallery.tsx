@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Download, Calendar, Tag, Loader2, Image as ImageIcon } from "lucide-react";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
 import type { Category, OutputFormat } from "@/lib/types";
+import { useLocale } from "@/hooks/use-locale";
 
 interface PosterImageData {
   generationId: string;
@@ -23,7 +24,17 @@ interface PosterGalleryProps {
   category?: Category;
 }
 
+const CATEGORY_LABELS_EN: Record<Category, string> = {
+  restaurant: "Restaurants & Cafes",
+  supermarket: "Supermarkets",
+  ecommerce: "E-commerce",
+  services: "Services",
+  fashion: "Fashion",
+  beauty: "Beauty & Care",
+};
+
 export function PosterGallery({ category }: PosterGalleryProps) {
+  const { locale, t } = useLocale();
   const { results, status, loadMore } = usePaginatedQuery(
     api.generations.listByOrgPaginated,
     { category },
@@ -33,7 +44,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const [selectedImage, setSelectedImage] = useState<PosterImageData | null>(null);
 
-  // Flatten all outputs into a single array of images
   const allImages: PosterImageData[] = [];
   if (results) {
     for (const generation of results) {
@@ -57,7 +67,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
     }
   }
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -76,7 +85,7 @@ export function PosterGallery({ category }: PosterGalleryProps) {
   }, [status, loadMore]);
 
   const formatDate = (timestamp: number) => {
-    return new Intl.DateTimeFormat("ar-SA", {
+    return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-US", {
       dateStyle: "medium",
     }).format(new Date(timestamp));
   };
@@ -95,19 +104,20 @@ export function PosterGallery({ category }: PosterGalleryProps) {
             <ImageIcon size={36} className="text-muted-foreground" />
           </div>
           <h3 className="text-lg font-bold text-foreground mb-2">
-            لا توجد صور بعد
+            {t("لا توجد صور بعد", "No images yet")}
           </h3>
           <p className="text-muted">
-            ابدأ بإنشاء أول بوستر من صفحة الإنشاء
+            {t("ابدأ بإنشاء أول بوستر من صفحة الإنشاء", "Create your first poster from the create page")}
           </p>
         </div>
       ) : (
         <>
-          {/* Masonry Grid */}
           <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
             {allImages.map((image, index) => {
               const formatConfig = FORMAT_CONFIGS[image.format as OutputFormat];
-              const categoryLabel = CATEGORY_LABELS[image.category as Category] ?? image.category;
+              const categoryLabel = locale === "ar"
+                ? CATEGORY_LABELS[image.category as Category] ?? image.category
+                : CATEGORY_LABELS_EN[image.category as Category] ?? image.category;
 
               return (
                 <div
@@ -115,7 +125,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
                   className="break-inside-avoid group relative"
                 >
                   <div className="bg-surface-1 rounded-2xl overflow-hidden border border-card-border shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
-                    {/* Image */}
                     <button
                       onClick={() => setSelectedImage(image)}
                       className="w-full block overflow-hidden bg-surface-2/30"
@@ -128,7 +137,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
                       />
                     </button>
 
-                    {/* Overlay Info */}
                     <div className="p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-bold text-foreground truncate">
@@ -150,9 +158,10 @@ export function PosterGallery({ category }: PosterGalleryProps) {
                         </span>
                       </div>
 
-                      <DownloadBtn 
-                        url={image.url} 
+                      <DownloadBtn
+                        url={image.url}
                         fileName={`${image.businessName}-${image.format}`}
+                        locale={locale}
                         className="w-full flex items-center justify-center gap-2 py-2 bg-primary/5 hover:bg-primary hover:text-white text-primary rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
@@ -162,7 +171,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
             })}
           </div>
 
-          {/* Load More Trigger */}
           <div ref={observerTarget} className="py-8">
             {status === "LoadingMore" && (
               <div className="flex justify-center">
@@ -173,7 +181,6 @@ export function PosterGallery({ category }: PosterGalleryProps) {
         </>
       )}
 
-      {/* Lightbox Modal */}
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -181,9 +188,10 @@ export function PosterGallery({ category }: PosterGalleryProps) {
         >
           <div className="relative max-w-5xl max-h-[90vh] w-full">
             <div className="absolute -top-12 left-0 right-0 flex items-center justify-between">
-              <DownloadBtn 
-                url={selectedImage.url} 
+              <DownloadBtn
+                url={selectedImage.url}
                 fileName={`${selectedImage.businessName}-${selectedImage.format}`}
+                locale={locale}
                 className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-bold transition-all backdrop-blur-sm disabled:opacity-50"
                 onClick={(e) => e.stopPropagation()}
               />
@@ -191,7 +199,7 @@ export function PosterGallery({ category }: PosterGalleryProps) {
                 onClick={() => setSelectedImage(null)}
                 className="text-white hover:text-muted text-sm font-bold px-4 py-2"
               >
-                إغلاق ✕
+                {t("إغلاق", "Close")} ✕
               </button>
             </div>
             <img
@@ -211,22 +219,24 @@ export function PosterGallery({ category }: PosterGalleryProps) {
   );
 }
 
-function DownloadBtn({ 
-  url, 
-  fileName, 
+function DownloadBtn({
+  url,
+  fileName,
   className,
-  onClick
-}: { 
-  url: string; 
-  fileName: string; 
+  onClick,
+  locale,
+}: {
+  url: string;
+  fileName: string;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
+  locale: "ar" | "en";
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async (e: React.MouseEvent) => {
     if (onClick) onClick(e);
-    
+
     setIsDownloading(true);
     try {
       const response = await fetch(url);
@@ -252,7 +262,7 @@ function DownloadBtn({
       className={className}
     >
       {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
-      {isDownloading ? "جاري التحميل..." : "تحميل"}
+      {isDownloading ? (locale === "ar" ? "جاري التحميل..." : "Downloading...") : (locale === "ar" ? "تحميل" : "Download")}
     </button>
   );
 }

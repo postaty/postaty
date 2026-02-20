@@ -10,6 +10,7 @@ import { ArrowRight, Sparkles, LayoutGrid, LogIn, AlertCircle } from "lucide-rea
 import { SignInButton } from "@clerk/nextjs";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useLocale } from "@/hooks/use-locale";
 
 // Components
 import { CategorySelector } from "../components/category-selector";
@@ -53,6 +54,14 @@ const BeautyForm = dynamic(
 );
 
 const ALL_CATEGORIES: Category[] = ["restaurant", "supermarket", "ecommerce", "services", "fashion", "beauty"];
+const CATEGORY_LABELS_EN: Record<Category, string> = {
+  restaurant: "Restaurants & Cafes",
+  supermarket: "Supermarkets",
+  ecommerce: "E-commerce",
+  services: "Services",
+  fashion: "Fashion",
+  beauty: "Beauty & Care",
+};
 
 function getNowMs(): number {
   return Date.now();
@@ -126,6 +135,7 @@ function CreatePageContent() {
   const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
   const { orgId, isLoading: isIdentityLoading } = useDevIdentity();
+  const { locale, t } = useLocale();
 
   // State
   const [category, setCategory] = useState<Category | null>(null);
@@ -275,7 +285,7 @@ function CreatePageContent() {
 
     // Gate: must have credits
     if (!canGenerate) {
-      setError("لا يوجد لديك رصيد كافٍ. يرجى ترقية اشتراكك أو شراء رصيد إضافي.");
+      setError(t("لا يوجد لديك رصيد كافٍ. يرجى ترقية اشتراكك أو شراء رصيد إضافي.", "You don't have enough credits. Please upgrade your plan or buy additional credits."));
       return;
     }
 
@@ -294,10 +304,10 @@ function CreatePageContent() {
     try {
       const creditResult = await consumeCredit({ idempotencyKey });
       if (!creditResult.ok) {
-        throw new Error("لا يوجد لديك رصيد كافٍ");
+        throw new Error(t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits"));
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "فشل خصم الرصيد";
+      const msg = err instanceof Error ? err.message : t("فشل خصم الرصيد", "Failed to consume credits");
       setError(msg);
       setGenStep("error");
       setIsGenerating(false);
@@ -326,7 +336,7 @@ function CreatePageContent() {
           status: "error",
           error: err instanceof Error ? err.message : "Generation failed",
           designName: "Design",
-          designNameAr: "تصميم",
+          designNameAr: locale === "ar" ? "تصميم" : "Design",
         };
         setResults([errorResult]);
         setGenStep("error");
@@ -440,11 +450,11 @@ function CreatePageContent() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
             <LogIn size={28} className="text-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-foreground">سجّل دخولك للمتابعة</h2>
-          <p className="text-muted">يجب تسجيل الدخول لإنشاء تصاميم جديدة</p>
+          <h2 className="text-2xl font-bold text-foreground">{t("سجّل دخولك للمتابعة", "Sign in to continue")}</h2>
+          <p className="text-muted">{t("يجب تسجيل الدخول لإنشاء تصاميم جديدة", "You need to sign in to create new designs")}</p>
           <SignInButton forceRedirectUrl="/create">
             <button className="px-8 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all">
-              تسجيل الدخول
+              {t("تسجيل الدخول", "Sign in")}
             </button>
           </SignInButton>
         </div>
@@ -495,7 +505,7 @@ function CreatePageContent() {
                 <ArrowRight size={20} />
              </motion.button>
              <h1 className="text-lg font-bold text-foreground">
-                {results.length > 0 ? "نتائج التصميم" : category ? "تفاصيل الإعلان" : "إنشاء جديد"}
+                {results.length > 0 ? t("نتائج التصميم", "Design results") : category ? t("تفاصيل الإعلان", "Ad details") : t("إنشاء جديد", "Create new")}
              </h1>
           </div>
 
@@ -505,7 +515,7 @@ function CreatePageContent() {
               style={{ backgroundColor: `${CATEGORY_THEMES[category].accent}15`, color: CATEGORY_THEMES[category].accent }}
             >
                 <Sparkles size={12} />
-                <span>{CATEGORY_LABELS[category]}</span>
+                <span>{locale === "ar" ? CATEGORY_LABELS[category] : CATEGORY_LABELS_EN[category]}</span>
             </div>
           )}
         </div>
@@ -521,8 +531,8 @@ function CreatePageContent() {
                 exit={{ opacity: 0, y: -10 }}
             >
                 <div className="text-center mb-10">
-                    <h2 className="text-3xl font-black text-foreground mb-3">ماذا تريد أن تصمم اليوم؟</h2>
-                    <p className="text-muted text-lg">اختر نوع نشاطك التجاري للبدء في تصميم إعلانك</p>
+                    <h2 className="text-3xl font-black text-foreground mb-3">{t("ماذا تريد أن تصمم اليوم؟", "What do you want to design today?")}</h2>
+                    <p className="text-muted text-lg">{t("اختر نوع نشاطك التجاري للبدء في تصميم إعلانك", "Choose your business type to start designing your ad")}</p>
                 </div>
                 <CategorySelector onSelect={handleCategorySelect} />
             </motion.div>
@@ -555,7 +565,7 @@ function CreatePageContent() {
                         className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary-hover font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <Sparkles size={18} />
-                        <span>إنشاء صورة إضافية بنفس المحتوى</span>
+                        <span>{t("إنشاء صورة إضافية بنفس المحتوى", "Create another image with the same content")}</span>
                     </motion.button>
                     <motion.button
                         whileTap={TAP_SCALE}
@@ -563,7 +573,7 @@ function CreatePageContent() {
                         className="flex items-center gap-2 px-6 py-3 bg-surface-1 border border-card-border text-foreground rounded-xl hover:bg-surface-2 font-medium transition-colors"
                     >
                         <LayoutGrid size={18} />
-                        <span>تصميم آخر</span>
+                        <span>{t("تصميم آخر", "Another design")}</span>
                     </motion.button>
                 </div>
             </motion.div>
@@ -580,14 +590,14 @@ function CreatePageContent() {
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
                     <AlertCircle size={20} className="shrink-0" />
                     <div className="flex-1">
-                      <p className="font-bold text-sm">لا يوجد لديك رصيد كافٍ</p>
-                      <p className="text-xs mt-0.5 opacity-80">يرجى ترقية اشتراكك أو شراء رصيد إضافي للمتابعة</p>
+                      <p className="font-bold text-sm">{t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits")}</p>
+                      <p className="text-xs mt-0.5 opacity-80">{t("يرجى ترقية اشتراكك أو شراء رصيد إضافي للمتابعة", "Please upgrade your plan or buy additional credits to continue")}</p>
                     </div>
                     <Link
                       href="/pricing"
                       className="shrink-0 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:bg-primary-hover transition-colors"
                     >
-                      ترقية الاشتراك
+                      {t("ترقية الاشتراك", "Upgrade plan")}
                     </Link>
                   </div>
                 )}

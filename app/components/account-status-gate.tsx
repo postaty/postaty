@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { ShieldX, Ban, LogOut } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -13,6 +14,7 @@ export function AccountStatusGate({ children }: { children: React.ReactNode }) {
 }
 
 function AccountStatusGateInner({ children }: { children: React.ReactNode }) {
+  const { t } = useLocale();
   const { userId } = useAuth();
   const { signOut } = useClerk();
   const currentUser = useQuery(
@@ -41,7 +43,7 @@ function AccountStatusGateInner({ children }: { children: React.ReactNode }) {
         </div>
 
         <h1 className="text-2xl font-black">
-          {isBanned ? "تم حظر حسابك" : "تم إيقاف حسابك مؤقتاً"}
+          {isBanned ? t("تم حظر حسابك", "Your account is banned") : t("تم إيقاف حسابك مؤقتاً", "Your account is temporarily suspended")}
         </h1>
 
         {currentUser.statusReason && (
@@ -52,8 +54,8 @@ function AccountStatusGateInner({ children }: { children: React.ReactNode }) {
 
         <p className="text-muted text-sm">
           {isBanned
-            ? "تم حظر حسابك بشكل دائم. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم."
-            : "تم إيقاف حسابك مؤقتاً. يرجى التواصل مع الدعم لمعرفة المزيد."}
+            ? t("تم حظر حسابك بشكل دائم. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم.", "Your account has been permanently banned. If you think this is a mistake, please contact support.")
+            : t("تم إيقاف حسابك مؤقتاً. يرجى التواصل مع الدعم لمعرفة المزيد.", "Your account has been temporarily suspended. Please contact support for more details.")}
         </p>
 
         <div className="flex flex-col gap-3">
@@ -61,14 +63,14 @@ function AccountStatusGateInner({ children }: { children: React.ReactNode }) {
             href="mailto:support@postaty.com"
             className="w-full px-4 py-3 rounded-xl bg-surface-1 border border-card-border text-sm font-bold hover:bg-surface-2 transition-colors"
           >
-            تواصل مع الدعم
+            {t("تواصل مع الدعم", "Contact support")}
           </a>
           <button
             onClick={() => signOut()}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500/20 transition-colors"
           >
             <LogOut size={16} />
-            تسجيل الخروج
+            {t("تسجيل الخروج", "Sign out")}
           </button>
         </div>
       </div>

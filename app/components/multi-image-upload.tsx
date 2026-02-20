@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Images, X } from "lucide-react";
 import { compressImage } from "@/lib/image-compression";
+import { useLocale } from "@/hooks/use-locale";
 
 interface MultiImageUploadProps {
   label: string;
@@ -18,7 +19,12 @@ export function MultiImageUpload({
   onChange,
   maxFiles = 5,
 }: MultiImageUploadProps) {
+  const { t } = useLocale();
   const [previews, setPreviews] = useState<string[]>(values);
+
+  useEffect(() => {
+    setPreviews(values);
+  }, [values]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -30,7 +36,6 @@ export function MultiImageUpload({
           return await compressImage(file, 2, 1920);
         } catch (error) {
           console.error("Error compressing image:", error);
-          // Fallback to original if compression fails
           return new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result as string);
@@ -71,7 +76,7 @@ export function MultiImageUpload({
             <div key={i} className="relative w-24 h-24">
               <img
                 src={preview}
-                alt={`صورة ${i + 1}`}
+                alt={`${t("صورة", "Image")} ${i + 1}`}
                 className="w-full h-full object-cover rounded-lg border border-card-border"
               />
               <button
@@ -95,8 +100,8 @@ export function MultiImageUpload({
             <Images size={24} />
             <p className="text-sm">
               {isDragActive
-                ? "أفلت الصور هنا"
-                : `أضف صور (${previews.length}/${maxFiles})`}
+                ? t("أفلت الصور هنا", "Drop images here")
+                : `${t("أضف صور", "Add images")} (${previews.length}/${maxFiles})`}
             </p>
           </div>
         </div>

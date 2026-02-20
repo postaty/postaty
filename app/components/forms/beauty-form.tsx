@@ -20,6 +20,7 @@ import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
 import { CampaignTypeSelector } from "../campaign-type-selector";
 import { FormInput, FormSelect } from "../ui/form-input";
+import { useLocale } from "@/hooks/use-locale";
 
 interface BeautyFormProps {
   onSubmit: (data: BeautyFormData) => void;
@@ -27,12 +28,22 @@ interface BeautyFormProps {
   defaultValues?: { businessName?: string; logo?: string | null };
 }
 
+const POST_TYPE_AR = ["خدمة صالون", "جلسة سبا", "منتج تجميلي"] as const;
+const POST_TYPE_EN = ["Salon Service", "Spa Session", "Beauty Product"] as const;
+const BOOKING_CONDITION_AR = ["حجز مسبق", "متاح فوراً"] as const;
+const BOOKING_CONDITION_EN = ["Advance Booking", "Available Now"] as const;
+const CTA_EN = ["Book now", "Reserve via WhatsApp", "Claim offer"] as const;
+
 export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormProps) {
+  const { locale, t } = useLocale();
   const [logoOverride, setLogoOverride] = useState<string | null | undefined>(undefined);
   const [serviceImage, setServiceImage] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
   const [campaignType, setCampaignType] = useState<CampaignType>("standard");
   const logo = logoOverride === undefined ? (defaultValues?.logo ?? null) : logoOverride;
+  const postTypeOptions = locale === "ar" ? POST_TYPE_AR : POST_TYPE_EN;
+  const bookingConditionOptions = locale === "ar" ? BOOKING_CONDITION_AR : BOOKING_CONDITION_EN;
+  const ctaOptions = locale === "ar" ? BEAUTY_CTA_OPTIONS : CTA_EN;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,20 +51,29 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
 
     if (!logo || !serviceImage) return;
 
+    const postTypeLabel = fd.get("postType") as string;
+    const bookingConditionLabel = fd.get("bookingCondition") as string;
+    const postTypeMap = locale === "ar"
+      ? { "خدمة صالون": "salon-service", "جلسة سبا": "spa-session", "منتج تجميلي": "beauty-product" }
+      : { "Salon Service": "salon-service", "Spa Session": "spa-session", "Beauty Product": "beauty-product" };
+    const bookingConditionMap = locale === "ar"
+      ? { "حجز مسبق": "advance", "متاح فوراً": "available-now" }
+      : { "Advance Booking": "advance", "Available Now": "available-now" };
+
     onSubmit({
       category: "beauty",
       campaignType,
       salonName: fd.get("salonName") as string,
       logo,
       serviceImage,
-      postType: fd.get("postType") as BeautyFormData["postType"],
+      postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as BeautyFormData["postType"]) ?? "salon-service",
       serviceName: fd.get("serviceName") as string,
       benefit: (fd.get("benefit") as string) || undefined,
       newPrice: fd.get("newPrice") as string,
       oldPrice: fd.get("oldPrice") as string,
       sessionDuration: (fd.get("sessionDuration") as string) || undefined,
       suitableFor: (fd.get("suitableFor") as string) || undefined,
-      bookingCondition: fd.get("bookingCondition") as BeautyFormData["bookingCondition"],
+      bookingCondition: (bookingConditionMap[bookingConditionLabel as keyof typeof bookingConditionMap] as BeautyFormData["bookingCondition"]) ?? "advance",
       offerDuration: (fd.get("offerDuration") as string) || undefined,
       whatsapp: fd.get("whatsapp") as string,
       cta: fd.get("cta") as string,
@@ -64,7 +84,6 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left Column: Inputs */}
         <div className="space-y-6">
           <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
              <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
@@ -72,85 +91,85 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
 
           <div className="space-y-5">
             <FormInput
-                label="اسم الصالون/السبا/المتجر"
+                label={t("اسم الصالون/السبا/المتجر", "Salon/Spa/Store name")}
                 name="salonName"
-                placeholder="مثال: صالون ليالي"
+                placeholder={t("مثال: صالون ليالي", "Example: Layali Salon")}
                 required
                 icon={Store}
                 defaultValue={defaultValues?.businessName}
             />
 
             <FormSelect
-                label="نوع البوست"
+                label={t("نوع البوست", "Post type")}
                 name="postType"
-                options={["خدمة صالون", "جلسة سبا", "منتج تجميلي"]}
+                options={postTypeOptions}
                 required
                 icon={Sparkles}
             />
 
             <FormInput
-                label="اسم الخدمة/المنتج"
+                label={t("اسم الخدمة/المنتج", "Service/product name")}
                 name="serviceName"
-                placeholder="مثال: بروتين شعر"
+                placeholder={t("مثال: بروتين شعر", "Example: Hair protein")}
                 required
                 icon={Heart}
             />
 
             <FormInput
-                label="النتيجة/الفائدة (اختياري)"
+                label={t("النتيجة/الفائدة (اختياري)", "Result/benefit (optional)")}
                 name="benefit"
-                placeholder="مثال: شعر ناعم ولامع لمدة 6 أشهر"
+                placeholder={t("مثال: شعر ناعم ولامع لمدة 6 أشهر", "Example: Smooth shiny hair for 6 months")}
                 icon={Star}
             />
 
             <div className="grid grid-cols-2 gap-4">
                 <FormInput
-                    label="السعر الجديد"
+                    label={t("السعر الجديد", "New price")}
                     name="newPrice"
-                    placeholder="299 ر.س"
+                    placeholder={t("299 ر.س", "$299")}
                     required
                     icon={Tag}
                 />
                 <FormInput
-                    label="السعر القديم"
+                    label={t("السعر القديم", "Old price")}
                     name="oldPrice"
-                    placeholder="500 ر.س"
+                    placeholder={t("500 ر.س", "$500")}
                     required
                     icon={Tag}
                 />
             </div>
 
             <FormInput
-                label="مدة الجلسة/حجم المنتج (اختياري)"
+                label={t("مدة الجلسة/حجم المنتج (اختياري)", "Session duration/product size (optional)")}
                 name="sessionDuration"
-                placeholder="مثال: 90 دقيقة"
+                placeholder={t("مثال: 90 دقيقة", "Example: 90 minutes")}
                 icon={Clock}
             />
 
             <FormInput
-                label="مناسب لـ (اختياري)"
+                label={t("مناسب لـ (اختياري)", "Suitable for (optional)")}
                 name="suitableFor"
-                placeholder="مثال: جميع أنواع البشرة"
+                placeholder={t("مثال: جميع أنواع البشرة", "Example: All skin types")}
                 icon={Users}
             />
 
             <FormSelect
-                label="شرط الحجز"
+                label={t("شرط الحجز", "Booking condition")}
                 name="bookingCondition"
-                options={["حجز مسبق", "متاح فوراً"]}
+                options={bookingConditionOptions}
                 required
                 icon={CalendarCheck}
             />
 
             <FormInput
-                label="مدة العرض (اختياري)"
+                label={t("مدة العرض (اختياري)", "Offer duration (optional)")}
                 name="offerDuration"
-                placeholder="مثال: لفترة محدودة"
+                placeholder={t("مثال: لفترة محدودة", "Example: Limited time")}
                 icon={Calendar}
             />
 
             <FormInput
-                label="رقم الواتساب"
+                label={t("رقم الواتساب", "WhatsApp number")}
                 name="whatsapp"
                 type="tel"
                 dir="ltr"
@@ -161,20 +180,19 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
             />
 
             <FormSelect
-                label="نص الزر (CTA)"
+                label={t("نص الزر (CTA)", "CTA text")}
                 name="cta"
-                options={BEAUTY_CTA_OPTIONS}
+                options={ctaOptions}
                 required
                 icon={MousePointerClick}
             />
           </div>
         </div>
 
-        {/* Right Column: Uploads */}
         <div className="space-y-8">
           <div className="space-y-6">
-             <ImageUpload label="لوجو الصالون" value={logo} onChange={setLogoOverride} />
-             <ImageUpload label="صورة الخدمة/المنتج" value={serviceImage} onChange={setServiceImage} />
+             <ImageUpload label={t("لوجو الصالون", "Salon logo")} value={logo} onChange={setLogoOverride} />
+             <ImageUpload label={t("صورة الخدمة/المنتج", "Service/product image")} value={serviceImage} onChange={setServiceImage} />
           </div>
 
           <div className="pt-4 border-t border-card-border">
@@ -183,7 +201,6 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
         </div>
       </div>
 
-      {/* Sticky Submit Button */}
       <div className="sticky bottom-24 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
         <button
           type="submit"
@@ -193,11 +210,11 @@ export function BeautyForm({ onSubmit, isLoading, defaultValues }: BeautyFormPro
           {isLoading ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                <span>جاري التصميم الذكي...</span>
+                <span>{t("جاري التصميم الذكي...", "Generating with AI...")}</span>
               </>
           ) : (
               <>
-                <span>إنشاء البوستر</span>
+                <span>{t("إنشاء البوستر", "Generate poster")}</span>
                 <span className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </span>

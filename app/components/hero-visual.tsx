@@ -14,8 +14,10 @@ import {
   UtensilsCrossed,
   Store,
 } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 export function HeroVisual() {
+  const { t } = useLocale();
   return (
     <div className="relative w-full max-w-sm aspect-[3/4] mx-auto lg:mx-0">
       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/25 via-accent/20 to-transparent blur-[70px]" />
@@ -108,7 +110,7 @@ export function HeroVisual() {
           <div className="rounded-lg bg-primary/15 p-1.5">
             <Zap size={14} className="text-primary" />
           </div>
-          <span className="text-xs font-bold text-foreground">30 ثانية</span>
+          <span className="text-xs font-bold text-foreground">{t("30 ثانية", "30 sec")}</span>
         </div>
       </motion.div>
 
@@ -122,7 +124,7 @@ export function HeroVisual() {
           <div className="rounded-lg bg-accent/15 p-1.5">
             <TrendingUp size={14} className="text-accent" />
           </div>
-          <span className="text-xs font-bold text-foreground">+320% تفاعل</span>
+          <span className="text-xs font-bold text-foreground">{t("+320% تفاعل", "+320% engagement")}</span>
         </div>
       </motion.div>
 
@@ -136,7 +138,7 @@ export function HeroVisual() {
           <div className="rounded-lg bg-success/15 p-1.5">
             <Smartphone size={14} className="text-success" />
           </div>
-          <span className="text-xs font-bold text-foreground">6 أحجام</span>
+          <span className="text-xs font-bold text-foreground">{t("6 أحجام", "6 sizes")}</span>
         </div>
       </motion.div>
 

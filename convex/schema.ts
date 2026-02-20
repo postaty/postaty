@@ -250,6 +250,15 @@ export default defineSchema(
       .index("by_createdAt", ["createdAt"])
       .index("by_source", ["source"]),
 
+    stripePrices: defineTable({
+      key: v.string(),
+      priceId: v.string(),
+      productId: v.string(),
+      label: v.optional(v.string()),
+      updatedAt: v.number(),
+    }).index("by_key", ["key"])
+      .index("by_productId", ["productId"]),
+
     creditLedger: defineTable({
       clerkUserId: v.string(),
       billingId: v.optional(v.id("billing")),

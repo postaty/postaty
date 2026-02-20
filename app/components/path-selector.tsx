@@ -1,28 +1,30 @@
 "use client";
 
 import { Sparkles, LayoutTemplate } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 interface PathSelectorProps {
   onSelectAI: () => void;
   onSelectTemplates: () => void;
 }
 
-const paths = [
-  {
-    id: "ai" as const,
-    label: "توليد بالذكاء الاصطناعي",
-    description: "أدخل بياناتك واترك الذكاء الاصطناعي يصمم لك بوستر احترافي فريد",
-    icon: Sparkles,
-  },
-  {
-    id: "templates" as const,
-    label: "قوالب جاهزة",
-    description: "اختر قالب جاهز وعدّل عليه مباشرة — بدون انتظار",
-    icon: LayoutTemplate,
-  },
-];
-
 export function PathSelector({ onSelectAI, onSelectTemplates }: PathSelectorProps) {
+  const { t } = useLocale();
+  const paths = [
+    {
+      id: "ai" as const,
+      label: t("توليد بالذكاء الاصطناعي", "AI generation"),
+      description: t("أدخل بياناتك واترك الذكاء الاصطناعي يصمم لك بوستر احترافي فريد", "Enter your data and let AI design a unique professional poster."),
+      icon: Sparkles,
+    },
+    {
+      id: "templates" as const,
+      label: t("قوالب جاهزة", "Ready templates"),
+      description: t("اختر قالب جاهز وعدّل عليه مباشرة — بدون انتظار", "Choose a template and edit it instantly, no waiting."),
+      icon: LayoutTemplate,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
       {paths.map((path) => {

@@ -6,10 +6,21 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 const ASPECTS = ["aspect-square", "aspect-[4/5]", "aspect-[3/4]", "aspect-[5/6]"] as const;
 
+const CATEGORY_LABELS_EN: Record<string, string> = {
+  restaurant: "Restaurants & Cafes",
+  supermarket: "Supermarkets",
+  ecommerce: "E-commerce",
+  services: "Services",
+  fashion: "Fashion",
+  beauty: "Beauty & Care",
+};
+
 export function ShowcaseGalleryClient() {
+  const { locale, t } = useLocale();
   const showcaseImages = useQuery(api.showcase.list);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
@@ -23,6 +34,11 @@ export function ShowcaseGalleryClient() {
     if (selectedCategory === "all") return showcaseImages;
     return showcaseImages.filter((img) => img.category === selectedCategory);
   }, [selectedCategory, showcaseImages]);
+
+  const getCategoryLabel = (cat: string) => {
+    if (locale === "en") return CATEGORY_LABELS_EN[cat] ?? cat;
+    return (CATEGORY_LABELS as Record<string, string>)[cat] ?? cat;
+  };
 
   if (showcaseImages === undefined) {
     return (
@@ -44,7 +60,7 @@ export function ShowcaseGalleryClient() {
                 : "border-card-border hover:bg-surface-2"
             }`}
           >
-            الكل
+            {t("الكل", "All")}
           </button>
           {categories.map((cat) => (
             <button
@@ -56,14 +72,14 @@ export function ShowcaseGalleryClient() {
                   : "border-card-border hover:bg-surface-2"
               }`}
             >
-              {(CATEGORY_LABELS as Record<string, string>)[cat] ?? cat}
+              {getCategoryLabel(cat)}
             </button>
           ))}
         </div>
 
         {filteredImages.length === 0 ? (
           <div className="rounded-2xl border border-card-border bg-surface-1 p-10 text-center text-muted">
-            لا توجد صور في المعرض حالياً.
+            {t("لا توجد صور في المعرض حالياً.", "There are no showcase images yet.")}
           </div>
         ) : (
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-5">
@@ -76,7 +92,7 @@ export function ShowcaseGalleryClient() {
                   {img.url ? (
                     <Image
                       src={img.url}
-                      alt={img.title || "Showcase image"}
+                      alt={img.title || t("صورة من المعرض", "Showcase image")}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -85,7 +101,7 @@ export function ShowcaseGalleryClient() {
                     <div className="w-full h-full bg-surface-2" />
                   )}
                   <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                    {(CATEGORY_LABELS as Record<string, string>)[img.category] ?? img.category}
+                    {getCategoryLabel(img.category)}
                   </div>
                 </div>
                 {img.title && (

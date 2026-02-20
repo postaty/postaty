@@ -12,6 +12,7 @@ import { FashionForm } from "./forms/fashion-form";
 import { BeautyForm } from "./forms/beauty-form";
 import type { Category, PostFormData } from "@/lib/types";
 import { CATEGORY_LABELS } from "@/lib/constants";
+import { useLocale } from "@/hooks/use-locale";
 
 interface CreateSheetProps {
   isOpen: boolean;
@@ -21,7 +22,16 @@ interface CreateSheetProps {
 }
 
 export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateSheetProps) {
+  const { locale, t } = useLocale();
   const [category, setCategory] = useState<Category | null>(null);
+  const categoryLabelsEn: Record<Category, string> = {
+    restaurant: "Restaurants & Cafes",
+    supermarket: "Supermarkets",
+    ecommerce: "E-commerce",
+    services: "Services",
+    fashion: "Fashion",
+    beauty: "Beauty & Care",
+  };
 
   const handleBack = () => {
     if (category) {
@@ -83,12 +93,12 @@ export function CreateSheet({ isOpen, onClose, onSubmit, isLoading }: CreateShee
                     </button>
                  )}
                  <h2 className="text-lg font-bold text-foreground">
-                    {category ? "أدخل التفاصيل" : "ماذا تريد أن تصمم؟"}
+                    {category ? t("أدخل التفاصيل", "Enter details") : t("ماذا تريد أن تصمم؟", "What do you want to create?")}
                  </h2>
                </div>
                {category && (
                  <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {CATEGORY_LABELS[category]}
+                    {locale === "ar" ? CATEGORY_LABELS[category] : categoryLabelsEn[category]}
                  </span>
                )}
             </div>

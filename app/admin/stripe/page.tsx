@@ -14,13 +14,16 @@ import {
   X,
   Check,
   DollarSign,
+  Link,
+  RefreshCw,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
-type Tab = "products" | "coupons" | "countryPricing";
+type Tab = "products" | "priceMappings" | "coupons" | "countryPricing";
 
 const TABS: Array<{ key: Tab; label: string; icon: typeof Tag }> = [
   { key: "products", label: "المنتجات والأسعار", icon: Tag },
+  { key: "priceMappings", label: "ربط الأسعار", icon: Link },
   { key: "coupons", label: "الكوبونات", icon: Ticket },
   { key: "countryPricing", label: "أسعار الدول", icon: Globe },
 ];
@@ -57,6 +60,7 @@ export default function AdminStripePage() {
       </div>
 
       {activeTab === "products" && <ProductsTab />}
+      {activeTab === "priceMappings" && <PriceMappingsTab />}
       {activeTab === "coupons" && <CouponsTab />}
       {activeTab === "countryPricing" && <CountryPricingTab />}
     </div>
@@ -88,11 +92,13 @@ function ProductsTab() {
   const updateProduct = useAction(api.stripeAdmin.updateProduct);
   const archiveProduct = useAction(api.stripeAdmin.archiveProduct);
   const createPrice = useAction(api.stripeAdmin.createPrice);
+  const deactivatePrice = useAction(api.stripeAdmin.deactivatePrice);
 
   const [products, setProducts] = useState<StripeProduct[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [showCreatePrice, setShowCreatePrice] = useState<string | null>(null);
+  const [deactivatingPrice, setDeactivatingPrice] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -272,6 +278,28 @@ function ProductsTab() {
                             price.active ? "bg-success" : "bg-destructive"
                           }`}
                         />
+                        {price.active && (
+                          <button
+                            onClick={async () => {
+                              setDeactivatingPrice(price.id);
+                              try {
+                                await deactivatePrice({ priceId: price.id, productId: product.id });
+                                await refresh();
+                              } finally {
+                                setDeactivatingPrice(null);
+                              }
+                            }}
+                            disabled={deactivatingPrice === price.id}
+                            className="p-1 text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+                            title="إلغاء تفعيل السعر"
+                          >
+                            {deactivatingPrice === price.id ? (
+                              <Loader2 size={12} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={12} />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -624,6 +652,296 @@ function CreatePriceForm({
         </button>
       </div>
     </form>
+  );
+}
+
+// ── Price Mappings Tab ─────────────────────────────────────────────
+
+function PriceMappingsTab() {
+  const mappings = useQuery(api.billing.listActivePrices, {});
+  const syncPricesAction = useAction(api.stripeAdmin.syncPrices);
+  const updateMappingAction = useAction(api.stripeAdmin.updatePriceMapping);
+  const deleteMappingAction = useAction(api.stripeAdmin.deletePriceMapping);
+
+  const [syncing, setSyncing] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState({ priceId: "", productId: "", label: "" });
+  const [saving, setSaving] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [addValues, setAddValues] = useState({ key: "", priceId: "", productId: "", label: "" });
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncPricesAction({});
+      alert(`تم مزامنة ${result.synced} سعر من Stripe`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    setDeletingKey(key);
+    try {
+      await deleteMappingAction({ key });
+    } finally {
+      setDeletingKey(null);
+    }
+  };
+
+  const startEdit = (row: { key: string; priceId: string; productId: string; label?: string }) => {
+    setEditingKey(row.key);
+    setEditValues({ priceId: row.priceId, productId: row.productId, label: row.label ?? "" });
+  };
+
+  const handleSaveEdit = async (key: string) => {
+    if (!editValues.priceId || !editValues.productId) return;
+    setSaving(true);
+    try {
+      await updateMappingAction({
+        key,
+        priceId: editValues.priceId,
+        productId: editValues.productId,
+        label: editValues.label || undefined,
+      });
+      setEditingKey(null);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addValues.key || !addValues.priceId || !addValues.productId) return;
+    setSaving(true);
+    try {
+      await updateMappingAction({
+        key: addValues.key,
+        priceId: addValues.priceId,
+        productId: addValues.productId,
+        label: addValues.label || undefined,
+      });
+      setShowAdd(false);
+      setAddValues({ key: "", priceId: "", productId: "", label: "" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (mappings === undefined) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 size={32} className="animate-spin text-muted" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold mb-1">ربط الأسعار</h2>
+          <p className="text-sm text-muted">ربط مفاتيح الخطط والإضافات بأسعار Stripe</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-surface-2/50 hover:bg-surface-2 border border-card-border text-foreground rounded-xl font-bold text-sm disabled:opacity-50 transition-colors"
+          >
+            {syncing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            مزامنة من Stripe
+          </button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold text-sm"
+          >
+            <Plus size={16} />
+            إضافة ربط
+          </button>
+        </div>
+      </div>
+
+      {showAdd && (
+        <form onSubmit={handleAdd} className="bg-surface-2/30 border border-card-border rounded-2xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold">إضافة ربط جديد</h3>
+            <button type="button" onClick={() => setShowAdd(false)} className="p-1 text-muted hover:text-foreground">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted mb-1 block">المفتاح *</label>
+              <input
+                value={addValues.key}
+                onChange={(e) => setAddValues({ ...addValues, key: e.target.value })}
+                className="w-full px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="starter / addon_5"
+                dir="ltr"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted mb-1 block">التسمية</label>
+              <input
+                value={addValues.label}
+                onChange={(e) => setAddValues({ ...addValues, label: e.target.value })}
+                className="w-full px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Starter Plan"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted mb-1 block">Price ID *</label>
+              <input
+                value={addValues.priceId}
+                onChange={(e) => setAddValues({ ...addValues, priceId: e.target.value })}
+                className="w-full px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="price_..."
+                dir="ltr"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted mb-1 block">Product ID *</label>
+              <input
+                value={addValues.productId}
+                onChange={(e) => setAddValues({ ...addValues, productId: e.target.value })}
+                className="w-full px-4 py-2.5 bg-surface-1 border border-card-border rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="prod_..."
+                dir="ltr"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm text-muted hover:text-foreground">
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !addValues.key || !addValues.priceId || !addValues.productId}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold text-sm disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              إضافة
+            </button>
+          </div>
+        </form>
+      )}
+
+      {mappings.length > 0 ? (
+        <div className="bg-surface-1 border border-card-border rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-card-border bg-surface-2/30">
+                  <th className="text-right py-3 px-4 font-medium text-muted">المفتاح</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">التسمية</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">Price ID</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">Product ID</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mappings.map((row) => (
+                  <tr key={row._id} className="border-b border-card-border/50 hover:bg-surface-2/20 transition-colors">
+                    <td className="py-3 px-4">
+                      <span className="font-mono font-bold text-primary" dir="ltr">{row.key}</span>
+                    </td>
+                    <td className="py-3 px-4">
+                      {editingKey === row.key ? (
+                        <input
+                          value={editValues.label}
+                          onChange={(e) => setEditValues({ ...editValues, label: e.target.value })}
+                          className="w-full px-2 py-1 bg-surface-1 border border-primary/30 rounded-lg text-sm focus:outline-none"
+                          dir="ltr"
+                        />
+                      ) : (
+                        <span className="text-muted">{row.label || "—"}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {editingKey === row.key ? (
+                        <input
+                          value={editValues.priceId}
+                          onChange={(e) => setEditValues({ ...editValues, priceId: e.target.value })}
+                          className="w-full px-2 py-1 bg-surface-1 border border-primary/30 rounded-lg text-sm font-mono focus:outline-none"
+                          dir="ltr"
+                        />
+                      ) : (
+                        <span className="font-mono text-xs" dir="ltr">{row.priceId}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {editingKey === row.key ? (
+                        <input
+                          value={editValues.productId}
+                          onChange={(e) => setEditValues({ ...editValues, productId: e.target.value })}
+                          className="w-full px-2 py-1 bg-surface-1 border border-primary/30 rounded-lg text-sm font-mono focus:outline-none"
+                          dir="ltr"
+                        />
+                      ) : (
+                        <span className="font-mono text-xs" dir="ltr">{row.productId}</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {editingKey === row.key ? (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleSaveEdit(row.key)}
+                            disabled={saving}
+                            className="p-1.5 bg-success/10 text-success rounded-lg hover:bg-success/20 disabled:opacity-50"
+                          >
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                          </button>
+                          <button
+                            onClick={() => setEditingKey(null)}
+                            className="p-1.5 text-muted hover:text-foreground rounded-lg"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => startEdit(row)}
+                            className="p-1.5 text-muted hover:text-foreground hover:bg-surface-2/50 rounded-lg transition-colors"
+                            title="تعديل"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(row.key)}
+                            disabled={deletingKey === row.key}
+                            className="p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors disabled:opacity-50"
+                            title="حذف"
+                          >
+                            {deletingKey === row.key ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={14} />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-surface-1 border border-card-border rounded-2xl p-12 text-center">
+          <Link size={48} className="text-muted mx-auto mb-4" />
+          <h3 className="text-lg font-bold mb-2">لا توجد أسعار مربوطة</h3>
+          <p className="text-muted mb-4">اضغط "مزامنة من Stripe" لاستيراد الأسعار تلقائياً.</p>
+        </div>
+      )}
+    </div>
   );
 }
 

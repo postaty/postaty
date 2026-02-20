@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Bell, Check, CheckCheck, Info, AlertTriangle, CircleCheck, Coins, Cog } from "lucide-react";
+import { Bell, CheckCheck, Info, AlertTriangle, CircleCheck, Coins, Cog } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useLocale } from "@/hooks/use-locale";
 
 const TYPE_ICONS: Record<string, typeof Info> = {
   info: Info,
@@ -25,20 +26,21 @@ const TYPE_COLORS: Record<string, string> = {
   system: "text-muted",
 };
 
-function formatRelativeTime(timestamp: number) {
+function formatRelativeTime(timestamp: number, locale: "ar" | "en") {
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "الآن";
-  if (minutes < 60) return `منذ ${minutes} د`;
+  if (minutes < 1) return locale === "ar" ? "الآن" : "Now";
+  if (minutes < 60) return locale === "ar" ? `منذ ${minutes} د` : `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `منذ ${hours} س`;
+  if (hours < 24) return locale === "ar" ? `منذ ${hours} س` : `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `منذ ${days} ي`;
-  return new Date(timestamp).toLocaleDateString("ar-SA");
+  if (days < 30) return locale === "ar" ? `منذ ${days} ي` : `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US");
 }
 
 export function NotificationBell() {
   const { userId } = useAuth();
+  const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -50,7 +52,6 @@ export function NotificationBell() {
   const markAsRead = useMutation(api.notifications.markAsRead);
   const markAllAsRead = useMutation(api.notifications.markAllAsRead);
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -70,7 +71,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-xl hover:bg-surface-2/60 transition-colors"
-        aria-label="الإشعارات"
+        aria-label={t("الإشعارات", "Notifications")}
       >
         <Bell size={20} className="text-muted" />
         {count > 0 && (
@@ -89,21 +90,19 @@ export function NotificationBell() {
             transition={{ duration: 0.15 }}
             className="absolute left-0 top-full mt-2 w-80 max-h-[420px] bg-surface-1 border border-card-border rounded-2xl shadow-xl overflow-hidden z-50"
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-card-border">
-              <h3 className="text-sm font-bold">الإشعارات</h3>
+              <h3 className="text-sm font-bold">{t("الإشعارات", "Notifications")}</h3>
               {count > 0 && (
                 <button
                   onClick={() => markAllAsRead()}
                   className="flex items-center gap-1 text-xs text-primary hover:text-primary-hover transition-colors"
                 >
                   <CheckCheck size={14} />
-                  قراءة الكل
+                  {t("قراءة الكل", "Mark all")}
                 </button>
               )}
             </div>
 
-            {/* List */}
             <div className="overflow-y-auto max-h-[320px]">
               {notifications && notifications.length > 0 ? (
                 notifications.map((n) => {
@@ -131,7 +130,7 @@ export function NotificationBell() {
                         </div>
                         <p className="text-xs text-muted line-clamp-2 mt-0.5">{n.body}</p>
                         <span className="text-[10px] text-muted mt-1 block">
-                          {formatRelativeTime(n.createdAt)}
+                          {formatRelativeTime(n.createdAt, locale)}
                         </span>
                       </div>
                     </button>
@@ -140,12 +139,11 @@ export function NotificationBell() {
               ) : (
                 <div className="px-4 py-8 text-center">
                   <Bell size={24} className="text-muted mx-auto mb-2" />
-                  <p className="text-xs text-muted">لا توجد إشعارات</p>
+                  <p className="text-xs text-muted">{t("لا توجد إشعارات", "No notifications")}</p>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
             {notifications && notifications.length > 0 && (
               <div className="border-t border-card-border px-4 py-2">
                 <Link
@@ -153,7 +151,7 @@ export function NotificationBell() {
                   onClick={() => setOpen(false)}
                   className="block text-center text-xs text-primary font-bold hover:text-primary-hover transition-colors py-1"
                 >
-                  عرض جميع الإشعارات
+                  {t("عرض جميع الإشعارات", "View all notifications")}
                 </Link>
               </div>
             )}

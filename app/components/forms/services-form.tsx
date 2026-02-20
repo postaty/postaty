@@ -21,6 +21,7 @@ import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
 import { CampaignTypeSelector } from "../campaign-type-selector";
 import { FormInput, FormSelect } from "../ui/form-input";
+import { useLocale } from "@/hooks/use-locale";
 
 interface ServicesFormProps {
   onSubmit: (data: ServicesFormData) => void;
@@ -28,12 +29,23 @@ interface ServicesFormProps {
   defaultValues?: { businessName?: string; logo?: string | null };
 }
 
+const SERVICE_TYPES_AR = ["صيانة", "تنظيف", "سفر", "رجال أعمال", "استشارات"] as const;
+const SERVICE_TYPES_EN = ["Maintenance", "Cleaning", "Travel", "Business", "Consulting"] as const;
+const PRICE_TYPES_AR = ["سعر ثابت", "ابتداءً من"] as const;
+const PRICE_TYPES_EN = ["Fixed price", "Starting from"] as const;
+const CTA_EN = ["Book now", "Request visit", "WhatsApp consultation"] as const;
+
 export function ServicesForm({ onSubmit, isLoading, defaultValues }: ServicesFormProps) {
+  const { locale, t } = useLocale();
   const [logoOverride, setLogoOverride] = useState<string | null | undefined>(undefined);
   const [serviceImage, setServiceImage] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
   const [campaignType, setCampaignType] = useState<CampaignType>("standard");
   const logo = logoOverride === undefined ? (defaultValues?.logo ?? null) : logoOverride;
+
+  const serviceTypes = locale === "ar" ? SERVICE_TYPES_AR : SERVICE_TYPES_EN;
+  const priceTypes = locale === "ar" ? PRICE_TYPES_AR : PRICE_TYPES_EN;
+  const ctaOptions = locale === "ar" ? SERVICES_CTA_OPTIONS : CTA_EN;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,123 +78,34 @@ export function ServicesForm({ onSubmit, isLoading, defaultValues }: ServicesFor
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left Column: Inputs */}
         <div className="space-y-6">
           <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
              <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
           </div>
 
           <div className="space-y-5">
-            <FormInput
-                label="اسم الشركة/مقدم الخدمة"
-                name="businessName"
-                placeholder="مثال: شركة النجم للصيانة"
-                required
-                icon={Building2}
-                defaultValue={defaultValues?.businessName}
-            />
-
-            <FormSelect
-                label="نوع الخدمة"
-                name="serviceType"
-                options={["صيانة", "تنظيف", "سفر", "رجال أعمال", "استشارات"]}
-                required
-                icon={Briefcase}
-            />
-
-            <FormInput
-                label="اسم الخدمة"
-                name="serviceName"
-                placeholder="مثال: صيانة تكييفات"
-                required
-                icon={Wrench}
-            />
-
-            <FormInput
-                label="تفاصيل الخدمة (اختياري)"
-                name="serviceDetails"
-                placeholder="مثال: فحص شامل + تنظيف + تعبئة فريون"
-                icon={FileText}
-            />
-
+            <FormInput label={t("اسم الشركة/مقدم الخدمة", "Business/provider name")} name="businessName" placeholder={t("مثال: شركة النجم للصيانة", "Example: Star Maintenance Co.")} required icon={Building2} defaultValue={defaultValues?.businessName} />
+            <FormSelect label={t("نوع الخدمة", "Service type")} name="serviceType" options={serviceTypes} required icon={Briefcase} />
+            <FormInput label={t("اسم الخدمة", "Service name")} name="serviceName" placeholder={t("مثال: صيانة تكييفات", "Example: AC maintenance")} required icon={Wrench} />
+            <FormInput label={t("تفاصيل الخدمة (اختياري)", "Service details (optional)")} name="serviceDetails" placeholder={t("مثال: فحص شامل + تنظيف + تعبئة فريون", "Example: Inspection + Cleaning + Gas refill")} icon={FileText} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                    label="السعر"
-                    name="price"
-                    placeholder="150 ر.س"
-                    required
-                    icon={Tag}
-                />
-                <FormSelect
-                    label="نوع السعر"
-                    name="priceType"
-                    options={["سعر ثابت", "ابتداءً من"]}
-                    required
-                    icon={Tag}
-                />
+                <FormInput label={t("السعر", "Price")} name="price" placeholder={t("150 ر.س", "$150")} required icon={Tag} />
+                <FormSelect label={t("نوع السعر", "Price type")} name="priceType" options={priceTypes} required icon={Tag} />
             </div>
-
-            <FormInput
-                label="مدة التنفيذ (اختياري)"
-                name="executionTime"
-                placeholder="مثال: خلال 24 ساعة"
-                icon={Clock}
-            />
-
-            <FormInput
-                label="منطقة الخدمة (اختياري)"
-                name="coverageArea"
-                placeholder="مثال: دبي وضواحيها"
-                icon={MapPin}
-            />
-
-            <FormInput
-                label="ضمان/اعتماد (اختياري)"
-                name="warranty"
-                placeholder="مثال: ضمان 6 أشهر"
-                icon={Shield}
-            />
-
-            <FormInput
-                label="مميزات سريعة - 3 كلمات (اختياري)"
-                name="quickFeatures"
-                placeholder="مثال: سرعة - جودة - ضمان"
-                icon={Zap}
-            />
-
-            <FormInput
-                label="مدة العرض (اختياري)"
-                name="offerDuration"
-                placeholder="مثال: لفترة محدودة"
-                icon={Calendar}
-            />
-
-            <FormInput
-                label="رقم الواتساب"
-                name="whatsapp"
-                type="tel"
-                dir="ltr"
-                placeholder="+971xxxxxxxxx"
-                required
-                icon={Phone}
-                className="text-left"
-            />
-
-            <FormSelect
-                label="نص الزر (CTA)"
-                name="cta"
-                options={SERVICES_CTA_OPTIONS}
-                required
-                icon={MousePointerClick}
-            />
+            <FormInput label={t("مدة التنفيذ (اختياري)", "Execution time (optional)")} name="executionTime" placeholder={t("مثال: خلال 24 ساعة", "Example: Within 24 hours")} icon={Clock} />
+            <FormInput label={t("منطقة الخدمة (اختياري)", "Coverage area (optional)")} name="coverageArea" placeholder={t("مثال: دبي وضواحيها", "Example: Dubai and nearby areas")} icon={MapPin} />
+            <FormInput label={t("ضمان/اعتماد (اختياري)", "Warranty/Certification (optional)")} name="warranty" placeholder={t("مثال: ضمان 6 أشهر", "Example: 6-month warranty")} icon={Shield} />
+            <FormInput label={t("مميزات سريعة - 3 كلمات (اختياري)", "Quick features - 3 words (optional)")} name="quickFeatures" placeholder={t("مثال: سرعة - جودة - ضمان", "Example: Speed - Quality - Warranty")} icon={Zap} />
+            <FormInput label={t("مدة العرض (اختياري)", "Offer duration (optional)")} name="offerDuration" placeholder={t("مثال: لفترة محدودة", "Example: Limited time")} icon={Calendar} />
+            <FormInput label={t("رقم الواتساب", "WhatsApp number")} name="whatsapp" type="tel" dir="ltr" placeholder="+971xxxxxxxxx" required icon={Phone} className="text-left" />
+            <FormSelect label={t("نص الزر (CTA)", "CTA text")} name="cta" options={ctaOptions} required icon={MousePointerClick} />
           </div>
         </div>
 
-        {/* Right Column: Uploads */}
         <div className="space-y-8">
           <div className="space-y-6">
-             <ImageUpload label="لوجو الشركة" value={logo} onChange={setLogoOverride} />
-             <ImageUpload label="صورة الخدمة" value={serviceImage} onChange={setServiceImage} />
+             <ImageUpload label={t("لوجو الشركة", "Company logo")} value={logo} onChange={setLogoOverride} />
+             <ImageUpload label={t("صورة الخدمة", "Service image")} value={serviceImage} onChange={setServiceImage} />
           </div>
 
           <div className="pt-4 border-t border-card-border">
@@ -191,7 +114,6 @@ export function ServicesForm({ onSubmit, isLoading, defaultValues }: ServicesFor
         </div>
       </div>
 
-      {/* Sticky Submit Button */}
       <div className="sticky bottom-24 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pb-4 pt-8 -mx-6 px-6 md:static md:bg-none md:p-0 md:m-0 transition-all">
         <button
           type="submit"
@@ -201,11 +123,11 @@ export function ServicesForm({ onSubmit, isLoading, defaultValues }: ServicesFor
           {isLoading ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                <span>جاري التصميم الذكي...</span>
+                <span>{t("جاري التصميم الذكي...", "Generating with AI...")}</span>
               </>
           ) : (
               <>
-                <span>إنشاء البوستر</span>
+                <span>{t("إنشاء البوستر", "Generate poster")}</span>
                 <span className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </span>

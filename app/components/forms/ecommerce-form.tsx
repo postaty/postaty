@@ -8,6 +8,7 @@ import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
 import { CampaignTypeSelector } from "../campaign-type-selector";
 import { FormInput, FormSelect } from "../ui/form-input";
+import { useLocale } from "@/hooks/use-locale";
 
 interface EcommerceFormProps {
   onSubmit: (data: EcommerceFormData) => void;
@@ -15,26 +16,23 @@ interface EcommerceFormProps {
   defaultValues?: { businessName?: string; logo?: string | null };
 }
 
-const POST_TYPE_OPTIONS = ["منتج", "تخفيضات", "وصل حديثاً"] as const;
-const POST_TYPE_VALUES: Record<string, EcommerceFormData["postType"]> = {
-  "منتج": "product",
-  "تخفيضات": "sales",
-  "وصل حديثاً": "new-arrival",
-};
-
-const AVAILABILITY_OPTIONS = ["متوفر", "غير متوفر", "طلب مسبق"] as const;
-const AVAILABILITY_VALUES: Record<string, EcommerceFormData["availability"]> = {
-  "متوفر": "in-stock",
-  "غير متوفر": "out-of-stock",
-  "طلب مسبق": "preorder",
-};
+const POST_TYPE_AR = ["منتج", "تخفيضات", "وصل حديثاً"] as const;
+const POST_TYPE_EN = ["Product", "Sales", "New Arrival"] as const;
+const AVAILABILITY_AR = ["متوفر", "غير متوفر", "طلب مسبق"] as const;
+const AVAILABILITY_EN = ["In Stock", "Out of Stock", "Preorder"] as const;
+const CTA_EN = ["Buy now", "Shop now", "View details"] as const;
 
 export function EcommerceForm({ onSubmit, isLoading, defaultValues }: EcommerceFormProps) {
+  const { locale, t } = useLocale();
   const [logoOverride, setLogoOverride] = useState<string | null | undefined>(undefined);
   const [productImage, setProductImage] = useState<string | null>(null);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
   const [campaignType, setCampaignType] = useState<CampaignType>("standard");
   const logo = logoOverride === undefined ? (defaultValues?.logo ?? null) : logoOverride;
+
+  const postTypes = locale === "ar" ? POST_TYPE_AR : POST_TYPE_EN;
+  const availabilityOptions = locale === "ar" ? AVAILABILITY_AR : AVAILABILITY_EN;
+  const ctaOptions = locale === "ar" ? ECOMMERCE_CTA_OPTIONS : CTA_EN;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -45,19 +43,27 @@ export function EcommerceForm({ onSubmit, isLoading, defaultValues }: EcommerceF
     const postTypeLabel = fd.get("postType") as string;
     const availabilityLabel = fd.get("availability") as string;
 
+    const postTypeMap = locale === "ar"
+      ? { "منتج": "product", "تخفيضات": "sales", "وصل حديثاً": "new-arrival" }
+      : { Product: "product", Sales: "sales", "New Arrival": "new-arrival" };
+
+    const availabilityMap = locale === "ar"
+      ? { "متوفر": "in-stock", "غير متوفر": "out-of-stock", "طلب مسبق": "preorder" }
+      : { "In Stock": "in-stock", "Out of Stock": "out-of-stock", Preorder: "preorder" };
+
     onSubmit({
       category: "ecommerce",
       campaignType,
       shopName: fd.get("shopName") as string,
       logo,
       productImage,
-      postType: POST_TYPE_VALUES[postTypeLabel] ?? "product",
+      postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as EcommerceFormData["postType"]) ?? "product",
       productName: fd.get("productName") as string,
       features: (fd.get("features") as string) || undefined,
       newPrice: fd.get("newPrice") as string,
       oldPrice: fd.get("oldPrice") as string,
       colorSize: (fd.get("colorSize") as string) || undefined,
-      availability: AVAILABILITY_VALUES[availabilityLabel] ?? "in-stock",
+      availability: (availabilityMap[availabilityLabel as keyof typeof availabilityMap] as EcommerceFormData["availability"]) ?? "in-stock",
       shippingDuration: (fd.get("shippingDuration") as string) || undefined,
       purchaseLink: (fd.get("purchaseLink") as string) || undefined,
       whatsapp: fd.get("whatsapp") as string,
@@ -69,119 +75,33 @@ export function EcommerceForm({ onSubmit, isLoading, defaultValues }: EcommerceF
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left Column */}
         <div className="space-y-6">
           <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
             <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
           </div>
 
           <div className="space-y-5">
-            <FormInput
-                label="اسم المتجر"
-                name="shopName"
-                placeholder="مثال: متجر نون"
-                required
-                icon={Store}
-                defaultValue={defaultValues?.businessName}
-            />
-
-            <FormSelect
-                label="نوع البوست"
-                name="postType"
-                options={POST_TYPE_OPTIONS}
-                required
-                icon={FileText}
-            />
-
-            <FormInput
-                label="اسم المنتج"
-                name="productName"
-                placeholder="مثال: سماعات أيربودز"
-                required
-                icon={ShoppingBag}
-            />
-
-            <FormInput
-                label="المميزات (اختياري)"
-                name="features"
-                placeholder="مثال: بلوتوث 5.0 - عزل ضوضاء - شحن لاسلكي"
-                icon={FileText}
-            />
-
+            <FormInput label={t("اسم المتجر", "Store name")} name="shopName" placeholder={t("مثال: متجر نون", "Example: Noon Store")} required icon={Store} defaultValue={defaultValues?.businessName} />
+            <FormSelect label={t("نوع البوست", "Post type")} name="postType" options={postTypes} required icon={FileText} />
+            <FormInput label={t("اسم المنتج", "Product name")} name="productName" placeholder={t("مثال: سماعات أيربودز", "Example: AirPods")} required icon={ShoppingBag} />
+            <FormInput label={t("المميزات (اختياري)", "Features (optional)")} name="features" placeholder={t("مثال: بلوتوث 5.0 - عزل ضوضاء - شحن لاسلكي", "Example: Bluetooth 5.0 - Noise cancelling - Wireless charging")} icon={FileText} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                    label="السعر الجديد"
-                    name="newPrice"
-                    placeholder="199 ر.س"
-                    required
-                    icon={Tag}
-                />
-                <FormInput
-                    label="السعر القديم"
-                    name="oldPrice"
-                    placeholder="350 ر.س"
-                    required
-                    icon={Tag}
-                />
+                <FormInput label={t("السعر الجديد", "New price")} name="newPrice" placeholder={t("199 ر.س", "$199")} required icon={Tag} />
+                <FormInput label={t("السعر القديم", "Old price")} name="oldPrice" placeholder={t("350 ر.س", "$350")} required icon={Tag} />
             </div>
-
-            <FormInput
-                label="اللون / المقاس (اختياري)"
-                name="colorSize"
-                placeholder="مثال: أبيض - أسود / مقاس M"
-                icon={Palette}
-            />
-
-            <FormSelect
-                label="التوفر"
-                name="availability"
-                options={AVAILABILITY_OPTIONS}
-                required
-                icon={Package}
-            />
-
-            <FormInput
-                label="مدة الشحن (اختياري)"
-                name="shippingDuration"
-                placeholder="مثال: 2-3 أيام عمل"
-                icon={Truck}
-            />
-
-            <FormInput
-                label="رابط الشراء (اختياري)"
-                name="purchaseLink"
-                dir="ltr"
-                placeholder="https://..."
-                icon={Link}
-                className="text-left"
-            />
-
-            <FormInput
-                label="رقم الواتساب"
-                name="whatsapp"
-                type="tel"
-                dir="ltr"
-                placeholder="+971xxxxxxxxx"
-                required
-                icon={Phone}
-                className="text-left"
-            />
-
-            <FormSelect
-                label="نص الزر (CTA)"
-                name="cta"
-                options={ECOMMERCE_CTA_OPTIONS}
-                required
-                icon={MousePointerClick}
-            />
+            <FormInput label={t("اللون / المقاس (اختياري)", "Color / size (optional)")} name="colorSize" placeholder={t("مثال: أبيض - أسود / مقاس M", "Example: White - Black / Size M")} icon={Palette} />
+            <FormSelect label={t("التوفر", "Availability")} name="availability" options={availabilityOptions} required icon={Package} />
+            <FormInput label={t("مدة الشحن (اختياري)", "Shipping duration (optional)")} name="shippingDuration" placeholder={t("مثال: 2-3 أيام عمل", "Example: 2-3 business days")} icon={Truck} />
+            <FormInput label={t("رابط الشراء (اختياري)", "Purchase link (optional)")} name="purchaseLink" dir="ltr" placeholder="https://..." icon={Link} className="text-left" />
+            <FormInput label={t("رقم الواتساب", "WhatsApp number")} name="whatsapp" type="tel" dir="ltr" placeholder="+971xxxxxxxxx" required icon={Phone} className="text-left" />
+            <FormSelect label={t("نص الزر (CTA)", "CTA text")} name="cta" options={ctaOptions} required icon={MousePointerClick} />
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-8">
           <div className="space-y-6">
-             <ImageUpload label="لوجو المتجر" value={logo} onChange={setLogoOverride} />
-             <ImageUpload label="صورة المنتج" value={productImage} onChange={setProductImage} />
+             <ImageUpload label={t("لوجو المتجر", "Store logo")} value={logo} onChange={setLogoOverride} />
+             <ImageUpload label={t("صورة المنتج", "Product image")} value={productImage} onChange={setProductImage} />
           </div>
 
           <div className="pt-4 border-t border-card-border">
@@ -199,11 +119,11 @@ export function EcommerceForm({ onSubmit, isLoading, defaultValues }: EcommerceF
           {isLoading ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                <span>جاري التصميم الذكي...</span>
+                <span>{t("جاري التصميم الذكي...", "Generating with AI...")}</span>
               </>
           ) : (
               <>
-                <span>إنشاء البوستر</span>
+                <span>{t("إنشاء البوستر", "Generate poster")}</span>
                 <span className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </span>

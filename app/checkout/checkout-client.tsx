@@ -43,10 +43,16 @@ export default function CheckoutClient() {
   const createEmbeddedCheckout = useAction(api.billing.createEmbeddedCheckout);
 
   const fetchClientSecret = useCallback(async () => {
+    const theme =
+      document.documentElement.getAttribute("data-theme") === "light"
+        ? "light"
+        : "dark";
+
     const { clientSecret } = await createEmbeddedCheckout({
       planKey: planKey ?? undefined,
       addonKey: addonKey ?? undefined,
       couponId,
+      theme,
       returnUrl: `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
     });
     return clientSecret;

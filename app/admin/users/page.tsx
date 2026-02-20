@@ -319,26 +319,133 @@ function SendNotificationModal({
   );
 }
 
-// ── Actions Dropdown ──────────────────────────────────────────────
+// ── Manage Role Modal ─────────────────────────────────────────────
 
-function ActionsDropdown({ user }: { user: ModalUser }) {
-  const [open, setOpen] = useState(false);
-  const [modal, setModal] = useState<"suspend" | "ban" | "credits" | "notify" | null>(null);
+function ManageRoleModal({
+  user,
+  onClose,
+}: {
+  user: ModalUser;
+  onClose: () => void;
+}) {
+  const [selectedRole, setSelectedRole] = useState<"admin" | "member">(
+    user.role === "owner" ? "admin" : user.role
+  );
+  const [loading, setLoading] = useState(false);
   const updateRole = useMutation(api.admin.updateUserRole);
-  const reinstateUser = useMutation(api.admin.reinstateUser);
 
-  const isOwner = user.role === "owner";
-  const isSuspendedOrBanned = user.effectiveStatus === "suspended" || user.effectiveStatus === "banned";
-
-  const handleRoleToggle = async () => {
-    const newRole = user.role === "admin" ? "member" : "admin";
+  const handleSubmit = async () => {
+    if (selectedRole === user.role) {
+      onClose();
+      return;
+    }
+    setLoading(true);
     try {
-      await updateRole({ userId: user._id, role: newRole });
+      await updateRole({ userId: user._id, role: selectedRole });
+      onClose();
     } catch (err) {
       alert(err instanceof Error ? err.message : "حدث خطأ");
+    } finally {
+      setLoading(false);
     }
-    setOpen(false);
   };
+
+  const roles = [
+    {
+      value: "admin" as const,
+      label: "مسؤول",
+      description: "يمكنه الوصول إلى لوحة الإدارة وإدارة المستخدمين",
+      icon: <Shield size={18} className="text-primary" />,
+      color: "border-primary/50 bg-primary/5",
+      selectedColor: "border-primary ring-2 ring-primary/30 bg-primary/10",
+    },
+    {
+      value: "member" as const,
+      label: "عضو",
+      description: "مستخدم عادي بدون صلاحيات إدارية",
+      icon: <Users size={18} className="text-muted" />,
+      color: "border-card-border bg-surface-2/30",
+      selectedColor: "border-primary ring-2 ring-primary/30 bg-primary/10",
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-surface-1 border border-card-border rounded-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">إدارة الدور</h3>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-surface-2 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="text-sm text-muted">
+          تغيير دور <span className="font-bold text-foreground">{user.name}</span>
+        </p>
+
+        <div className="space-y-2">
+          {roles.map((role) => (
+            <button
+              key={role.value}
+              onClick={() => setSelectedRole(role.value)}
+              className={`w-full text-right flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+                selectedRole === role.value ? role.selectedColor : role.color
+              }`}
+            >
+              {role.icon}
+              <div className="flex-1">
+                <div className="font-bold text-sm">{role.label}</div>
+                <div className="text-xs text-muted">{role.description}</div>
+              </div>
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                selectedRole === role.value ? "border-primary" : "border-muted/40"
+              }`}>
+                {selectedRole === role.value && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {selectedRole !== user.role && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-600">
+            سيتم تغيير دور المستخدم من{" "}
+            <span className="font-bold">{user.role === "admin" ? "مسؤول" : "عضو"}</span>{" "}
+            إلى{" "}
+            <span className="font-bold">{selectedRole === "admin" ? "مسؤول" : "عضو"}</span>
+          </div>
+        )}
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-sm font-bold hover:bg-surface-2 transition-colors"
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={selectedRole === user.role || loading}
+            className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-hover transition-colors disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : "حفظ"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Actions Dropdown ──────────────────────────────────────────────
+
+function ActionsDropdown({ user, currentUserId }: { user: ModalUser; currentUserId?: Id<"users"> }) {
+  const [open, setOpen] = useState(false);
+  const [modal, setModal] = useState<"suspend" | "ban" | "credits" | "notify" | "role" | null>(null);
+  const reinstateUser = useMutation(api.admin.reinstateUser);
+
+  const isSelf = currentUserId === user._id;
+  const isSuspendedOrBanned = user.effectiveStatus === "suspended" || user.effectiveStatus === "banned";
 
   const handleReinstate = async () => {
     try {
@@ -363,19 +470,19 @@ function ActionsDropdown({ user }: { user: ModalUser }) {
           <>
             <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
             <div className="absolute left-0 top-full mt-1 w-48 bg-surface-1 border border-card-border rounded-xl shadow-xl z-40 overflow-hidden">
-              {/* Role toggle */}
-              {!isOwner && (
+              {/* Manage Role */}
+              {!isSelf && (
                 <button
-                  onClick={handleRoleToggle}
+                  onClick={() => { setModal("role"); setOpen(false); }}
                   className="w-full text-right flex items-center gap-2 px-3 py-2.5 text-xs hover:bg-surface-2 transition-colors"
                 >
                   <UserCog size={14} />
-                  {user.role === "admin" ? "تحويل إلى عضو" : "ترقية لمسؤول"}
+                  إدارة الدور
                 </button>
               )}
 
               {/* Suspend / Ban / Reinstate */}
-              {!isOwner && isSuspendedOrBanned && (
+              {!isSelf && isSuspendedOrBanned && (
                 <button
                   onClick={handleReinstate}
                   className="w-full text-right flex items-center gap-2 px-3 py-2.5 text-xs text-green-600 hover:bg-green-500/10 transition-colors"
@@ -384,7 +491,7 @@ function ActionsDropdown({ user }: { user: ModalUser }) {
                   إعادة تفعيل
                 </button>
               )}
-              {!isOwner && !isSuspendedOrBanned && (
+              {!isSelf && !isSuspendedOrBanned && (
                 <>
                   <button
                     onClick={() => { setModal("suspend"); setOpen(false); }}
@@ -428,6 +535,9 @@ function ActionsDropdown({ user }: { user: ModalUser }) {
       </div>
 
       {/* Modals */}
+      {modal === "role" && (
+        <ManageRoleModal user={user} onClose={() => setModal(null)} />
+      )}
       {(modal === "suspend" || modal === "ban") && (
         <ConfirmActionModal user={user} action={modal} onClose={() => setModal(null)} />
       )}
@@ -445,6 +555,7 @@ function ActionsDropdown({ user }: { user: ModalUser }) {
 
 export default function AdminUsersPage() {
   const users = useQuery(api.admin.listUsers, { limit: 200 });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const [search, setSearch] = useState("");
   const [countryFilter, setCountryFilter] = useState<"all" | string>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended" | "banned">("all");
@@ -636,6 +747,7 @@ export default function AdminUsersPage() {
                           role: user.role,
                           effectiveStatus: user.effectiveStatus,
                         }}
+                        currentUserId={currentUser?._id}
                       />
                     </td>
                   </tr>

@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef, useState } from "react";
 import type { GiftEditorState } from "@/lib/types";
+import { useLocale } from "@/hooks/use-locale";
 
 type ActiveLayer = "text" | "overlay";
 
@@ -26,6 +27,7 @@ function GiftEditorCanvasImpl({
   onActiveLayerChange,
   onChange,
 }: GiftEditorCanvasProps) {
+  const { t } = useLocale();
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragLayerRef = useRef<ActiveLayer | null>(null);
   const [overlayRatio, setOverlayRatio] = useState(1);
@@ -144,10 +146,10 @@ function GiftEditorCanvasImpl({
             activeLayer === "text" ? "ring-2 ring-primary bg-black/25" : "bg-black/20"
           }`}
         >
-          {state.text.content || "اكتب النص هنا"}
+          {state.text.content || t("اكتب النص هنا", "Write text here")}
         </div>
       </div>
-      <p className="text-xs text-muted mt-2">اسحب النص أو الصورة داخل المعاينة لتحديد المكان.</p>
+      <p className="text-xs text-muted mt-2">{t("اسحب النص أو الصورة داخل المعاينة لتحديد المكان.", "Drag text or image inside the preview to position it.")}</p>
     </div>
   );
 }

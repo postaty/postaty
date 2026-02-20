@@ -29,6 +29,7 @@ import confetti from "canvas-confetti";
 import type { PosterResult, PosterGenStep } from "@/lib/types";
 import { LoadingSlideshow } from "./loading-slideshow";
 import { PosterModal } from "./poster-modal";
+import { useLocale } from "@/hooks/use-locale";
 
 // ── Props ─────────────────────────────────────────────────────────
 
@@ -434,6 +435,7 @@ export function PosterGrid({
   totalExpected = results.length || 3,
   onSaveAsTemplate,
 }: PosterGridProps) {
+  const { t } = useLocale();
   const shouldReduceMotion = useReducedMotion();
   const isLoading = genStep === "generating-designs";
   const [exportingAll, setExportingAll] = useState(false);
@@ -528,10 +530,10 @@ export function PosterGrid({
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                تم اكتمال التصميم!
+                {t("تم اكتمال التصميم!", "Design completed!")}
               </h3>
               <p className="text-muted text-sm">
-                تم إنشاء التصميم بنجاح
+                {t("تم إنشاء التصميم بنجاح", "Design generated successfully")}
               </p>
             </div>
           </div>
@@ -548,7 +550,7 @@ export function PosterGrid({
               ) : (
                 <DownloadCloud size={18} />
               )}
-              تصدير التصميم
+              {t("تصدير التصميم", "Export design")}
             </button>
           )}
         </div>
@@ -559,7 +561,7 @@ export function PosterGrid({
           <div className="p-4 bg-danger/10 rounded-full">
             <XCircle size={40} className="text-danger" />
           </div>
-          <h3 className="text-xl font-bold text-foreground">عذراً، حدث خطأ</h3>
+          <h3 className="text-xl font-bold text-foreground">{t("عذراً، حدث خطأ", "Sorry, an error occurred")}</h3>
           {error && (
             <p className="max-w-md mx-auto text-muted bg-danger/5 border border-danger/10 rounded-lg p-3 text-sm">
               {error}
@@ -661,6 +663,7 @@ function GiftReveal({
   lowMotion: boolean;
   onPreview: () => void;
 }) {
+  const { t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = useCallback(async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -723,7 +726,7 @@ function GiftReveal({
             <Gift size={18} className="text-white" />
           </div>
           <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500">
-            هدية مجانية لك!
+            {t("هدية مجانية لك!", "A free gift for you!")}
           </span>
         </motion.div>
 
@@ -740,7 +743,7 @@ function GiftReveal({
             {result.imageBase64 && (
               <img
                 src={result.imageBase64}
-                alt="هدية مجانية"
+                alt={t("هدية مجانية", "Free gift")}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             )}
@@ -748,13 +751,13 @@ function GiftReveal({
             {/* Gift badge */}
             <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold shadow-lg z-20">
               <Gift size={12} />
-              هدية
+              {t("هدية", "Gift")}
             </div>
             
              {/* Hover overlay with action */}
              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100">
                   <div className="bg-white/90 backdrop-blur-md text-amber-600 px-4 py-2 rounded-full font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                      معاينة الهدية
+                      {t("معاينة الهدية", "Preview gift")}
                   </div>
              </div>
           </div>
@@ -770,7 +773,7 @@ function GiftReveal({
                   type="button"
                   onClick={handleShare}
                   className="p-2 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                  title="مشاركة"
+                  title={t("مشاركة", "Share")}
                 >
                   <Share2 size={16} />
                 </button>
@@ -780,7 +783,7 @@ function GiftReveal({
                 onClick={handleExport}
                 disabled={isExporting}
                 className="p-2 rounded-lg text-muted hover:text-success hover:bg-success/10 transition-colors"
-                title="تصدير PNG"
+                title={t("تصدير PNG", "Export PNG")}
               >
                 {isExporting ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -797,6 +800,7 @@ function GiftReveal({
 }
 
 function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => void }) {
+  const { t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
   const seed = hashString(result.imageBase64 || result.designNameAr || "gift");
   const theme = GIFT_THEMES[seed % GIFT_THEMES.length];
@@ -849,7 +853,7 @@ function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => vo
             <GiftIcon size={18} className="text-foreground" />
           </div>
           <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-white text-xs font-bold bg-black/25 backdrop-blur-sm">
-            هدية
+            {t("هدية", "Gift")}
           </div>
         </div>
 
@@ -861,7 +865,7 @@ function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => vo
             {result.imageBase64 && (
               <img
                 src={result.imageBase64}
-                alt="هدية مجانية"
+                alt={t("هدية مجانية", "Free gift")}
                 className="w-full aspect-square object-cover"
               />
             )}
@@ -877,7 +881,7 @@ function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => vo
                   type="button"
                   onClick={handleShare}
                   className="p-2 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                  title="مشاركة"
+                  title={t("مشاركة", "Share")}
                 >
                   <Share2 size={16} />
                 </button>
@@ -887,7 +891,7 @@ function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => vo
                 onClick={handleExport}
                 disabled={isExporting}
                 className="p-2 rounded-lg text-muted hover:text-success hover:bg-success/10 transition-colors"
-                title="تصدير PNG"
+                title={t("تصدير PNG", "Export PNG")}
               >
                 {isExporting ? (
                   <Loader2 size={16} className="animate-spin" />
@@ -901,7 +905,7 @@ function GiftCard({ result, onClick }: { result: PosterResult; onClick: () => vo
           <div className="pt-3">
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs text-white bg-gradient-to-r ${theme.chip}`}>
               <GiftIcon size={12} />
-              هدية مجانية
+              {t("هدية مجانية", "Free gift")}
             </div>
           </div>
         </div>
@@ -955,6 +959,7 @@ function PosterCard({
   lowMotion: boolean;
   onClick: () => void;
 }) {
+  const { t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = useCallback(async (e: React.MouseEvent) => {
@@ -1010,12 +1015,12 @@ function PosterCard({
       <div className="bg-card border border-danger/30 rounded-2xl overflow-hidden shadow-md w-full">
         <div className="aspect-square bg-danger/5 flex flex-col items-center justify-center gap-3 p-6 text-center">
           <XCircle size={32} className="text-danger" />
-          <p className="text-sm text-danger font-medium">فشل التصميم</p>
+          <p className="text-sm text-danger font-medium">{t("فشل التصميم", "Design failed")}</p>
           {result.error && <p className="text-xs text-muted">{result.error}</p>}
         </div>
         <div className="p-3 text-center">
           <span className="text-xs text-muted">
-            تصميم {result.designIndex + 1}
+            {t("تصميم", "Design")} {result.designIndex + 1}
           </span>
         </div>
       </div>
@@ -1047,7 +1052,7 @@ function PosterCard({
           {result.imageBase64 ? (
             <img
               src={result.imageBase64}
-              alt={result.designNameAr || `تصميم ${result.designIndex + 1}`}
+              alt={result.designNameAr || `${t("تصميم", "Design")} ${result.designIndex + 1}`}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
@@ -1071,7 +1076,7 @@ function PosterCard({
         {/* Footer */}
         <div className="p-4 flex items-center justify-between mt-auto bg-surface-1 relative z-10 border-t border-card-border">
           <span className="text-sm font-medium text-foreground/80 truncate max-w-[40%]">
-            {result.designNameAr || `تصميم ${result.designIndex + 1}`}
+            {result.designNameAr || `${t("تصميم", "Design")} ${result.designIndex + 1}`}
           </span>
           <div className="flex items-center gap-1.5">
             {onSaveAsTemplate && (
@@ -1079,7 +1084,7 @@ function PosterCard({
                 type="button"
                 onClick={handleSave}
                 className="p-2 rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-colors"
-                title="حفظ كقالب"
+                title={t("حفظ كقالب", "Save as template")}
               >
                 <Save size={18} />
               </button>
@@ -1089,7 +1094,7 @@ function PosterCard({
                 type="button"
                 onClick={handleShare}
                 className="p-2 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                title="مشاركة"
+                title={t("مشاركة", "Share")}
               >
                 <Share2 size={18} />
               </button>
@@ -1099,7 +1104,7 @@ function PosterCard({
               onClick={handleExport}
               disabled={isExporting}
               className="p-2 rounded-lg text-muted hover:text-success hover:bg-success/10 transition-colors"
-              title="تصدير PNG"
+              title={t("تصدير PNG", "Export PNG")}
             >
               {isExporting ? (
                 <Loader2 size={18} className="animate-spin" />

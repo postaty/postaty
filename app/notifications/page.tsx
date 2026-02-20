@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Bell, CheckCheck, Info, AlertTriangle, CircleCheck, Coins, Cog, Check, Loader2 } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useLocale } from "@/hooks/use-locale";
 
 const TYPE_ICONS: Record<string, typeof Info> = {
   info: Info,
@@ -22,8 +23,8 @@ const TYPE_COLORS: Record<string, string> = {
   system: "text-muted bg-muted/10",
 };
 
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toLocaleDateString("ar-SA", {
+function formatDate(timestamp: number, locale: "ar" | "en") {
+  return new Date(timestamp).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -34,6 +35,7 @@ function formatDate(timestamp: number) {
 
 export default function NotificationsPage() {
   const { userId } = useAuth();
+  const { locale, t } = useLocale();
   const notifications = useQuery(
     api.notifications.listMyNotifications,
     userId ? { limit: 100 } : "skip"
@@ -52,14 +54,15 @@ export default function NotificationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-black mb-1">الإشعارات</h1>
+          <h1 className="text-3xl font-black mb-1">{t("الإشعارات", "Notifications")}</h1>
           <p className="text-muted text-sm">
             {(unreadCount ?? 0) > 0
-              ? `${unreadCount} إشعار غير مقروء`
-              : "لا توجد إشعارات جديدة"}
+              ? locale === "ar"
+                ? `${unreadCount} إشعار غير مقروء`
+                : `${unreadCount} unread notifications`
+              : t("لا توجد إشعارات جديدة", "No new notifications")}
           </p>
         </div>
         {(unreadCount ?? 0) > 0 && (
@@ -68,12 +71,11 @@ export default function NotificationsPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-1 border border-card-border text-sm font-bold hover:bg-surface-2 transition-colors"
           >
             <CheckCheck size={16} />
-            قراءة الكل
+            {t("قراءة الكل", "Mark all as read")}
           </button>
         )}
       </div>
 
-      {/* Notifications list */}
       {notifications.length > 0 ? (
         <div className="space-y-3">
           {notifications.map((n) => {
@@ -103,14 +105,14 @@ export default function NotificationsPage() {
                       </h3>
                       <p className="text-muted text-sm mt-1">{n.body}</p>
                       <span className="text-xs text-muted mt-2 block">
-                        {formatDate(n.createdAt)}
+                        {formatDate(n.createdAt, locale)}
                       </span>
                     </div>
                     {!n.isRead && (
                       <button
                         onClick={() => markAsRead({ notificationId: n._id as Id<"notifications"> })}
                         className="shrink-0 p-2 rounded-lg hover:bg-surface-2 transition-colors text-muted hover:text-foreground"
-                        title="تعيين كمقروء"
+                        title={t("تعيين كمقروء", "Mark as read")}
                       >
                         <Check size={16} />
                       </button>
@@ -124,8 +126,8 @@ export default function NotificationsPage() {
       ) : (
         <div className="bg-surface-1 border border-card-border rounded-2xl p-12 text-center">
           <Bell size={48} className="text-muted mx-auto mb-4" />
-          <h3 className="text-lg font-bold mb-2">لا توجد إشعارات</h3>
-          <p className="text-muted text-sm">ستظهر الإشعارات هنا عند وصولها.</p>
+          <h3 className="text-lg font-bold mb-2">{t("لا توجد إشعارات", "No notifications")}</h3>
+          <p className="text-muted text-sm">{t("ستظهر الإشعارات هنا عند وصولها.", "Notifications will appear here when they arrive.")}</p>
         </div>
       )}
     </div>

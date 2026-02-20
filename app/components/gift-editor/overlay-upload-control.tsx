@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus, Loader2, Scissors, Trash2 } from "lucide-react";
 import { compressImage } from "@/lib/image-compression";
+import { useLocale } from "@/hooks/use-locale";
 
 interface OverlayUploadControlProps {
   value: string | null;
@@ -18,6 +19,7 @@ export function OverlayUploadControl({
   onRemoveBackground,
   removeBgLoading,
 }: OverlayUploadControlProps) {
+  const { t } = useLocale();
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const onDrop = useCallback(
@@ -30,10 +32,10 @@ export function OverlayUploadControl({
         const compressed = await compressImage(file, 2, 1600);
         onChange(compressed);
       } catch {
-        setUploadError("فشل رفع الصورة، حاول مرة أخرى.");
+        setUploadError(t("فشل رفع الصورة، حاول مرة أخرى.", "Image upload failed, please try again."));
       }
     },
-    [onChange]
+    [onChange, t]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -57,7 +59,7 @@ export function OverlayUploadControl({
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-2 text-muted">
             <ImagePlus size={22} />
-            <p className="text-sm">ارفع صورة لإضافتها فوق الهدية</p>
+            <p className="text-sm">{t("ارفع صورة لإضافتها فوق الهدية", "Upload an image to place over the gift")}</p>
           </div>
         </div>
       ) : (
@@ -73,7 +75,7 @@ export function OverlayUploadControl({
               className="flex items-center justify-center gap-2 rounded-lg border border-card-border py-2 text-sm hover:bg-surface-2 disabled:opacity-60"
             >
               {removeBgLoading ? <Loader2 size={14} className="animate-spin" /> : <Scissors size={14} />}
-              إزالة الخلفية
+              {t("إزالة الخلفية", "Remove background")}
             </button>
             <button
               type="button"
@@ -81,7 +83,7 @@ export function OverlayUploadControl({
               className="flex items-center justify-center gap-2 rounded-lg border border-card-border py-2 text-sm hover:bg-surface-2"
             >
               <Trash2 size={14} />
-              حذف الصورة
+              {t("حذف الصورة", "Delete image")}
             </button>
           </div>
           <div
@@ -89,7 +91,7 @@ export function OverlayUploadControl({
             className="rounded-lg border border-card-border py-2 text-center text-sm cursor-pointer hover:bg-surface-2"
           >
             <input {...getInputProps()} />
-            استبدال الصورة
+            {t("استبدال الصورة", "Replace image")}
           </div>
         </div>
       )}

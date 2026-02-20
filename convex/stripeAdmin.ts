@@ -132,6 +132,14 @@ export const createProduct = action({
       default_price: price.id,
     });
 
+    // Auto-sync price mapping
+    await ctx.runMutation(internal.billing.setActivePrice, {
+      key: args.lookupKey,
+      priceId: price.id,
+      productId: product.id,
+      label: args.name,
+    });
+
     return { productId: product.id, priceId: price.id };
   },
 });
@@ -191,7 +199,49 @@ export const createPrice = action({
       default_price: price.id,
     });
 
+    // Auto-sync: update any existing mappings for this product to the new price
+    await ctx.runMutation(internal.billing.updatePriceForProduct, {
+      productId: args.productId,
+      newPriceId: price.id,
+    });
+
+    // Also set the lookup_key mapping
+    await ctx.runMutation(internal.billing.setActivePrice, {
+      key: args.lookupKey,
+      priceId: price.id,
+      productId: args.productId,
+    });
+
     return { priceId: price.id };
+  },
+});
+
+export const deactivatePrice = action({
+  args: { priceId: v.string(), productId: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
+    const stripe = getStripe();
+
+    // If this price is the product's default, clear it first
+    const product = await stripe.products.retrieve(args.productId);
+    const defaultPriceId =
+      typeof product.default_price === "string"
+        ? product.default_price
+        : product.default_price?.id;
+    if (defaultPriceId === args.priceId) {
+      await stripe.products.update(args.productId, { default_price: "" });
+    }
+
+    const price = await stripe.prices.update(args.priceId, { active: false });
+
+    // Remove price mapping if it exists
+    if (price.lookup_key) {
+      await ctx.runMutation(internal.billing.deleteActivePrice, {
+        key: price.lookup_key,
+      });
+    }
+
+    return { success: true };
   },
 });
 
@@ -201,12 +251,23 @@ export const archiveProduct = action({
     await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
     const stripe = getStripe();
 
+    // Clear default price first so individual prices can be archived
+    await stripe.products.update(args.productId, {
+      default_price: "",
+    });
+
     const prices = await stripe.prices.list({
       product: args.productId,
       active: true,
     });
     for (const price of prices.data) {
       await stripe.prices.update(price.id, { active: false });
+      // Remove price mapping if it exists
+      if (price.lookup_key) {
+        await ctx.runMutation(internal.billing.deleteActivePrice, {
+          key: price.lookup_key,
+        });
+      }
     }
 
     await stripe.products.update(args.productId, { active: false });
@@ -384,6 +445,130 @@ export const updateCountryPricing = action({
   handler: async (ctx, args) => {
     await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
     await ctx.runMutation(internal.stripeAdmin.upsertCountryPricing, args);
+    return { success: true };
+  },
+});
+
+// ── Price Mappings (admin CRUD) ─────────────────────────────────
+
+// Name-based matching patterns for products without lookup_key
+const PRODUCT_NAME_PATTERNS: Array<{ pattern: RegExp; key: string }> = [
+  { pattern: /starter/i, key: "starter" },
+  { pattern: /growth/i, key: "growth" },
+  { pattern: /dominant/i, key: "dominant" },
+  { pattern: /addon[_\s-]*5|5[_\s-]*credit/i, key: "addon_5" },
+  { pattern: /addon[_\s-]*10|10[_\s-]*credit/i, key: "addon_10" },
+];
+
+function inferKeyFromProduct(product: { name: string; metadata: Record<string, string> }): string | null {
+  // 1. Check metadata first (most explicit)
+  if (product.metadata?.plan_key) return product.metadata.plan_key;
+  if (product.metadata?.addon_key) return product.metadata.addon_key;
+  if (product.metadata?.key) return product.metadata.key;
+
+  // 2. Match by product name
+  for (const { pattern, key } of PRODUCT_NAME_PATTERNS) {
+    if (pattern.test(product.name)) return key;
+  }
+
+  return null;
+}
+
+export const syncPrices = action({
+  args: {},
+  handler: async (ctx) => {
+    await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
+    const stripe = getStripe();
+
+    const [products, prices] = await Promise.all([
+      stripe.products.list({ limit: 100, active: true }),
+      stripe.prices.list({ limit: 100, active: true }),
+    ]);
+
+    // Build price lookup by product ID
+    const pricesByProduct = new Map<string, typeof prices.data>();
+    for (const price of prices.data) {
+      const productId =
+        typeof price.product === "string" ? price.product : undefined;
+      if (!productId) continue;
+      if (!pricesByProduct.has(productId)) pricesByProduct.set(productId, []);
+      pricesByProduct.get(productId)!.push(price);
+    }
+
+    let synced = 0;
+    const syncedKeys = new Set<string>();
+
+    // Pass 1: Sync prices that have lookup_key (highest priority)
+    for (const price of prices.data) {
+      if (!price.lookup_key) continue;
+      const productId =
+        typeof price.product === "string" ? price.product : undefined;
+      if (!productId) continue;
+
+      const product = products.data.find((p) => p.id === productId);
+      await ctx.runMutation(internal.billing.setActivePrice, {
+        key: price.lookup_key,
+        priceId: price.id,
+        productId,
+        label: product?.name ?? price.lookup_key,
+      });
+      syncedKeys.add(price.lookup_key);
+      synced++;
+    }
+
+    // Pass 2: For products without lookup_key prices, infer key from name/metadata
+    for (const product of products.data) {
+      const key = inferKeyFromProduct(product);
+      if (!key || syncedKeys.has(key)) continue;
+
+      const productPrices = pricesByProduct.get(product.id) ?? [];
+      if (productPrices.length === 0) continue;
+
+      // Prefer the default price, then the most recent active price
+      const defaultPriceId =
+        typeof product.default_price === "string"
+          ? product.default_price
+          : product.default_price?.id;
+
+      const bestPrice =
+        productPrices.find((p) => p.id === defaultPriceId) ??
+        productPrices[0];
+
+      if (!bestPrice) continue;
+
+      await ctx.runMutation(internal.billing.setActivePrice, {
+        key,
+        priceId: bestPrice.id,
+        productId: product.id,
+        label: product.name,
+      });
+      syncedKeys.add(key);
+      synced++;
+    }
+
+    return { synced };
+  },
+});
+
+export const updatePriceMapping = action({
+  args: {
+    key: v.string(),
+    priceId: v.string(),
+    productId: v.string(),
+    label: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
+    await ctx.runMutation(internal.billing.setActivePrice, args);
+    return { success: true };
+  },
+});
+
+export const deletePriceMapping = action({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.runQuery(internal.stripeAdmin.requireAdminCheck, {});
+    await ctx.runMutation(internal.billing.deleteActivePrice, { key: args.key });
     return { success: true };
   },
 });

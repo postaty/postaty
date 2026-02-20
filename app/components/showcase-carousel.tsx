@@ -5,11 +5,13 @@ import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocale } from "@/hooks/use-locale";
 
 const AUTOPLAY_MS = 3800;
 const PAUSE_AFTER_INTERACTION_MS = 7000;
 
 export function ShowcaseCarousel() {
+  const { t } = useLocale();
   const showcaseImages = useQuery(api.showcase.list);
   const sectionRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -158,9 +160,9 @@ export function ShowcaseCarousel() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-black mb-4">
-            أمثلة من <span className="text-gradient">إبداعات عملائنا</span>
+            {t("أمثلة من", "Examples of")} <span className="text-gradient">{t("إبداعات عملائنا", "our customers' creations")}</span>
           </h2>
-          <p className="text-muted text-lg">تصاميم حقيقية تم إنشاؤها بالذكاء الاصطناعي</p>
+          <p className="text-muted text-lg">{t("تصاميم حقيقية تم إنشاؤها بالذكاء الاصطناعي", "Real designs generated with AI")}</p>
         </div>
 
         <div
@@ -173,14 +175,14 @@ export function ShowcaseCarousel() {
         >
           <button
             onClick={goPrev}
-            aria-label="السابق"
+            aria-label={t("السابق", "Previous")}
             className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full items-center justify-center text-muted hover:text-foreground shadow-lg"
           >
             <ChevronRight size={20} />
           </button>
           <button
             onClick={goNext}
-            aria-label="التالي"
+            aria-label={t("التالي", "Next")}
             className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-surface-1/90 backdrop-blur-sm border border-card-border rounded-full items-center justify-center text-muted hover:text-foreground shadow-lg"
           >
             <ChevronLeft size={20} />
@@ -240,7 +242,7 @@ export function ShowcaseCarousel() {
               <button
                 key={`dot-${img._id}`}
                 onClick={() => scrollToIndex(idx)}
-                aria-label={`انتقل إلى العنصر ${idx + 1}`}
+                aria-label={`${t("انتقل إلى العنصر", "Go to item")} ${idx + 1}`}
                 className={`h-2.5 rounded-full transition-all ${idx === currentIndex ? "w-6 bg-primary" : "w-2.5 bg-card-border hover:bg-muted"}`}
               />
             ))}

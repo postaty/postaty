@@ -609,9 +609,9 @@ export const updateUserRole = mutation({
     const targetUser = await ctx.db.get(args.userId);
     if (!targetUser) throw new Error("User not found");
 
-    // Cannot demote an owner
-    if (targetUser.role === "owner") {
-      throw new Error("Cannot change the role of an owner");
+    // Cannot change your own role
+    if (targetUser.clerkId === clerkUserId) {
+      throw new Error("Cannot change your own role");
     }
 
     await ctx.db.patch(args.userId, { role: args.role });

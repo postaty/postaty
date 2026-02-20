@@ -6,23 +6,26 @@ import { Sparkles, Palette, Clock, Images, Settings, Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { SPRING } from "@/lib/animation";
+import { useLocale } from "@/hooks/use-locale";
 
 type NavItemConfig = {
   href: string;
-  label: string;
+  labelAr: string;
+  labelEn: string;
   icon: LucideIcon;
   disabled?: boolean;
 };
 
 const NAV_ITEMS: NavItemConfig[] = [
-  { href: "/history", label: "سجلي", icon: Clock },
-  { href: "/brand-kit", label: "هويتي", icon: Palette },
+  { href: "/history", labelAr: "سجلي", labelEn: "History", icon: Clock },
+  { href: "/brand-kit", labelAr: "هويتي", labelEn: "Brand kit", icon: Palette },
   // Center FAB is handled separately
-  { href: "/showcase", label: "المعرض", icon: Images },
-  { href: "/settings", label: "إعدادات", icon: Settings },
+  { href: "/showcase", labelAr: "المعرض", labelEn: "Showcase", icon: Images },
+  { href: "/settings", labelAr: "إعدادات", labelEn: "Settings", icon: Settings },
 ];
 
 export function BottomDock() {
+  const { t } = useLocale();
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
 
@@ -55,7 +58,7 @@ export function BottomDock() {
             {/* Left Side */}
             <div className="flex-1 flex justify-around pr-4">
               {NAV_ITEMS.slice(0, 2).map((item) => (
-                <NavItem key={item.href} item={item} pathname={pathname} />
+                <NavItem key={item.href} item={item} pathname={pathname} t={t} />
               ))}
             </div>
 
@@ -65,7 +68,7 @@ export function BottomDock() {
             {/* Right Side */}
             <div className="flex-1 flex justify-around pl-4">
                {NAV_ITEMS.slice(2).map((item) => (
-                <NavItem key={item.href} item={item} pathname={pathname} />
+                <NavItem key={item.href} item={item} pathname={pathname} t={t} />
               ))}
             </div>
 
@@ -76,15 +79,16 @@ export function BottomDock() {
   );
 }
 
-function NavItem({ item, pathname }: { item: NavItemConfig; pathname: string }) {
+function NavItem({ item, pathname, t }: { item: NavItemConfig; pathname: string; t: (ar: string, en: string) => string }) {
   const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
   const Icon = item.icon;
+  const label = t(item.labelAr, item.labelEn);
 
   if (item.disabled) {
     return (
       <div className="flex flex-col items-center justify-center w-full opacity-30 grayscale pointer-events-none">
          <Icon size={24} strokeWidth={2} />
-         <span className="text-[10px] font-medium mt-1">{item.label}</span>
+         <span className="text-[10px] font-medium mt-1">{label}</span>
       </div>
     )
   }
@@ -112,7 +116,7 @@ function NavItem({ item, pathname }: { item: NavItemConfig; pathname: string }) 
       </div>
 
       <span className={`text-[10px] font-bold mt-0.5 transition-colors duration-200 ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
-        {item.label}
+        {label}
       </span>
 
       {/* Active Dot */}

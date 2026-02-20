@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import HomeClient from "./components/home-client";
 import { getPricingForCountry, normalizeCountry } from "@/lib/country-pricing";
+import { LOCALE_COOKIE, normalizeLocale } from "@/lib/i18n";
 
 const COUNTRY_COOKIE = "pst_country";
 
@@ -13,8 +14,9 @@ async function getDetectedCountry() {
 }
 
 export default async function HomePage() {
-  const country = await getDetectedCountry();
+  const [country, cookieStore] = await Promise.all([getDetectedCountry(), cookies()]);
   const pricing = getPricingForCountry(country);
+  const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
 
-  return <HomeClient countryCode={country} pricing={pricing} />;
+  return <HomeClient countryCode={country} pricing={pricing} locale={locale} />;
 }

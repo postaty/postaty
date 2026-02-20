@@ -9,6 +9,7 @@ import { MultiImageUpload } from "../multi-image-upload";
 import { FormatSelector } from "../format-selector";
 import { CampaignTypeSelector } from "../campaign-type-selector";
 import { FormInput, FormSelect } from "../ui/form-input";
+import { useLocale } from "@/hooks/use-locale";
 
 interface SupermarketFormProps {
   onSubmit: (data: SupermarketFormData) => void;
@@ -16,19 +17,20 @@ interface SupermarketFormProps {
   defaultValues?: { businessName?: string; logo?: string | null };
 }
 
-const POST_TYPE_OPTIONS = ["منتج", "عروض يومية", "تخفيضات قسم"] as const;
-const POST_TYPE_VALUES: Record<string, SupermarketFormData["postType"]> = {
-  "منتج": "product",
-  "عروض يومية": "daily-offers",
-  "تخفيضات قسم": "section-sales",
-};
+const POST_TYPE_AR = ["منتج", "عروض يومية", "تخفيضات قسم"] as const;
+const POST_TYPE_EN = ["Product", "Daily Offers", "Section Sales"] as const;
+const CTA_EN = ["Order now", "Add to cart on WhatsApp", "Offer valid today"] as const;
 
 export function SupermarketForm({ onSubmit, isLoading, defaultValues }: SupermarketFormProps) {
+  const { locale, t } = useLocale();
   const [logoOverride, setLogoOverride] = useState<string | null | undefined>(undefined);
   const [productImages, setProductImages] = useState<string[]>([]);
   const [formats, setFormats] = useState<OutputFormat[]>(["instagram-square"]);
   const [campaignType, setCampaignType] = useState<CampaignType>("standard");
   const logo = logoOverride === undefined ? (defaultValues?.logo ?? null) : logoOverride;
+
+  const postTypeOptions = locale === "ar" ? POST_TYPE_AR : POST_TYPE_EN;
+  const ctaOptions = locale === "ar" ? SUPERMARKET_CTA_OPTIONS : CTA_EN;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,6 +39,9 @@ export function SupermarketForm({ onSubmit, isLoading, defaultValues }: Supermar
     if (!logo || productImages.length === 0) return;
 
     const postTypeLabel = fd.get("postType") as string;
+    const postTypeMap = locale === "ar"
+      ? { "منتج": "product", "عروض يومية": "daily-offers", "تخفيضات قسم": "section-sales" }
+      : { Product: "product", "Daily Offers": "daily-offers", "Section Sales": "section-sales" };
 
     onSubmit({
       category: "supermarket",
@@ -44,7 +49,7 @@ export function SupermarketForm({ onSubmit, isLoading, defaultValues }: Supermar
       supermarketName: fd.get("supermarketName") as string,
       logo,
       productImages,
-      postType: POST_TYPE_VALUES[postTypeLabel] ?? "product",
+      postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as SupermarketFormData["postType"]) ?? "product",
       productName: fd.get("productName") as string,
       quantity: (fd.get("quantity") as string) || undefined,
       newPrice: fd.get("newPrice") as string,
@@ -62,121 +67,35 @@ export function SupermarketForm({ onSubmit, isLoading, defaultValues }: Supermar
   return (
     <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-        {/* Left Column */}
         <div className="space-y-6">
           <div className="bg-surface-2 p-1 rounded-2xl border border-card-border">
             <CampaignTypeSelector value={campaignType} onChange={setCampaignType} />
           </div>
 
           <div className="space-y-5">
-            <FormInput
-                label="اسم السوبر ماركت"
-                name="supermarketName"
-                placeholder="مثال: كارفور"
-                required
-                icon={Store}
-                defaultValue={defaultValues?.businessName}
-            />
-
-            <FormSelect
-                label="نوع البوست"
-                name="postType"
-                options={POST_TYPE_OPTIONS}
-                required
-                icon={FileText}
-            />
-
-            <FormInput
-                label="اسم المنتج"
-                name="productName"
-                placeholder="مثال: شيبسي ليز"
-                required
-                icon={ShoppingBasket}
-            />
-
-            <FormInput
-                label="الكمية / الوزن (اختياري)"
-                name="quantity"
-                placeholder="مثال: 200 جرام أو 6 حبات"
-                icon={Scale}
-            />
-
+            <FormInput label={t("اسم السوبر ماركت", "Supermarket name")} name="supermarketName" placeholder={t("مثال: كارفور", "Example: Carrefour")} required icon={Store} defaultValue={defaultValues?.businessName} />
+            <FormSelect label={t("نوع البوست", "Post type")} name="postType" options={postTypeOptions} required icon={FileText} />
+            <FormInput label={t("اسم المنتج", "Product name")} name="productName" placeholder={t("مثال: شيبسي ليز", "Example: Chips")} required icon={ShoppingBasket} />
+            <FormInput label={t("الكمية / الوزن (اختياري)", "Quantity / weight (optional)")} name="quantity" placeholder={t("مثال: 200 جرام أو 6 حبات", "Example: 200g or 6 pieces")} icon={Scale} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                    label="السعر الجديد"
-                    name="newPrice"
-                    placeholder="15 ر.س"
-                    required
-                    icon={Tag}
-                />
-                <FormInput
-                    label="السعر القديم"
-                    name="oldPrice"
-                    placeholder="25 ر.س"
-                    required
-                    icon={Tag}
-                />
+                <FormInput label={t("السعر الجديد", "New price")} name="newPrice" placeholder={t("15 ر.س", "$15")} required icon={Tag} />
+                <FormInput label={t("السعر القديم", "Old price")} name="oldPrice" placeholder={t("25 ر.س", "$25")} required icon={Tag} />
             </div>
-
-            <FormInput
-                label="نسبة الخصم (اختياري)"
-                name="discountPercentage"
-                placeholder="مثال: 40"
-                icon={Percent}
-            />
-
-            <FormInput
-                label="حد العرض (اختياري)"
-                name="offerLimit"
-                placeholder="مثال: 3 قطع لكل عميل"
-                icon={Package}
-            />
-
+            <FormInput label={t("نسبة الخصم (اختياري)", "Discount percentage (optional)")} name="discountPercentage" placeholder={t("مثال: 40", "Example: 40")} icon={Percent} />
+            <FormInput label={t("حد العرض (اختياري)", "Offer limit (optional)")} name="offerLimit" placeholder={t("مثال: 3 قطع لكل عميل", "Example: 3 units per customer")} icon={Package} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                    label="مدة العرض (اختياري)"
-                    name="offerDuration"
-                    placeholder="مثال: حتى نفاذ الكمية"
-                    icon={Clock}
-                />
-                <FormInput
-                    label="تاريخ الانتهاء (اختياري)"
-                    name="expiryDate"
-                    placeholder="مثال: 2025/03/15"
-                    icon={CalendarDays}
-                />
+                <FormInput label={t("مدة العرض (اختياري)", "Offer duration (optional)")} name="offerDuration" placeholder={t("مثال: حتى نفاذ الكمية", "Example: Until out of stock")} icon={Clock} />
+                <FormInput label={t("تاريخ الانتهاء (اختياري)", "Expiry date (optional)")} name="expiryDate" placeholder={t("مثال: 2025/03/15", "Example: 2025/03/15")} icon={CalendarDays} />
             </div>
-
-            <FormInput
-                label="رقم الواتساب"
-                name="whatsapp"
-                type="tel"
-                dir="ltr"
-                placeholder="+971xxxxxxxxx"
-                required
-                icon={Phone}
-                className="text-left"
-            />
-
-            <FormSelect
-                label="نص الزر (CTA)"
-                name="cta"
-                options={SUPERMARKET_CTA_OPTIONS}
-                required
-                icon={MousePointerClick}
-            />
+            <FormInput label={t("رقم الواتساب", "WhatsApp number")} name="whatsapp" type="tel" dir="ltr" placeholder="+971xxxxxxxxx" required icon={Phone} className="text-left" />
+            <FormSelect label={t("نص الزر (CTA)", "CTA text")} name="cta" options={ctaOptions} required icon={MousePointerClick} />
           </div>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-8">
           <div className="space-y-6">
-             <ImageUpload label="لوجو السوبر ماركت" value={logo} onChange={setLogoOverride} />
-             <MultiImageUpload
-                label="صور المنتج (يمكن رفع أكثر من صورة)"
-                values={productImages}
-                onChange={setProductImages}
-             />
+             <ImageUpload label={t("لوجو السوبر ماركت", "Supermarket logo")} value={logo} onChange={setLogoOverride} />
+             <MultiImageUpload label={t("صور المنتج (يمكن رفع أكثر من صورة)", "Product images (multiple allowed)")} values={productImages} onChange={setProductImages} />
           </div>
 
           <div className="pt-4 border-t border-card-border">
@@ -194,11 +113,11 @@ export function SupermarketForm({ onSubmit, isLoading, defaultValues }: Supermar
           {isLoading ? (
               <>
                 <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
-                <span>جاري التصميم الذكي...</span>
+                <span>{t("جاري التصميم الذكي...", "Generating with AI...")}</span>
               </>
           ) : (
               <>
-                <span>إنشاء البوستر</span>
+                <span>{t("إنشاء البوستر", "Generate poster")}</span>
                 <span className="bg-white/20 p-1 rounded-lg group-hover:bg-white/30 transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                 </span>

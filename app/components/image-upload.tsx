@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { ImagePlus, X } from "lucide-react";
 import { compressImage } from "@/lib/image-compression";
+import { useLocale } from "@/hooks/use-locale";
 
 interface ImageUploadProps {
   label: string;
@@ -18,6 +19,7 @@ export function ImageUpload({
   onChange,
   accept = { "image/*": [".png", ".jpg", ".jpeg", ".webp"] },
 }: ImageUploadProps) {
+  const { t } = useLocale();
   const [preview, setPreview] = useState<string | null>(value);
 
   useEffect(() => {
@@ -30,13 +32,11 @@ export function ImageUpload({
       if (!file) return;
 
       try {
-        // Compress image before converting to base64
         const compressedBase64 = await compressImage(file, 2, 1920);
         setPreview(compressedBase64);
         onChange(compressedBase64);
       } catch (error) {
         console.error("Error compressing image:", error);
-        // Fallback to original if compression fails
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = reader.result as string;
@@ -53,7 +53,7 @@ export function ImageUpload({
     onDrop,
     accept,
     maxFiles: 1,
-    maxSize: 5 * 1024 * 1024, // 5MB
+    maxSize: 5 * 1024 * 1024,
   });
 
   const handleRemove = (e: React.MouseEvent) => {
@@ -78,11 +78,11 @@ export function ImageUpload({
           <div className="relative group">
             <img
               src={preview}
-              alt="معاينة"
+              alt={t("معاينة", "Preview")}
               className="w-full h-48 object-contain rounded-xl shadow-sm bg-surface-1"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
-               <p className="text-white font-medium text-sm">انقر للتغيير</p>
+              <p className="text-white font-medium text-sm">{t("انقر للتغيير", "Click to change")}</p>
             </div>
             <button
               onClick={handleRemove}
@@ -93,14 +93,14 @@ export function ImageUpload({
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <div className={`p-4 rounded-full ${isDragActive ? 'bg-primary/10 text-primary' : 'bg-surface-2 text-muted'}`}>
-               <ImagePlus size={32} />
+            <div className={`p-4 rounded-full ${isDragActive ? "bg-primary/10 text-primary" : "bg-surface-2 text-muted"}`}>
+              <ImagePlus size={32} />
             </div>
             <div className="space-y-1">
               <p className="font-medium text-foreground">
-                {isDragActive ? "أفلت الصورة هنا" : "اضغط لرفع صورة"}
+                {isDragActive ? t("أفلت الصورة هنا", "Drop image here") : t("اضغط لرفع صورة", "Click to upload image")}
               </p>
-              <p className="text-xs text-muted-foreground">أو اسحب وأفلت هنا</p>
+              <p className="text-xs text-muted-foreground">{t("أو اسحب وأفلت هنا", "or drag and drop here")}</p>
             </div>
             <p className="text-[10px] uppercase tracking-wider opacity-60 bg-surface-2 px-2 py-1 rounded text-muted">PNG, JPG, WEBP • Max 5MB</p>
           </div>

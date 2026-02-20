@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { motion } from "framer-motion";
 import { TAP_SCALE } from "@/lib/animation";
+import { useLocale } from "@/hooks/use-locale";
 
 type Theme = "dark" | "light";
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const { t } = useLocale();
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    const saved = localStorage.getItem("theme") as Theme | null;
+    return saved ?? "dark";
+  });
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved) {
-      setTheme(saved);
-      document.documentElement.setAttribute("data-theme", saved);
-    }
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const toggle = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -34,7 +36,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       onClick={toggle}
       whileTap={TAP_SCALE}
       className={`p-2 rounded-xl bg-surface-2 border border-card-border text-muted hover:text-foreground transition-colors ${className ?? ""}`}
-      aria-label={theme === "dark" ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن"}
+      aria-label={theme === "dark" ? t("تفعيل الوضع الفاتح", "Enable light mode") : t("تفعيل الوضع الداكن", "Enable dark mode")}
     >
       {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
     </motion.button>

@@ -13,6 +13,7 @@ import { internal } from "./_generated/api";
 
 type PlanKey = "starter" | "growth" | "dominant";
 type AddonKey = "addon_5" | "addon_10";
+type CheckoutTheme = "dark" | "light";
 type BillingStatus =
   | "trialing"
   | "active"
@@ -43,29 +44,19 @@ type StripeInvoiceShape = {
 
 const PLAN_CONFIG: Record<
   PlanKey,
-  { monthlyCredits: number; firstMonthDiscountCents: number; envVar: string }
+  { monthlyCredits: number; firstMonthDiscountCents: number }
 > = {
-  starter: {
-    monthlyCredits: 10,
-    firstMonthDiscountCents: 200,
-    envVar: "STRIPE_PRICE_STARTER",
-  },
-  growth: {
-    monthlyCredits: 25,
-    firstMonthDiscountCents: 400,
-    envVar: "STRIPE_PRICE_GROWTH",
-  },
-  dominant: {
-    monthlyCredits: 50,
-    firstMonthDiscountCents: 800,
-    envVar: "STRIPE_PRICE_DOMINANT",
-  },
+  starter: { monthlyCredits: 10, firstMonthDiscountCents: 200 },
+  growth: { monthlyCredits: 25, firstMonthDiscountCents: 400 },
+  dominant: { monthlyCredits: 50, firstMonthDiscountCents: 800 },
 };
 
-const ADDON_CONFIG: Record<AddonKey, { credits: number; envVar: string }> = {
-  addon_5: { credits: 5, envVar: "STRIPE_PRICE_ADDON_5" },
-  addon_10: { credits: 10, envVar: "STRIPE_PRICE_ADDON_10" },
+const ADDON_CONFIG: Record<AddonKey, { credits: number }> = {
+  addon_5: { credits: 5 },
+  addon_10: { credits: 10 },
 };
+
+type PriceMap = Record<string, string>;
 
 const MUTABLE_BILLING_STATUSES = new Set([
   "trialing",
@@ -89,12 +80,22 @@ function getStripe() {
   return new Stripe(requireEnv("STRIPE_SECRET_KEY"));
 }
 
-function getPlanPriceId(planKey: PlanKey) {
-  return requireEnv(PLAN_CONFIG[planKey].envVar);
+function resolvePriceId(prices: PriceMap, key: string): string {
+  const priceId = prices[key];
+  if (!priceId) {
+    throw new Error(`No active Stripe price configured for "${key}". Set it in admin → Price Mappings.`);
+  }
+  return priceId;
 }
 
-function getAddonPriceId(addonKey: AddonKey) {
-  return requireEnv(ADDON_CONFIG[addonKey].envVar);
+function planKeyFromPriceId(prices: PriceMap, priceId: string | undefined): PlanKey | null {
+  if (!priceId) return null;
+  for (const [key, id] of Object.entries(prices)) {
+    if (id === priceId && (key === "starter" || key === "growth" || key === "dominant")) {
+      return key;
+    }
+  }
+  return null;
 }
 
 function extractClerkUserId(identity: { subject?: string | null } | null) {
@@ -117,17 +118,30 @@ function extractStripeCustomerId(
   return value.id ?? null;
 }
 
-function planFromPriceId(priceId: string | undefined): PlanKey | null {
-  if (!priceId) return null;
-  if (priceId === process.env.STRIPE_PRICE_STARTER) return "starter";
-  if (priceId === process.env.STRIPE_PRICE_GROWTH) return "growth";
-  if (priceId === process.env.STRIPE_PRICE_DOMINANT) return "dominant";
-  return null;
-}
 
 function estimateStripeFeeCents(amountCents: number): number {
   if (amountCents <= 0) return 0;
   return Math.round(amountCents * 0.029 + 30);
+}
+
+function getCheckoutBrandingSettings(
+  theme: CheckoutTheme
+): Stripe.Checkout.SessionCreateParams.BrandingSettings {
+  if (theme === "light") {
+    return {
+      background_color: "#ffffff",
+      button_color: "#7C3AED",
+      border_style: "rounded",
+      font_family: "noto_sans",
+    };
+  }
+
+  return {
+    background_color: "#12122a",
+    button_color: "#8B5CF6",
+    border_style: "rounded",
+    font_family: "noto_sans",
+  };
 }
 
 async function upsertFromSubscriptionEvent(
@@ -352,6 +366,7 @@ export const createSubscriptionCheckout = action({
     const identity = await ctx.auth.getUserIdentity();
     const clerkUserId = extractClerkUserId(identity);
 
+    const prices = await ctx.runQuery(internal.billing.getActivePrices);
     const stripe = getStripe();
     const existingBilling = await ctx.runQuery(internal.billing.getBillingByClerkUserId, {
       clerkUserId,
@@ -381,7 +396,7 @@ export const createSubscriptionCheckout = action({
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
-      line_items: [{ price: getPlanPriceId(args.planKey), quantity: 1 }],
+      line_items: [{ price: resolvePriceId(prices, args.planKey), quantity: 1 }],
       discounts: [{ coupon: coupon.id }],
       allow_promotion_codes: true,
       success_url: args.successUrl,
@@ -413,6 +428,7 @@ export const createAddonCheckout = action({
     const identity = await ctx.auth.getUserIdentity();
     const clerkUserId = extractClerkUserId(identity);
 
+    const prices = await ctx.runQuery(internal.billing.getActivePrices);
     const stripe = getStripe();
     const existingBilling = await ctx.runQuery(internal.billing.getBillingByClerkUserId, {
       clerkUserId,
@@ -434,7 +450,7 @@ export const createAddonCheckout = action({
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: stripeCustomerId,
-      line_items: [{ price: getAddonPriceId(args.addonKey), quantity: 1 }],
+      line_items: [{ price: resolvePriceId(prices, args.addonKey), quantity: 1 }],
       success_url: args.successUrl,
       cancel_url: args.cancelUrl,
       metadata: {
@@ -479,6 +495,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
     return new Response("Missing stripe-signature header", { status: 400 });
   }
 
+  const prices = await ctx.runQuery(internal.billing.getActivePrices);
   const stripe = getStripe();
   const body = await request.text();
   let event: Stripe.Event;
@@ -519,7 +536,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
           const subscription = (await stripe.subscriptions.retrieve(
             subscriptionId
           )) as unknown as StripeSubscriptionShape;
-          const planKey = planFromPriceId(
+          const planKey = planKeyFromPriceId(prices,
             subscription.items.data[0]?.price?.id
           );
           if (!planKey) throw new Error("Unknown subscription price ID");
@@ -574,7 +591,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
         const stripeCustomerId = extractStripeCustomerId(subscription.customer);
         if (!stripeCustomerId) break;
 
-        let planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
+        let planKey = planKeyFromPriceId(prices,subscription.items.data[0]?.price?.id);
         if (!planKey) {
           const existingBilling = await ctx.runQuery(
             internal.billing.getBillingByStripeCustomerId,
@@ -612,7 +629,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
         const subscription = (await stripe.subscriptions.retrieve(
           invoice.subscription
         )) as unknown as StripeSubscriptionShape;
-        const planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
+        const planKey = planKeyFromPriceId(prices,subscription.items.data[0]?.price?.id);
         const stripeCustomerId = extractStripeCustomerId(subscription.customer);
         if (!stripeCustomerId || !planKey) break;
 
@@ -695,6 +712,98 @@ export const getBillingByStripeCustomerId = internalQuery({
         q.eq("stripeCustomerId", args.stripeCustomerId)
       )
       .first();
+  },
+});
+
+// ── Stripe Price Mappings ─────────────────────────────────────────
+
+export const getActivePrices = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<PriceMap> => {
+    const rows = await ctx.db.query("stripePrices").collect();
+    const map: PriceMap = {};
+    for (const row of rows) {
+      map[row.key] = row.priceId;
+    }
+    return map;
+  },
+});
+
+export const listActivePrices = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("stripePrices").collect();
+  },
+});
+
+export const setActivePrice = internalMutation({
+  args: {
+    key: v.string(),
+    priceId: v.string(),
+    productId: v.string(),
+    label: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("stripePrices")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        priceId: args.priceId,
+        productId: args.productId,
+        label: args.label,
+        updatedAt: Date.now(),
+      });
+      return existing._id;
+    }
+    return await ctx.db.insert("stripePrices", {
+      key: args.key,
+      priceId: args.priceId,
+      productId: args.productId,
+      label: args.label,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Update all existing mappings for a given productId to use a new priceId
+export const updatePriceForProduct = internalMutation({
+  args: {
+    productId: v.string(),
+    newPriceId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("stripePrices")
+      .withIndex("by_productId", (q) => q.eq("productId", args.productId))
+      .collect();
+    let updated = 0;
+    for (const row of rows) {
+      if (row.priceId !== args.newPriceId) {
+        await ctx.db.patch(row._id, {
+          priceId: args.newPriceId,
+          updatedAt: Date.now(),
+        });
+        updated++;
+      }
+    }
+    return updated;
+  },
+});
+
+export const deleteActivePrice = internalMutation({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("stripePrices")
+      .withIndex("by_key", (q) => q.eq("key", args.key))
+      .first();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      return true;
+    }
+    return false;
   },
 });
 
@@ -1093,6 +1202,7 @@ export const createEmbeddedCheckout = action({
     ),
     addonKey: v.optional(v.union(v.literal("addon_5"), v.literal("addon_10"))),
     couponId: v.optional(v.string()),
+    theme: v.optional(v.union(v.literal("dark"), v.literal("light"))),
     returnUrl: v.string(),
   },
   handler: async (ctx, args): Promise<{ clientSecret: string }> => {
@@ -1103,7 +1213,9 @@ export const createEmbeddedCheckout = action({
       throw new Error("Must specify either planKey or addonKey");
     }
 
+    const prices = await ctx.runQuery(internal.billing.getActivePrices);
     const stripe = getStripe();
+    const brandingSettings = getCheckoutBrandingSettings(args.theme ?? "dark");
     const existingBilling = await ctx.runQuery(
       internal.billing.getBillingByClerkUserId,
       { clerkUserId }
@@ -1143,8 +1255,9 @@ export const createEmbeddedCheckout = action({
       const session = await stripe.checkout.sessions.create({
         ui_mode: "embedded",
         mode: "subscription",
+        branding_settings: brandingSettings,
         customer: stripeCustomerId,
-        line_items: [{ price: getPlanPriceId(args.planKey), quantity: 1 }],
+        line_items: [{ price: resolvePriceId(prices, args.planKey), quantity: 1 }],
         ...(discounts.length > 0 ? { discounts } : {}),
         return_url: args.returnUrl,
         metadata: { clerkUserId, planKey: args.planKey },
@@ -1164,8 +1277,9 @@ export const createEmbeddedCheckout = action({
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
       mode: "payment",
+      branding_settings: brandingSettings,
       customer: stripeCustomerId,
-      line_items: [{ price: getAddonPriceId(args.addonKey!), quantity: 1 }],
+      line_items: [{ price: resolvePriceId(prices, args.addonKey!), quantity: 1 }],
       return_url: args.returnUrl,
       metadata: {
         clerkUserId,
@@ -1187,6 +1301,7 @@ export const getCheckoutSessionStatus = action({
     const identity = await ctx.auth.getUserIdentity();
     const clerkUserId = extractClerkUserId(identity);
 
+    const prices = await ctx.runQuery(internal.billing.getActivePrices);
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(args.sessionId);
     const stripeCustomerId = toStripeString(session.customer as string | null);
@@ -1205,7 +1320,7 @@ export const getCheckoutSessionStatus = action({
         const subscription = (await stripe.subscriptions.retrieve(
           session.subscription
         )) as unknown as StripeSubscriptionShape;
-        const planKey = planFromPriceId(subscription.items.data[0]?.price?.id);
+        const planKey = planKeyFromPriceId(prices,subscription.items.data[0]?.price?.id);
         if (planKey) {
           await upsertFromSubscriptionEvent(ctx, {
             clerkUserId,

@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Download, Share2, Loader2, AlertCircle } from "lucide-react";
 import type { GenerationResult } from "@/lib/types";
 import { FORMAT_CONFIGS } from "@/lib/constants";
+import { useLocale } from "@/hooks/use-locale";
 
 interface PosterPreviewProps {
   result: GenerationResult;
 }
 
 export function PosterPreview({ result }: PosterPreviewProps) {
+  const { t } = useLocale();
   const config = FORMAT_CONFIGS[result.format];
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -40,7 +42,7 @@ export function PosterPreview({ result }: PosterPreviewProps) {
       }
     } catch (error) {
       console.error("Download failed:", error);
-      alert("حدث خطأ أثناء تحميل الصورة. يرجى المحاولة مرة أخرى.");
+      alert(t("حدث خطأ أثناء تحميل الصورة. يرجى المحاولة مرة أخرى.", "An error occurred while downloading the image. Please try again."));
     } finally {
       setIsDownloading(false);
     }
@@ -70,7 +72,7 @@ export function PosterPreview({ result }: PosterPreviewProps) {
 
       await navigator.share({
         files: [file],
-        title: "بوستر العرض",
+        title: t("بوستر العرض", "Promotional poster"),
       });
     } catch (err) {
       console.error("Share failed:", err);
@@ -88,19 +90,19 @@ export function PosterPreview({ result }: PosterPreviewProps) {
         {result.status === "generating" || result.status === "pending" ? (
           <div className="flex flex-col items-center gap-3">
              <Loader2 size={32} className="animate-spin text-primary" />
-             <p className="text-sm text-muted animate-pulse">جاري المعالجة...</p>
+             <p className="text-sm text-muted animate-pulse">{t("جاري المعالجة...", "Processing...")}</p>
           </div>
         ) : result.status === "error" ? (
           <div className="flex flex-col items-center gap-3 text-danger p-4 text-center">
             <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
                 <AlertCircle size={24} />
             </div>
-            <p className="text-sm font-medium">{result.error || "حدث خطأ أثناء الإنشاء"}</p>
+            <p className="text-sm font-medium">{result.error || t("حدث خطأ أثناء الإنشاء", "An error occurred while generating")}</p>
           </div>
         ) : (
           <img
             src={imageSrc}
-            alt={`بوستر ${config.label}`}
+            alt={`${t("بوستر", "Poster")} ${config.label}`}
             className="max-w-full max-h-[400px] object-contain rounded-xl shadow-md"
           />
         )}
@@ -114,7 +116,7 @@ export function PosterPreview({ result }: PosterPreviewProps) {
             className="flex items-center justify-center gap-2 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {isDownloading ? "جاري..." : "تحميل"}
+            {isDownloading ? t("جاري...", "Downloading...") : t("تحميل", "Download")}
           </button>
           {typeof navigator !== "undefined" && "share" in navigator && (
             <button
@@ -122,7 +124,7 @@ export function PosterPreview({ result }: PosterPreviewProps) {
               className="flex items-center justify-center gap-2 px-4 py-2.5 border border-card-border rounded-xl hover:bg-slate-50 hover:border-primary/30 hover:text-primary transition-all text-sm font-medium text-muted-foreground"
             >
               <Share2 size={16} />
-              مشاركة
+              {t("مشاركة", "Share")}
             </button>
           )}
         </div>

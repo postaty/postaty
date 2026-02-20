@@ -20,6 +20,7 @@ import { removeOverlayBackground } from "@/app/actions-v2";
 import { renderEditedGiftToBlob } from "@/lib/gift-editor/export-edited-gift";
 import type { GiftEditorState, PosterResult } from "@/lib/types";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useLocale } from "@/hooks/use-locale";
 
 const GiftEditorCanvas = dynamic(
   () => import("./gift-editor/gift-editor-canvas").then((mod) => mod.GiftEditorCanvas),
@@ -45,10 +46,10 @@ interface PosterModalProps {
 type ModalTab = "preview" | "edit";
 type ActiveLayer = "text" | "overlay";
 
-function defaultEditorState(): GiftEditorState {
+function defaultEditorState(defaultText: string): GiftEditorState {
   return {
     text: {
-      content: "هدية مجانية",
+      content: defaultText,
       color: "#ffffff",
       fontSize: 54,
       fontWeight: 800,
@@ -101,6 +102,7 @@ export function PosterModal({
   generationId,
   imageStorageId,
 }: PosterModalProps) {
+  const { t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
   const [feedbackState, setFeedbackState] = useState<"idle" | "like" | "dislike" | "submitted">("idle");
   const [showCommentBox, setShowCommentBox] = useState(false);
@@ -108,7 +110,7 @@ export function PosterModal({
   const [isSendingFeedback, setIsSendingFeedback] = useState(false);
   const [tab, setTab] = useState<ModalTab>("preview");
   const [activeLayer, setActiveLayer] = useState<ActiveLayer>("text");
-  const [editorState, setEditorState] = useState<GiftEditorState>(defaultEditorState);
+  const [editorState, setEditorState] = useState<GiftEditorState>(() => defaultEditorState(t("هدية مجانية", "Free gift")));
   const [removeBgLoading, setRemoveBgLoading] = useState(false);
   const [removeBgMessage, setRemoveBgMessage] = useState<string>();
 
@@ -130,10 +132,10 @@ export function PosterModal({
     setFeedbackComment("");
     setTab("preview");
     setActiveLayer("text");
-    setEditorState(defaultEditorState());
+    setEditorState(defaultEditorState(t("هدية مجانية", "Free gift")));
     setRemoveBgLoading(false);
     setRemoveBgMessage(undefined);
-  }, [result, isOpen]);
+  }, [result, isOpen, t]);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
@@ -156,10 +158,10 @@ export function PosterModal({
           imageBase64: output.imageBase64,
         },
       }));
-      setRemoveBgMessage(output.warning ?? "تمت إزالة الخلفية بنجاح.");
+      setRemoveBgMessage(output.warning ?? t("تمت إزالة الخلفية بنجاح.", "Background removed successfully."));
     } catch (error) {
       console.error("Remove background failed", error);
-      setRemoveBgMessage("تعذر إزالة الخلفية الآن، حاول مرة أخرى.");
+      setRemoveBgMessage(t("تعذر إزالة الخلفية الآن، حاول مرة أخرى.", "Couldn't remove background now, please try again."));
     } finally {
       setRemoveBgLoading(false);
     }
@@ -299,7 +301,7 @@ export function PosterModal({
             <div className="w-full md:w-[360px] bg-surface-1 border-l border-card-border p-6 flex flex-col gap-5 z-20 overflow-y-auto">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">
-                  {isGift ? "تفاصيل وتحرير الهدية" : "تفاصيل التصميم"}
+                  {isGift ? t("تفاصيل وتحرير الهدية", "Gift details and editing") : t("تفاصيل التصميم", "Design details")}
                 </h2>
                 <button
                   onClick={onClose}
@@ -332,7 +334,7 @@ export function PosterModal({
                     }`}
                   >
                     <WandSparkles size={14} />
-                    Edit Gift
+                    {t("تعديل الهدية", "Edit gift")}
                   </button>
                 </div>
               )}
@@ -351,22 +353,22 @@ export function PosterModal({
                 ) : (
                   <>
                     <div className="p-4 bg-surface-2 rounded-2xl border border-card-border space-y-3">
-                      <div className="text-sm font-medium text-muted">العنوان المقترح</div>
-                      <div className="font-bold text-foreground">{result.designNameAr || "بدون عنوان"}</div>
+                      <div className="text-sm font-medium text-muted">{t("العنوان المقترح", "Suggested title")}</div>
+                      <div className="font-bold text-foreground">{result.designNameAr || t("بدون عنوان", "Untitled")}</div>
                     </div>
 
                     <div className="p-4 bg-surface-2 rounded-2xl border border-card-border space-y-3">
-                      <div className="text-sm font-medium text-muted">التنسيق</div>
+                      <div className="text-sm font-medium text-muted">{t("التنسيق", "Format")}</div>
                       <div className="font-bold text-foreground uppercase">{result.format}</div>
                     </div>
 
                     {isAuthenticated && (
                       <div className="p-4 bg-surface-2 rounded-2xl border border-card-border space-y-3">
-                        <div className="text-sm font-medium text-muted">قيّم التصميم</div>
+                        <div className="text-sm font-medium text-muted">{t("قيّم التصميم", "Rate this design")}</div>
                         {feedbackState === "submitted" ? (
                           <div className="flex items-center gap-2 text-success text-sm font-medium">
                             <CheckCircle2 size={16} />
-                            <span>شكراً لتقييمك!</span>
+                            <span>{t("شكراً لتقييمك!", "Thanks for your feedback!")}</span>
                           </div>
                         ) : (
                           <>
@@ -380,7 +382,7 @@ export function PosterModal({
                                 }`}
                               >
                                 <ThumbsUp size={16} />
-                                <span>إعجاب</span>
+                                <span>{t("إعجاب", "Like")}</span>
                               </button>
                               <button
                                 onClick={() => handleFeedbackClick("dislike")}
@@ -391,7 +393,7 @@ export function PosterModal({
                                 }`}
                               >
                                 <ThumbsDown size={16} />
-                                <span>عدم إعجاب</span>
+                                <span>{t("عدم إعجاب", "Dislike")}</span>
                               </button>
                             </div>
                             {showCommentBox && (
@@ -399,7 +401,7 @@ export function PosterModal({
                                 <textarea
                                   value={feedbackComment}
                                   onChange={(event) => setFeedbackComment(event.target.value)}
-                                  placeholder="أخبرنا بالمزيد (اختياري)..."
+                                  placeholder={t("أخبرنا بالمزيد (اختياري)...", "Tell us more (optional)...")}
                                   rows={2}
                                   className="w-full px-3 py-2 bg-surface-1 border border-card-border rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
                                 />
@@ -411,7 +413,7 @@ export function PosterModal({
                                   {isSendingFeedback ? (
                                     <Loader2 size={14} className="animate-spin mx-auto" />
                                   ) : (
-                                    "إرسال التقييم"
+                                    t("إرسال التقييم", "Submit feedback")
                                   )}
                                 </button>
                               </div>
@@ -431,7 +433,7 @@ export function PosterModal({
                   className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold transition-all shadow-lg shadow-primary/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isExporting ? <Loader2 size={20} className="animate-spin" /> : <Download size={20} />}
-                  <span>{isGift && tab === "edit" ? "تحميل النسخة المعدلة" : "تحميل الصورة"}</span>
+                  <span>{isGift && tab === "edit" ? t("تحميل النسخة المعدلة", "Download edited version") : t("تحميل الصورة", "Download image")}</span>
                 </button>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -441,7 +443,7 @@ export function PosterModal({
                       className="flex items-center justify-center gap-2 py-3.5 px-4 bg-surface-1 border border-card-border hover:bg-surface-2 text-foreground rounded-xl font-semibold transition-all active:scale-95"
                     >
                       <Share2 size={18} />
-                      <span>مشاركة</span>
+                      <span>{t("مشاركة", "Share")}</span>
                     </button>
                   )}
 
@@ -451,7 +453,7 @@ export function PosterModal({
                       className="flex items-center justify-center gap-2 py-3.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold transition-all active:scale-95 col-span-1"
                     >
                       <Save size={18} />
-                      <span>حفظ</span>
+                      <span>{t("حفظ", "Save")}</span>
                     </button>
                   )}
                 </div>

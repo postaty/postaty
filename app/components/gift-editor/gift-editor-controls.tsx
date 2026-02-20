@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { GiftEditorState } from "@/lib/types";
 import { OverlayUploadControl } from "./overlay-upload-control";
+import { useLocale } from "@/hooks/use-locale";
 
 type ActiveLayer = "text" | "overlay";
 
@@ -25,6 +26,7 @@ function GiftEditorControlsImpl({
   removeBgLoading,
   removeBgMessage,
 }: GiftEditorControlsProps) {
+  const { t } = useLocale();
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-2">
@@ -37,7 +39,7 @@ function GiftEditorControlsImpl({
               : "border-card-border hover:bg-surface-2"
           }`}
         >
-          طبقة النص
+          {t("طبقة النص", "Text layer")}
         </button>
         <button
           type="button"
@@ -48,12 +50,12 @@ function GiftEditorControlsImpl({
               : "border-card-border hover:bg-surface-2"
           }`}
         >
-          طبقة الصورة
+          {t("طبقة الصورة", "Image layer")}
         </button>
       </div>
 
       <section className="space-y-3 p-3 rounded-xl bg-surface-2 border border-card-border">
-        <h3 className="text-sm font-bold">النص</h3>
+        <h3 className="text-sm font-bold">{t("النص", "Text")}</h3>
         <input
           type="text"
           value={state.text.content}
@@ -63,13 +65,13 @@ function GiftEditorControlsImpl({
               text: { ...state.text, content: event.target.value },
             })
           }
-          placeholder="اكتب نص الهدية"
+          placeholder={t("اكتب نص الهدية", "Enter gift text")}
           className="w-full rounded-lg border border-card-border px-3 py-2 bg-surface-1 text-sm"
         />
 
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs text-muted flex flex-col gap-1">
-            اللون
+            {t("اللون", "Color")}
             <input
               type="color"
               value={state.text.color}
@@ -84,7 +86,7 @@ function GiftEditorControlsImpl({
           </label>
 
           <label className="text-xs text-muted flex flex-col gap-1">
-            الخط
+            {t("الخط", "Font")}
             <select
               value={state.text.fontFamily}
               onChange={(event) =>
@@ -105,7 +107,7 @@ function GiftEditorControlsImpl({
 
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs text-muted flex flex-col gap-1">
-            وزن الخط
+            {t("وزن الخط", "Font weight")}
             <select
               value={state.text.fontWeight}
               onChange={(event) =>
@@ -128,7 +130,7 @@ function GiftEditorControlsImpl({
           </label>
 
           <label className="text-xs text-muted flex flex-col gap-1">
-            حجم الخط
+            {t("حجم الخط", "Font size")}
             <input
               type="range"
               min={20}
@@ -154,12 +156,12 @@ function GiftEditorControlsImpl({
           }
           className="w-full rounded-lg border border-card-border py-2 text-sm hover:bg-surface-1"
         >
-          إعادة موضع النص
+          {t("إعادة موضع النص", "Reset text position")}
         </button>
       </section>
 
       <section className="space-y-3 p-3 rounded-xl bg-surface-2 border border-card-border">
-        <h3 className="text-sm font-bold">الصورة المضافة</h3>
+        <h3 className="text-sm font-bold">{t("الصورة المضافة", "Overlay image")}</h3>
         <OverlayUploadControl
           value={state.overlay.imageBase64}
           onChange={(base64) =>
@@ -175,7 +177,7 @@ function GiftEditorControlsImpl({
         {state.overlay.imageBase64 && (
           <>
             <label className="text-xs text-muted flex flex-col gap-1">
-              الحجم
+              {t("الحجم", "Size")}
               <input
                 type="range"
                 min={0.2}
@@ -192,7 +194,7 @@ function GiftEditorControlsImpl({
             </label>
 
             <label className="text-xs text-muted flex flex-col gap-1">
-              تدوير الزوايا
+              {t("تدوير الزوايا", "Corner roundness")}
               <input
                 type="range"
                 min={0}
@@ -217,7 +219,7 @@ function GiftEditorControlsImpl({
               }
               className="w-full rounded-lg border border-card-border py-2 text-sm hover:bg-surface-1"
             >
-              إعادة موضع الصورة
+              {t("إعادة موضع الصورة", "Reset image position")}
             </button>
           </>
         )}

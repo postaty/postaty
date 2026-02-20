@@ -1,46 +1,67 @@
 import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 import { ContactForm } from "./contact-form";
+import { getRequestLocale } from "@/lib/server-locale";
 
-export const metadata: Metadata = {
-  title: "اتصل بنا | Postaty",
-  description: "تواصل مع فريق Postaty — نحب نسمع منك سواء كان سؤال أو اقتراح أو شراكة",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
+  if (locale === "en") {
+    return {
+      title: "Contact Us | Postaty",
+      description: "Get in touch with the Postaty team for support, questions, ideas, or partnerships",
+    };
+  }
+  return {
+    title: "اتصل بنا | Postaty",
+    description: "تواصل مع فريق Postaty — نحب نسمع منك سواء كان سؤال أو اقتراح أو شراكة",
+  };
+}
 
-const contactMethods = [
-  {
-    icon: Mail,
-    title: "البريد الإلكتروني",
-    description: "أرسل لنا وبنرد خلال 24 ساعة",
-    value: "hello@postaty.com",
-    href: "mailto:hello@postaty.com",
-  },
-];
+const contactMethods = {
+  ar: [
+    {
+      icon: Mail,
+      title: "البريد الإلكتروني",
+      description: "أرسل لنا وبنرد خلال 24 ساعة",
+      value: "hello@postaty.com",
+      href: "mailto:hello@postaty.com",
+    },
+  ],
+  en: [
+    {
+      icon: Mail,
+      title: "Email",
+      description: "Send us a message and we will reply within 24 hours",
+      value: "hello@postaty.com",
+      href: "mailto:hello@postaty.com",
+    },
+  ],
+} as const;
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const locale = await getRequestLocale();
+  const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
+
   return (
     <div className="min-h-screen">
-      {/* Hero */}
       <section className="pt-32 pb-16 px-4 text-center relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/8 rounded-full blur-[120px]" />
         </div>
         <div className="max-w-3xl mx-auto relative">
           <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-            نحب نسمع
-            <br />
-            <span className="text-gradient">منك</span>
+            {t("نحب نسمع", "We love hearing")}<br />
+            <span className="text-gradient">{t("منك", "from you")}</span>
           </h1>
           <p className="text-muted text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            عندك سؤال؟ اقتراح؟ تبي شراكة؟ فريقنا جاهز يساعدك.
+            {t("عندك سؤال؟ اقتراح؟ تبي شراكة؟ فريقنا جاهز يساعدك.", "Have a question, idea, or partnership request? Our team is ready to help.")}
           </p>
         </div>
       </section>
 
-      {/* Contact methods */}
       <section className="py-12 px-4">
         <div className="max-w-2xl mx-auto grid grid-cols-1 gap-6">
-          {contactMethods.map((method) => (
+          {contactMethods[locale].map((method) => (
             <div
               key={method.title}
               className="bg-surface-1 border border-card-border rounded-2xl p-8 hover:border-primary/30 transition-colors"
@@ -65,10 +86,9 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Contact form */}
       <section className="py-16 px-4">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-black mb-8 text-center">أرسل لنا رسالة</h2>
+          <h2 className="text-3xl font-black mb-8 text-center">{t("أرسل لنا رسالة", "Send us a message")}</h2>
           <ContactForm />
         </div>
       </section>

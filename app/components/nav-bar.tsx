@@ -4,37 +4,68 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
-import { Palette, Clock, Plus, Loader2, Settings, Coins } from "lucide-react";
+import { Palette, Clock, Plus, Loader2, Settings, Coins, Languages } from "lucide-react";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { ThemeToggle } from "./theme-toggle";
 import { NotificationBell } from "./notification-bell";
+import type { AppLocale } from "@/lib/i18n";
+import { LOCALE_COOKIE } from "@/lib/i18n";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
-const NAV_ITEMS = [
-  { href: "/brand-kit", label: "هوية العلامة", icon: Palette },
-  { href: "/history", label: "السجل", icon: Clock },
-  { href: "/settings", label: "الإعدادات", icon: Settings },
-] as const;
+const COPY = {
+  ar: {
+    navItems: [
+      { href: "/brand-kit", label: "هوية العلامة", icon: Palette },
+      { href: "/history", label: "السجل", icon: Clock },
+      { href: "/settings", label: "الإعدادات", icon: Settings },
+    ],
+    newPost: "إنشاء جديد",
+    signIn: "تسجيل دخول",
+    subscribe: "اشترك",
+    topUp: "شحن+",
+    profileAlt: "الملف الشخصي",
+    langToggle: "English",
+  },
+  en: {
+    navItems: [
+      { href: "/brand-kit", label: "Brand Kit", icon: Palette },
+      { href: "/history", label: "History", icon: Clock },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+    newPost: "Create New",
+    signIn: "Sign In",
+    subscribe: "Upgrade",
+    topUp: "Top up+",
+    profileAlt: "Profile image",
+    langToggle: "العربية",
+  },
+} as const;
 
-export function NavBar() {
+type NavBarProps = {
+  locale: AppLocale;
+};
+
+export function NavBar({ locale }: NavBarProps) {
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
 
   if (isAuthPage) return null;
 
   if (!AUTH_ENABLED) {
-    return <NavBarNoAuth />;
+    return <NavBarNoAuth locale={locale} />;
   }
-  return <NavBarWithAuth />;
+  return <NavBarWithAuth locale={locale} />;
 }
 
-function NavBarWithAuth() {
+function NavBarWithAuth({ locale }: NavBarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { isLoaded: isClerkLoaded, userId } = useAuth();
+  const copy = COPY[locale];
+  const nextLocale = locale === "ar" ? "en" : "ar";
 
   const isClerkSignedIn = Boolean(userId);
 
@@ -54,12 +85,15 @@ function NavBarWithAuth() {
     document.getElementById("hero")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const handleLocaleSwitch = () => {
+    document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
+    router.refresh();
+  };
+
   return (
     <nav className="sticky top-0 z-50 px-4 py-3 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-surface-1/90">
-
-          {/* Brand / Logo */}
           <Link href="/#hero" onClick={handleLogoClick} className="flex items-center gap-2 group">
             <div className=" relative size-24 transition-transform duration-300 group-hover:rotate-12">
               <Image
@@ -72,9 +106,8 @@ function NavBarWithAuth() {
             </div>
           </Link>
 
-          {/* Navigation Items */}
           <div className="hidden md:flex items-center gap-1 bg-surface-2/50 p-1 rounded-xl border border-card-border">
-            {NAV_ITEMS.map((item) => {
+            {copy.navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
               return (
@@ -87,7 +120,7 @@ function NavBarWithAuth() {
                       : "text-muted hover:text-foreground hover:bg-surface-1/50"
                   }`}
                 >
-                  <Icon size={16} className={`transition-transform duration-300 ${isActive ? 'scale-110 text-primary' : 'group-hover/nav:scale-110'}`} />
+                  <Icon size={16} className={`transition-transform duration-300 ${isActive ? "scale-110 text-primary" : "group-hover/nav:scale-110"}`} />
                   <span>{item.label}</span>
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-accent to-primary" />
@@ -97,35 +130,39 @@ function NavBarWithAuth() {
             })}
           </div>
 
-          {/* Actions / Credits */}
           <div className="flex items-center gap-3">
-
-            {/* Theme Toggle */}
             <ThemeToggle className="flex" />
+            <button
+              type="button"
+              onClick={handleLocaleSwitch}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-card-border text-sm font-bold text-muted hover:text-foreground hover:bg-surface-2 transition-colors"
+            >
+              <Languages size={14} />
+              <span>{copy.langToggle}</span>
+            </button>
 
-            {/* Desktop Generate Button */}
             <button
               onClick={handleGenerateClick}
               className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
               <Plus size={18} />
-              <span>إنشاء جديد</span>
+              <span>{copy.newPost}</span>
             </button>
 
             {!isClerkLoaded ? (
               <Loader2 size={20} className="animate-spin text-muted" />
             ) : isClerkSignedIn ? (
               <>
-              <NotificationBell />
-              <CreditsBadge />
+                <NotificationBell />
+                <CreditsBadge locale={locale} />
               </>
             ) : (
               <div className="hidden sm:block">
-                  <SignInButton>
-                    <button className="text-sm font-bold text-muted hover:text-primary transition-colors px-3 py-1.5">
-                        تسجيل دخول
-                    </button>
-                  </SignInButton>
+                <SignInButton>
+                  <button className="text-sm font-bold text-muted hover:text-primary transition-colors px-3 py-1.5">
+                    {copy.signIn}
+                  </button>
+                </SignInButton>
               </div>
             )}
           </div>
@@ -135,14 +172,15 @@ function NavBarWithAuth() {
   );
 }
 
-function CreditsBadge() {
+function CreditsBadge({ locale }: NavBarProps) {
   const { user: clerkUser } = useUser();
   const creditState = useQuery(api.billing.getCreditState);
   const requiresSubscription =
     !!creditState &&
     "planKey" in creditState &&
     creditState.planKey === "none";
-  const href = requiresSubscription ? "/pricing" : "/checkout?addon=addon_5";
+  const href = requiresSubscription ? "/pricing" : "/top-up";
+  const copy = COPY[locale];
 
   const initials = clerkUser?.fullName
     ?.split(" ")
@@ -162,11 +200,11 @@ function CreditsBadge() {
         </span>
         {requiresSubscription ? (
           <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-            اشترك
+            {copy.subscribe}
           </span>
         ) : (
           <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-            شحن+
+            {copy.topUp}
           </span>
         )}
       </Link>
@@ -177,7 +215,7 @@ function CreditsBadge() {
         {clerkUser?.imageUrl ? (
           <Image
             src={clerkUser.imageUrl}
-            alt={clerkUser.fullName ?? "الملف الشخصي"}
+            alt={clerkUser.fullName ?? copy.profileAlt}
             fill
             sizes="36px"
             className="object-cover"
@@ -193,12 +231,21 @@ function CreditsBadge() {
   );
 }
 
-function NavBarNoAuth() {
+function NavBarNoAuth({ locale }: NavBarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const copy = COPY[locale];
+  const nextLocale = locale === "ar" ? "en" : "ar";
+
   const handleLogoClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (pathname !== "/") return;
     e.preventDefault();
     document.getElementById("hero")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleLocaleSwitch = () => {
+    document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=31536000; samesite=lax`;
+    router.refresh();
   };
 
   return (
@@ -221,7 +268,7 @@ function NavBarNoAuth() {
           </Link>
 
           <div className="hidden md:flex items-center gap-1 bg-surface-2/50 p-1 rounded-xl border border-card-border">
-            {NAV_ITEMS.map((item) => {
+            {copy.navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
               return (
@@ -243,12 +290,20 @@ function NavBarNoAuth() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle className="hidden sm:flex" />
+            <button
+              type="button"
+              onClick={handleLocaleSwitch}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-card-border text-sm font-bold text-muted hover:text-foreground hover:bg-surface-2 transition-colors"
+            >
+              <Languages size={14} />
+              <span>{copy.langToggle}</span>
+            </button>
             <Link
               href="/create"
               className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-primary to-primary-hover text-primary-foreground text-sm font-bold shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
             >
               <Plus size={18} />
-              <span>إنشاء جديد</span>
+              <span>{copy.newPost}</span>
             </Link>
           </div>
         </div>
