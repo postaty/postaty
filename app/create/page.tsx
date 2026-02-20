@@ -137,6 +137,37 @@ function CreatePageContent() {
   const { orgId, isLoading: isIdentityLoading } = useDevIdentity();
   const { locale, t } = useLocale();
 
+  const toLocalizedErrorMessage = (error: unknown): string => {
+    const message = error instanceof Error ? error.message : "";
+    if (!message) {
+      return t("حدث خطأ أثناء إنشاء التصميم. حاول مرة أخرى.", "An error occurred while generating. Please try again.");
+    }
+
+    if (
+      message.includes("لقد تجاوزت الحد المسموح") ||
+      /rate limit/i.test(message)
+    ) {
+      return t("لقد تجاوزت الحد المسموح. حاول مرة أخرى بعد دقيقة.", "You hit the rate limit. Please try again in a minute.");
+    }
+
+    if (
+      message.includes("يجب تسجيل الدخول لإنشاء تصاميم") ||
+      /sign in/i.test(message)
+    ) {
+      return t("يجب تسجيل الدخول لإنشاء تصاميم", "You need to sign in to create designs.");
+    }
+
+    if (/validation failed/i.test(message)) {
+      return t("البيانات المدخلة غير صحيحة. تحقق من الحقول وحاول مرة أخرى.", "Some inputs are invalid. Please review the fields and try again.");
+    }
+
+    if (/generation failed/i.test(message)) {
+      return t("فشل إنشاء التصميم. حاول مرة أخرى.", "Design generation failed. Please try again.");
+    }
+
+    return message;
+  };
+
   // State
   const [category, setCategory] = useState<Category | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -307,7 +338,7 @@ function CreatePageContent() {
         throw new Error(t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits"));
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("فشل خصم الرصيد", "Failed to consume credits");
+      const msg = toLocalizedErrorMessage(err);
       setError(msg);
       setGenStep("error");
       setIsGenerating(false);
@@ -329,18 +360,19 @@ function CreatePageContent() {
         }
       })
       .catch((err) => {
+        const localizedMessage = toLocalizedErrorMessage(err);
         const errorResult: PosterResult = {
           designIndex: 0,
           format: data.formats[0],
           html: "",
           status: "error",
-          error: err instanceof Error ? err.message : "Generation failed",
+          error: localizedMessage,
           designName: "Design",
           designNameAr: locale === "ar" ? "تصميم" : "Design",
         };
         setResults([errorResult]);
         setGenStep("error");
-        setError(err instanceof Error ? err.message : "Generation failed");
+        setError(localizedMessage);
         setIsGenerating(false);
         generatingRef.current = false;
       });

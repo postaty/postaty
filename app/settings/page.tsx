@@ -6,15 +6,15 @@ import { api } from "@/convex/_generated/api";
 import { Loader2, Zap, Calendar, LogOut, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale } from "@/hooks/use-locale";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
-const PLAN_NAMES: Record<string, string> = {
-  none: "غير مشترك",
-  starter: "مبتدي",
-  growth: "نمو",
-  dominant: "هيمنة",
+const PLAN_NAMES: Record<string, { ar: string; en: string }> = {
+  none: { ar: "غير مشترك", en: "No plan" },
+  starter: { ar: "مبتدي", en: "Starter" },
+  growth: { ar: "نمو", en: "Growth" },
+  dominant: { ar: "هيمنة", en: "Dominant" },
 };
 
 const PLAN_COLORS: Record<string, string> = {
@@ -35,7 +35,7 @@ function SettingsPageWithClerk() {
   const { isLoaded: isClerkLoaded } = useAuth();
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
-  const router = useRouter();
+  const { locale, t } = useLocale();
   const { isAuthenticated: isConvexAuthenticated, isLoading: isConvexLoading } =
     useConvexAuth();
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -72,7 +72,7 @@ function SettingsPageWithClerk() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <Loader2 size={32} className="animate-spin text-muted mx-auto mb-4" />
-              <p className="text-muted">جاري التحميل...</p>
+              <p className="text-muted">{t("جاري التحميل...", "Loading...")}</p>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ function SettingsPageWithClerk() {
             {clerkUser.imageUrl ? (
               <img
                 src={clerkUser.imageUrl}
-                alt={clerkUser.fullName ?? "الملف الشخصي"}
+                alt={clerkUser.fullName ?? t("الملف الشخصي", "Profile")}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -111,15 +111,15 @@ function SettingsPageWithClerk() {
 
           {/* Name + Plan Badge */}
           <div className="flex items-center justify-center gap-3 mb-1">
-            <h1 className="text-2xl font-black">{clerkUser.fullName || "بدون اسم"}</h1>
+            <h1 className="text-2xl font-black">{clerkUser.fullName || t("بدون اسم", "No name")}</h1>
             <span className={`px-3 py-0.5 rounded-full text-xs font-bold ${PLAN_COLORS[planKey]} ${PLAN_BG[planKey]}`}>
-              {PLAN_NAMES[planKey] || "غير معروف"}
+              {PLAN_NAMES[planKey]?.[locale] || t("غير معروف", "Unknown")}
             </span>
           </div>
 
           {/* Email */}
           <p className="text-muted text-sm">
-            {clerkUser.emailAddresses[0]?.emailAddress || "بدون بريد"}
+            {clerkUser.emailAddresses[0]?.emailAddress || t("بدون بريد", "No email")}
           </p>
 
           {/* Manage Account Link */}
@@ -128,7 +128,7 @@ function SettingsPageWithClerk() {
             className="inline-flex items-center gap-1.5 mt-4 text-sm text-primary hover:underline font-medium"
           >
             <ExternalLink size={14} />
-            <span>إدارة الحساب</span>
+            <span>{t("إدارة الحساب", "Manage account")}</span>
           </button>
         </div>
 
@@ -137,7 +137,7 @@ function SettingsPageWithClerk() {
           <div className="bg-surface-1 border border-card-border rounded-2xl p-8 flex items-center justify-center h-48">
             <div className="text-center">
               <Loader2 size={32} className="animate-spin text-muted mx-auto mb-4" />
-              <p className="text-muted">جاري تحميل بيانات الاشتراك...</p>
+              <p className="text-muted">{t("جاري تحميل بيانات الاشتراك...", "Loading subscription data...")}</p>
             </div>
           </div>
         ) : creditState && "planKey" in creditState ? (
@@ -148,23 +148,23 @@ function SettingsPageWithClerk() {
               <div className="bg-surface-1 border border-card-border rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Zap size={18} className="text-primary" />
-                  <h3 className="font-bold">الأرصدة</h3>
+                  <h3 className="font-bold">{t("الأرصدة", "Credits")}</h3>
                 </div>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted">الشهري المتبقي</span>
+                    <span className="text-sm text-muted">{t("الشهري المتبقي", "Monthly remaining")}</span>
                     <span className="text-lg font-bold text-primary">
                       {creditState.monthlyRemaining}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted">إضافات</span>
+                    <span className="text-sm text-muted">{t("إضافات", "Add-ons")}</span>
                     <span className="text-lg font-bold text-accent">
                       {creditState.addonRemaining}
                     </span>
                   </div>
                   <div className="border-t border-card-border pt-3 flex justify-between items-center">
-                    <span className="text-sm font-medium">المجموع</span>
+                    <span className="text-sm font-medium">{t("المجموع", "Total")}</span>
                     <span className="text-2xl font-black text-foreground">
                       {creditState.totalRemaining}
                     </span>
@@ -176,11 +176,11 @@ function SettingsPageWithClerk() {
               <div className="bg-surface-1 border border-card-border rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Calendar size={18} className="text-accent" />
-                  <h3 className="font-bold">الاشتراك</h3>
+                  <h3 className="font-bold">{t("الاشتراك", "Subscription")}</h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <span className="text-sm text-muted">الحالة</span>
+                    <span className="text-sm text-muted">{t("الحالة", "Status")}</span>
                     <div className="mt-1">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
@@ -189,17 +189,17 @@ function SettingsPageWithClerk() {
                             : "bg-muted/20 text-muted"
                         }`}
                       >
-                        {creditState.status === "active" ? "نشط" : "غير نشط"}
+                        {creditState.status === "active" ? t("نشط", "Active") : t("غير نشط", "Inactive")}
                       </span>
                     </div>
                   </div>
                   {creditState.currentPeriodStart && creditState.currentPeriodEnd && (
                     <div>
-                      <span className="text-sm text-muted">الفترة الحالية</span>
+                      <span className="text-sm text-muted">{t("الفترة الحالية", "Current period")}</span>
                       <p className="text-sm text-foreground mt-1">
-                        {new Date(creditState.currentPeriodStart).toLocaleDateString("ar-SA")}
+                        {new Date(creditState.currentPeriodStart).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
                         {" - "}
-                        {new Date(creditState.currentPeriodEnd).toLocaleDateString("ar-SA")}
+                        {new Date(creditState.currentPeriodEnd).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
                       </p>
                     </div>
                   )}
@@ -218,10 +218,10 @@ function SettingsPageWithClerk() {
                   {loadingAction === "portal" ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      <span>جاري التحميل...</span>
+                      <span>{t("جاري التحميل...", "Loading...")}</span>
                     </>
                   ) : (
-                    <span>إدارة الاشتراك</span>
+                    <span>{t("إدارة الاشتراك", "Manage subscription")}</span>
                   )}
                 </button>
               )}
@@ -232,7 +232,7 @@ function SettingsPageWithClerk() {
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-2xl font-bold hover:shadow-lg hover:shadow-primary/25 transition-all"
                 >
                   <Zap size={16} />
-                  <span>عرض الخطط والأسعار</span>
+                  <span>{t("عرض الخطط والأسعار", "View plans and pricing")}</span>
                 </Link>
               )}
             </div>
@@ -242,12 +242,12 @@ function SettingsPageWithClerk() {
         {/* Support */}
         <div className="bg-surface-2/30 border border-card-border rounded-2xl p-6 text-center">
           <p className="text-sm text-muted">
-            هل تحتاج إلى مساعدة؟{" "}
+            {t("هل تحتاج إلى مساعدة؟", "Need help?")}{" "}
             <a
               href="mailto:support@postaty.com"
               className="text-primary hover:underline font-bold"
             >
-              تواصل معنا
+              {t("تواصل معنا", "Contact us")}
             </a>
           </p>
         </div>
@@ -263,7 +263,7 @@ function SettingsPageWithClerk() {
           ) : (
             <LogOut size={16} />
           )}
-          <span>تسجيل الخروج</span>
+          <span>{t("تسجيل الخروج", "Sign out")}</span>
         </button>
       </div>
     </main>
@@ -271,25 +271,30 @@ function SettingsPageWithClerk() {
 }
 
 export default function SettingsPage() {
+  const { t } = useLocale();
+
   if (!AUTH_ENABLED) {
     return (
       <main className="min-h-screen relative pt-8 pb-32 px-4 md:pt-16 md:pb-24">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-4xl font-black mb-2">الملف الشخصي</h1>
-            <p className="text-muted">إدارة حسابك والاشتراك والأرصدة</p>
+            <h1 className="text-4xl font-black mb-2">{t("الملف الشخصي", "Profile")}</h1>
+            <p className="text-muted">{t("إدارة حسابك والاشتراك والأرصدة", "Manage your account, subscription, and credits")}</p>
           </div>
 
           <div className="bg-surface-1 border border-card-border rounded-2xl p-8 text-center">
-            <p className="text-lg font-bold mb-2">صفحة الإعدادات تتطلب تفعيل تسجيل الدخول</p>
+            <p className="text-lg font-bold mb-2">{t("صفحة الإعدادات تتطلب تفعيل تسجيل الدخول", "Settings page requires authentication to be enabled")}</p>
             <p className="text-muted mb-6">
-              أضف `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` لتفعيل الحسابات والاشتراكات.
+              {t(
+                "أضف `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` لتفعيل الحسابات والاشتراكات.",
+                "Add `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` to enable accounts and subscriptions."
+              )}
             </p>
             <Link
               href="/"
               className="inline-flex items-center justify-center px-5 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold"
             >
-              الرجوع للرئيسية
+              {t("الرجوع للرئيسية", "Back to home")}
             </Link>
           </div>
         </div>

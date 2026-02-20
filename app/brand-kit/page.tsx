@@ -9,6 +9,7 @@ import { Palette, Loader2 } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useLocale } from "@/hooks/use-locale";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
@@ -22,6 +23,7 @@ export default function BrandKitPage() {
 
 function BrandKitContent() {
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const { isLoading: isIdentityLoading, isAuthenticated } = useDevIdentity();
   const existingKit = useQuery(
     api.brandKits.getDefault,
@@ -42,13 +44,16 @@ function BrandKitContent() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center gap-3 mb-4 bg-surface-1/80 backdrop-blur-sm px-6 py-2 rounded-full border border-card-border shadow-sm animate-fade-in-up">
             <Palette size={24} className="text-primary" />
-            <span className="text-foreground font-semibold tracking-wide text-sm">تخصيص العلامة</span>
+            <span className="text-foreground font-semibold tracking-wide text-sm">{t("تخصيص العلامة", "Brand customization")}</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold mb-4 text-foreground animate-gradient-flow">
-            هوية العلامة التجارية
+            {t("هوية العلامة التجارية", "Brand identity")}
           </h1>
           <p className="text-muted text-lg max-w-xl mx-auto leading-relaxed font-light">
-            أضف شعارك وألوانك لتطبيقها تلقائياً على كل البوسترات التي تنشئها
+            {t(
+              "أضف شعارك وألوانك لتطبيقها تلقائياً على كل البوسترات التي تنشئها",
+              "Add your logo and colors to apply them automatically to every poster you generate"
+            )}
           </p>
         </div>
 
@@ -58,16 +63,16 @@ function BrandKitContent() {
           </div>
         ) : !isAuthenticated ? (
           <div className="text-center py-16">
-            <p className="text-muted mb-6">سجل الدخول لإدارة هوية علامتك التجارية</p>
+            <p className="text-muted mb-6">{t("سجل الدخول لإدارة هوية علامتك التجارية", "Sign in to manage your brand identity")}</p>
             {AUTH_ENABLED ? (
               <SignInButton forceRedirectUrl="/brand-kit">
                 <button className="px-6 py-3 bg-primary text-white rounded-xl font-bold">
-                  تسجيل الدخول
+                  {t("تسجيل الدخول", "Sign in")}
                 </button>
               </SignInButton>
             ) : (
               <Link href="/create" className="px-6 py-3 bg-primary text-white rounded-xl font-bold inline-block">
-                ابدأ الآن
+                {t("ابدأ الآن", "Start now")}
               </Link>
             )}
           </div>
@@ -79,7 +84,7 @@ function BrandKitContent() {
                   href={redirectTo}
                   className="text-sm text-muted hover:text-foreground underline underline-offset-4"
                 >
-                  تخطي حالياً والمتابعة للتصميم
+                  {t("تخطي حالياً والمتابعة للتصميم", "Skip for now and continue to design")}
                 </Link>
               </div>
             )}

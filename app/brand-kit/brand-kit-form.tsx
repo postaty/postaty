@@ -10,6 +10,7 @@ import type { BrandPalette, StyleAdjective } from "@/lib/types";
 import { STYLE_ADJECTIVE_OPTIONS } from "@/lib/constants";
 import { extractColorsFromImage } from "@/lib/brand-extraction";
 import { uploadBase64ToConvex } from "@/lib/convex-upload";
+import { useLocale } from "@/hooks/use-locale";
 import {
   X,
   Plus,
@@ -28,12 +29,12 @@ const FONT_OPTIONS = [
   "Amiri",
 ];
 
-const PALETTE_LABELS: Record<keyof BrandPalette, string> = {
-  primary: "اللون الأساسي",
-  secondary: "اللون الثانوي",
-  accent: "لون التمييز",
-  background: "لون الخلفية",
-  text: "لون النص",
+const PALETTE_LABELS: Record<keyof BrandPalette, { ar: string; en: string }> = {
+  primary: { ar: "اللون الأساسي", en: "Primary color" },
+  secondary: { ar: "اللون الثانوي", en: "Secondary color" },
+  accent: { ar: "لون التمييز", en: "Accent color" },
+  background: { ar: "لون الخلفية", en: "Background color" },
+  text: { ar: "لون النص", en: "Text color" },
 };
 
 const DEFAULT_PALETTE: BrandPalette = {
@@ -63,6 +64,7 @@ interface BrandKitFormProps {
 
 export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
   const router = useRouter();
+  const { locale, t } = useLocale();
   const [name, setName] = useState(existingKit?.name ?? "");
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(
@@ -104,7 +106,10 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
 
       if (!file.type.startsWith("image/")) return;
       if (file.size > 5 * 1024 * 1024) {
-        setSaveMessage({ type: "error", text: "حجم الصورة يجب أن لا يتجاوز 5 ميجابايت" });
+        setSaveMessage({
+          type: "error",
+          text: t("حجم الصورة يجب أن لا يتجاوز 5 ميجابايت", "Image size must not exceed 5MB"),
+        });
         return;
       }
 
@@ -127,7 +132,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       };
       reader.readAsDataURL(file);
     },
-    []
+    [t]
   );
 
   const handleRemoveLogo = () => {
@@ -180,7 +185,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      setSaveMessage({ type: "error", text: "يرجى إدخال اسم العلامة التجارية" });
+      setSaveMessage({ type: "error", text: t("يرجى إدخال اسم العلامة التجارية", "Please enter your brand name") });
       return;
     }
 
@@ -231,14 +236,14 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
         });
       }
 
-      setSaveMessage({ type: "success", text: "تم حفظ هوية العلامة التجارية بنجاح" });
+      setSaveMessage({ type: "success", text: t("تم حفظ هوية العلامة التجارية بنجاح", "Brand identity saved successfully") });
       if (redirectTo) {
         router.push(redirectTo);
       }
     } catch (err) {
       setSaveMessage({
         type: "error",
-        text: err instanceof Error ? err.message : "حدث خطأ أثناء الحفظ",
+        text: err instanceof Error ? err.message : t("حدث خطأ أثناء الحفظ", "An error occurred while saving"),
       });
     }
 
@@ -250,13 +255,13 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Brand Name */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-2">
-          اسم العلامة التجارية
+          {t("اسم العلامة التجارية", "Brand name")}
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="مثال: مطعم الشام"
+          placeholder={t("مثال: مطعم الشام", "Example: Nova Cafe")}
           className="w-full h-12 px-4 bg-surface-1 rounded-xl border border-card-border focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
         />
       </section>
@@ -264,7 +269,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Logo Upload */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-3">
-          شعار العلامة التجارية
+          {t("شعار العلامة التجارية", "Brand logo")}
         </label>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           {logoPreview ? (
@@ -272,7 +277,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
               <div className="w-32 h-32 rounded-2xl border-2 border-card-border overflow-hidden bg-surface-1 flex items-center justify-center">
                 <Image
                   src={logoPreview}
-                  alt="Logo"
+                  alt={t("الشعار", "Logo")}
                   fill
                   sizes="128px"
                   className="object-contain"
@@ -294,7 +299,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
           ) : (
             <label className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-card-border rounded-2xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all bg-surface-1/50 shrink-0">
               <ImageIcon size={24} className="text-muted-foreground mb-2" />
-              <span className="text-xs text-muted-foreground">رفع الشعار</span>
+              <span className="text-xs text-muted-foreground">{t("رفع الشعار", "Upload logo")}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -304,8 +309,8 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
             </label>
           )}
           <div className="text-xs text-muted space-y-1">
-            <p>صيغة مناسبة: PNG, JPG, SVG</p>
-            <p>الحد الأقصى للحجم: 5MB</p>
+            <p>{t("صيغة مناسبة: PNG, JPG, SVG", "Accepted formats: PNG, JPG, SVG")}</p>
+            <p>{t("الحد الأقصى للحجم: 5MB", "Maximum size: 5MB")}</p>
           </div>
         </div>
       </section>
@@ -314,7 +319,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {extractedColors.length > 0 && (
         <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
           <label className="block text-sm font-bold text-foreground mb-2">
-            الألوان المستخرجة من الشعار
+            {t("الألوان المستخرجة من الشعار", "Extracted colors from logo")}
           </label>
           <div className="flex flex-wrap gap-2.5">
             {extractedColors.map((color, i) => (
@@ -325,7 +330,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
                 }
                 className="w-10 h-10 rounded-xl border-2 border-card-border hover:border-primary/50 hover:scale-110 transition-all shadow-sm"
                 style={{ backgroundColor: color }}
-                title={`استخدم ${color} كلون أساسي`}
+                title={t(`استخدم ${color} كلون أساسي`, `Use ${color} as primary color`)}
               />
             ))}
           </div>
@@ -335,14 +340,14 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Palette Editor */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-3">
-          لوحة الألوان
+          {t("لوحة الألوان", "Color palette")}
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {(Object.keys(PALETTE_LABELS) as (keyof BrandPalette)[]).map(
             (key) => (
               <div key={key} className="space-y-2 rounded-xl border border-card-border/70 bg-surface-1 p-3">
                 <span className="text-xs font-medium text-muted-foreground">
-                  {PALETTE_LABELS[key]}
+                  {PALETTE_LABELS[key][locale]}
                 </span>
                 <div className="flex items-center gap-2">
                   <input
@@ -368,7 +373,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Font Family */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-2">
-          الخط المستخدم
+          {t("الخط المستخدم", "Font family")}
         </label>
         <select
           value={fontFamily}
@@ -386,9 +391,9 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Style Adjectives */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-2">
-          أسلوب العلامة{" "}
+          {t("أسلوب العلامة", "Brand style")}{" "}
           <span className="text-muted-foreground font-normal">
-            (اختر حتى 5)
+            {t("(اختر حتى 5)", "(Choose up to 5)")}
           </span>
         </label>
         <div className="flex flex-wrap gap-2">
@@ -410,7 +415,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
                 disabled={!isSelected && selectedAdjectives.length >= 5}
               >
                 {isSelected && <Check size={14} className="inline ml-1" />}
-                {option.labelAr}
+                {locale === "ar" ? option.labelAr : option.label}
               </button>
             );
           })}
@@ -420,7 +425,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Do Rules */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-2">
-          قواعد التصميم (افعل)
+          {t("قواعد التصميم (افعل)", "Design rules (Do)")}
         </label>
         <div className="space-y-2">
           {doRules.map((rule, i) => (
@@ -429,7 +434,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
                 type="text"
                 value={rule}
                 onChange={(e) => handleRuleChange("do", i, e.target.value)}
-                placeholder="مثال: استخدم ألوان دافئة"
+                placeholder={t("مثال: استخدم ألوان دافئة", "Example: Use warm colors")}
                 className="flex-1 h-11 px-4 bg-surface-1 rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
               />
               {doRules.length > 1 && (
@@ -448,7 +453,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
               className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
             >
               <Plus size={16} />
-              إضافة قاعدة
+              {t("إضافة قاعدة", "Add rule")}
             </button>
           )}
         </div>
@@ -457,7 +462,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
       {/* Don't Rules */}
       <section className="rounded-2xl border border-card-border/70 bg-surface-1/40 p-4 md:p-5">
         <label className="block text-sm font-bold text-foreground mb-2">
-          قواعد التصميم (لا تفعل)
+          {t("قواعد التصميم (لا تفعل)", "Design rules (Don't)")}
         </label>
         <div className="space-y-2">
           {dontRules.map((rule, i) => (
@@ -466,7 +471,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
                 type="text"
                 value={rule}
                 onChange={(e) => handleRuleChange("dont", i, e.target.value)}
-                placeholder="مثال: لا تستخدم صور كرتونية"
+                placeholder={t("مثال: لا تستخدم صور كرتونية", "Example: Don't use cartoon images")}
                 className="flex-1 h-11 px-4 bg-surface-1 rounded-xl border border-card-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all placeholder:text-muted/50"
               />
               {dontRules.length > 1 && (
@@ -485,7 +490,7 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
               className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
             >
               <Plus size={16} />
-              إضافة قاعدة
+              {t("إضافة قاعدة", "Add rule")}
             </button>
           )}
         </div>
@@ -513,10 +518,10 @@ export function BrandKitForm({ existingKit, redirectTo }: BrandKitFormProps) {
         {isSaving ? (
           <span className="flex items-center justify-center gap-2">
             <Loader2 size={20} className="animate-spin" />
-            جاري الحفظ...
+            {t("جاري الحفظ...", "Saving...")}
           </span>
         ) : (
-          "حفظ هوية العلامة التجارية"
+          t("حفظ هوية العلامة التجارية", "Save brand identity")
         )}
       </button>
     </div>

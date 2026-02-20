@@ -94,7 +94,7 @@ function NavBarWithAuth({ locale }: NavBarProps) {
     <nav className="sticky top-0 z-50 px-4 py-3 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-surface-1/90">
-          <Link href="/#hero" onClick={handleLogoClick} className="flex items-center gap-2 group">
+          <Link href="/" onClick={handleLogoClick} className="flex items-center gap-2 group">
             <div className=" relative size-24 transition-transform duration-300 group-hover:rotate-12">
               <Image
                 src="/name_logo_svg.svg"
@@ -252,7 +252,7 @@ function NavBarNoAuth({ locale }: NavBarProps) {
     <nav className="sticky top-0 z-50 px-4 py-3 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="bg-surface-1/80 backdrop-blur-xl border border-card-border shadow-sm rounded-2xl px-4 h-16 flex items-center justify-between transition-all duration-300 hover:bg-surface-1/90">
-          <Link href="/#hero" onClick={handleLogoClick} className="flex items-center gap-2 group">
+          <Link href="/" onClick={handleLogoClick} className="flex items-center gap-2 group">
             <div className="relative w-9 h-9 transition-transform duration-300 group-hover:rotate-12">
               <Image
                 src="/icon_logo_svg.svg"

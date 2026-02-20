@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "@/convex/_generated/api";
+import { useLocale } from "@/hooks/use-locale";
 import { XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -25,6 +26,7 @@ export default function CheckoutReturnPage() {
 function CheckoutReturnContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const sessionId = searchParams.get("session_id");
   const getStatus = useAction(api.billing.getCheckoutSessionStatus);
 
@@ -53,7 +55,7 @@ function CheckoutReturnContent() {
       <main className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 size={32} className="animate-spin text-muted mx-auto mb-4" />
-          <p className="text-muted">جاري التحقق من حالة الدفع...</p>
+          <p className="text-muted">{t("جاري التحقق من حالة الدفع...", "Checking payment status...")}</p>
         </div>
       </main>
     );
@@ -64,15 +66,18 @@ function CheckoutReturnContent() {
       <main className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <Loader2 size={64} className="animate-spin text-primary mx-auto mb-6" />
-          <h1 className="text-3xl font-black mb-4">جاري تحويلك</h1>
+          <h1 className="text-3xl font-black mb-4">{t("جاري تحويلك", "Redirecting you")}</h1>
           <p className="text-muted mb-8">
-            تم تفعيل اشتراكك بنجاح. الخطوة التالية: حفظ هوية العلامة التجارية.
+            {t(
+              "تم تفعيل اشتراكك بنجاح. الخطوة التالية: حفظ هوية العلامة التجارية.",
+              "Your subscription is active. Next step: save your brand identity."
+            )}
           </p>
           <Link
             href="/brand-kit?next=/create"
             className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold"
           >
-            المتابعة الآن
+            {t("المتابعة الآن", "Continue now")}
           </Link>
         </div>
       </main>
@@ -83,15 +88,15 @@ function CheckoutReturnContent() {
     <main className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <XCircle size={64} className="text-destructive mx-auto mb-6" />
-        <h1 className="text-3xl font-black mb-4">حدث خطأ</h1>
+        <h1 className="text-3xl font-black mb-4">{t("حدث خطأ", "Something went wrong")}</h1>
         <p className="text-muted mb-8">
-          لم يتم إكمال عملية الدفع. يرجى المحاولة مرة أخرى.
+          {t("لم يتم إكمال عملية الدفع. يرجى المحاولة مرة أخرى.", "Payment was not completed. Please try again.")}
         </p>
         <Link
           href="/pricing"
           className="inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold"
         >
-          العودة لصفحة الأسعار
+          {t("العودة لصفحة الأسعار", "Back to pricing")}
         </Link>
       </div>
     </main>
