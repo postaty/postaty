@@ -8,6 +8,24 @@ import type { PostFormData, OutputFormat, GeneratePostersResult } from "@/lib/ty
 import type { BrandKitPromptData } from "@/lib/prompts";
 import type { GenerationUsage } from "@/lib/generate-designs";
 
+// Simple in-memory rate limiter: max 5 requests per minute per user
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 5;
+const rateLimitMap = new Map<string, number[]>();
+
+function checkRateLimit(userId: string): void {
+  const now = Date.now();
+  const timestamps = rateLimitMap.get(userId) ?? [];
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+
+  if (recent.length >= RATE_LIMIT_MAX) {
+    throw new Error("لقد تجاوزت الحد المسموح. حاول مرة أخرى بعد دقيقة.");
+  }
+
+  recent.push(now);
+  rateLimitMap.set(userId, recent);
+}
+
 function extractUsageFromUnknown(value: unknown): GenerationUsage | undefined {
   if (!value || typeof value !== "object") return undefined;
   const maybeUsage = (value as { usage?: unknown }).usage;
@@ -38,6 +56,8 @@ export async function generatePosters(
   if (!userId) {
     throw new Error("يجب تسجيل الدخول لإنشاء تصاميم");
   }
+
+  checkRateLimit(userId);
 
   const validation = postFormDataSchema.safeParse(data);
   if (!validation.success) {

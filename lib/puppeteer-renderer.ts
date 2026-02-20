@@ -6,11 +6,12 @@ async function launchBrowser(): Promise<Browser> {
   const isDev = process.env.NODE_ENV === "development";
 
   if (isDev) {
-    // In development, use full puppeteer with bundled Chromium
-    const puppeteer = (await import("puppeteer")).default;
+    // In development, use puppeteer-core with system Chrome
+    const puppeteer = (await import("puppeteer-core")).default;
     return puppeteer.launch({
       headless: true,
       defaultViewport: null,
+      channel: "chrome",
     });
   }
 

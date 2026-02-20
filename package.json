@@ -45,7 +45,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jest": "^30.2.0",
-    "puppeteer": "^24.37.2",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
     "typescript": "^5"

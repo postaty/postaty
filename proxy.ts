@@ -13,6 +13,8 @@ const isProtectedRoute = createRouteMatcher([
   "/admin(.*)",
   "/checkout(.*)",
   "/onboarding(.*)",
+  "/notifications(.*)",
+  "/top-up(.*)",
   "/templates/editor(.*)",
   "/templates/pick(.*)",
 ]);

@@ -320,6 +320,25 @@ export const list = query({
   },
 });
 
+export const remove = mutation({
+  args: { generationId: v.id("generations") },
+  handler: async (ctx, args) => {
+    const currentUser = await requireCurrentUser(ctx);
+    const generation = await ctx.db.get(args.generationId);
+    if (!generation) throw new Error("Generation not found");
+    if (generation.userId !== currentUser._id) throw new Error("Unauthorized");
+
+    // Clean up stored files
+    for (const output of generation.outputs) {
+      if (output.storageId) {
+        await ctx.storage.delete(output.storageId);
+      }
+    }
+
+    await ctx.db.delete(args.generationId);
+  },
+});
+
 export const generateUploadUrl = mutation({
   handler: async (ctx) => {
     await requireCurrentUser(ctx);
