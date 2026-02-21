@@ -242,6 +242,7 @@ export default defineSchema(
       amountCents: v.number(),
       currency: v.string(),
       estimatedStripeFeeCents: v.number(),
+      actualStripeFeeCents: v.optional(v.number()),
       netAmountCents: v.number(),
       occurredAt: v.number(),
       createdAt: v.number(),

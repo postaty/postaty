@@ -411,7 +411,8 @@ export interface AdminAiOverview {
 export interface AdminFinancialOverview {
   periodDays: number;
   grossRevenue: number;
-  estimatedStripeFees: number;
+  stripeFees: number;
+  hasActualFees: boolean;
   apiCostUsd: number;
   netProfit: number;
   activeSubscriptions: number;

@@ -40,6 +40,7 @@ type StripeInvoiceShape = {
   amount_paid?: number;
   currency?: string;
   created?: number;
+  charge?: string | null;
 };
 
 const PLAN_CONFIG: Record<
@@ -644,6 +645,28 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
 
           const amountCents = session.amount_total ?? 0;
           if (amountCents > 0) {
+            // Fetch actual Stripe fee from the payment intent's charge
+            let actualStripeFeeCents: number | undefined;
+            const paymentIntentId = typeof session.payment_intent === "string"
+              ? session.payment_intent
+              : session.payment_intent?.id;
+            if (paymentIntentId) {
+              try {
+                const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
+                  expand: ["latest_charge.balance_transaction"],
+                });
+                const charge = pi.latest_charge;
+                if (charge && typeof charge === "object" && "balance_transaction" in charge) {
+                  const bt = charge.balance_transaction;
+                  if (bt && typeof bt === "object" && "fee" in bt) {
+                    actualStripeFeeCents = (bt as { fee: number }).fee;
+                  }
+                }
+              } catch {
+                // Fall back to estimated fee
+              }
+            }
+
             await ctx.runMutation(internal.billing.recordRevenueEvent, {
               stripeEventId: event.id,
               stripeObjectId: session.id,
@@ -653,6 +676,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
               amountCents,
               currency: (session.currency ?? "usd").toUpperCase(),
               occurredAt: session.created ? session.created * 1000 : Date.now(),
+              actualStripeFeeCents,
             });
           }
         }
@@ -723,6 +747,22 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
 
         const amountPaid = typeof invoice.amount_paid === "number" ? invoice.amount_paid : 0;
         if (amountPaid > 0) {
+          // Fetch actual Stripe fee from the charge's balance transaction
+          let actualStripeFeeCents: number | undefined;
+          if (typeof invoice.charge === "string") {
+            try {
+              const charge = await stripe.charges.retrieve(invoice.charge, {
+                expand: ["balance_transaction"],
+              });
+              const bt = charge.balance_transaction;
+              if (bt && typeof bt === "object" && "fee" in bt) {
+                actualStripeFeeCents = bt.fee;
+              }
+            } catch {
+              // Fall back to estimated fee if retrieval fails
+            }
+          }
+
           await ctx.runMutation(internal.billing.recordRevenueEvent, {
             stripeEventId: event.id,
             stripeObjectId: typeof invoice.id === "string" ? invoice.id : undefined,
@@ -735,6 +775,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
                 ? invoice.currency.toUpperCase()
                 : "USD",
             occurredAt: invoice.created ? invoice.created * 1000 : Date.now(),
+            actualStripeFeeCents,
           });
         }
         break;
@@ -1190,6 +1231,7 @@ export const recordRevenueEvent = internalMutation({
     amountCents: v.number(),
     currency: v.string(),
     occurredAt: v.number(),
+    actualStripeFeeCents: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -1199,7 +1241,8 @@ export const recordRevenueEvent = internalMutation({
     if (existing) return existing._id;
 
     const estimatedStripeFeeCents = estimateStripeFeeCents(args.amountCents);
-    const netAmountCents = Math.max(args.amountCents - estimatedStripeFeeCents, 0);
+    const feeCents = args.actualStripeFeeCents ?? estimatedStripeFeeCents;
+    const netAmountCents = Math.max(args.amountCents - feeCents, 0);
 
     return await ctx.db.insert("stripeRevenueEvents", {
       stripeEventId: args.stripeEventId,
@@ -1210,6 +1253,7 @@ export const recordRevenueEvent = internalMutation({
       amountCents: args.amountCents,
       currency: args.currency.toUpperCase(),
       estimatedStripeFeeCents,
+      actualStripeFeeCents: args.actualStripeFeeCents,
       netAmountCents,
       occurredAt: args.occurredAt,
       createdAt: Date.now(),

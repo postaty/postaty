@@ -1,7 +1,6 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { FADE_UP, STAGGER_CONTAINER } from "@/lib/animation";
 
 export function AnimateOnScroll({
@@ -11,14 +10,11 @@ export function AnimateOnScroll({
   children: React.ReactNode;
   className?: string;
 }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
-
   return (
     <motion.div
-      ref={ref}
-      initial={FADE_UP.initial}
-      animate={isInView ? FADE_UP.animate : FADE_UP.initial}
+      // Keep content visible by default to avoid first-paint blanking on Safari/mobile.
+      initial={false}
+      animate={FADE_UP.animate}
       transition={FADE_UP.transition}
       className={className}
     >
@@ -34,14 +30,11 @@ export function StaggerOnScroll({
   children: React.ReactNode;
   className?: string;
 }) {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-60px" });
-
   return (
     <motion.div
-      ref={ref}
-      initial="initial"
-      animate={isInView ? "animate" : "initial"}
+      // Avoid hiding sections before IntersectionObserver settles.
+      initial={false}
+      animate="animate"
       variants={STAGGER_CONTAINER}
       className={className}
     >

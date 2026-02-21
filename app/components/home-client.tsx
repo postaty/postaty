@@ -35,6 +35,7 @@ import { api } from "@/convex/_generated/api";
 import type { PricingSet } from "@/lib/country-pricing";
 import { formatPrice } from "@/lib/country-pricing";
 import type { AppLocale } from "@/lib/i18n";
+import { ShowcaseCarousel } from "./showcase-carousel";
 
 const AUTH_ENABLED = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 const HeroVisual = dynamic(
@@ -203,38 +204,6 @@ const CATEGORIES = [
   },
 ];
 
-const TRUST_LOGOS = {
-  ar: ["برجر البرو", "Fresh Market", "Glow Beauty", "Daily Bites", "Style Hub", "Coffee Spot"],
-  en: ["Burger Pro", "Fresh Market", "Glow Beauty", "Daily Bites", "Style Hub", "Coffee Spot"],
-} as const;
-
-const TESTIMONIALS = [
-  {
-    quote: {
-      ar: "خلال أسبوع واحد تضاعف التفاعل لأن التصاميم صارت احترافية وثابتة الهوية.",
-      en: "Engagement doubled in one week because our posts became professional and consistent.",
-    },
-    author: { ar: "سارة - متجر تجميل", en: "Sarah - Beauty Store" },
-    metric: { ar: "+240% تفاعل", en: "+240% engagement" },
-  },
-  {
-    quote: {
-      ar: "بدل انتظار المصمم يومين، صار عندنا 3 بوستات جاهزة بنفس اليوم.",
-      en: "Instead of waiting two days for a designer, we now get 3 posts in the same day.",
-    },
-    author: { ar: "أحمد - مطعم", en: "Ahmed - Restaurant" },
-    metric: { ar: "وقت أقل 5x", en: "5x less time" },
-  },
-  {
-    quote: {
-      ar: "العروض الأسبوعية صارت أوضح، والعميل يفهم الخصم من أول نظرة.",
-      en: "Weekly offers are now clearer, and customers understand the discount at first glance.",
-    },
-    author: { ar: "منى - سوبرماركت", en: "Mona - Supermarket" },
-    metric: { ar: "+31% طلبات", en: "+31% orders" },
-  },
-] as const;
-
 type HomeClientProps = {
   pricing: PricingSet;
   countryCode: string;
@@ -244,13 +213,13 @@ type HomeClientProps = {
 export default function HomeClient({ pricing, countryCode, locale }: HomeClientProps) {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
-  const showcaseImages = useQuery(api.showcase.list) ?? [];
+  const showcaseImagesQuery = useQuery(api.showcase.list);
+  const showcaseImages = showcaseImagesQuery ?? [];
   const t = (ar: string, en: string) => (locale === "ar" ? ar : en);
-  const showcaseBefore = showcaseImages[0];
-  const showcaseAfter = showcaseImages[1];
-  const showcaseCard1 = showcaseImages[2];
-  const showcaseTall = showcaseImages[3];
-  const showcaseCard2 = showcaseImages[4];
+  // Before/After are static local images; admin-selected showcase images fill the bento cards
+  const showcaseCard1 = showcaseImages[0];
+  const showcaseTall = showcaseImages[1];
+  const showcaseCard2 = showcaseImages[2];
   const starterFeatures =
     locale === "ar"
       ? ["10 تصاميم ذكية شهرياً", "1–2 محتوى أسبوعياً", "حجم تصدير واحد", "نصوص تسويقية أساسية", "تنزيل HD", "معرض بسيط"]
@@ -361,7 +330,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
           </div>
         </div>
       </section>
-
+      <ShowcaseCarousel showcaseImages={showcaseImagesQuery} />
       {/* ═══════════════════════════════════════════════════════
           SECTION 2: RESULTS SHOWCASE (BENTO GRID)
       ═══════════════════════════════════════════════════════ */}
@@ -401,19 +370,11 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
                   {/* Before/After Visual */}
                   <div className="relative w-full h-full flex gap-2 items-end">
                       <div className="flex-1 h-[80%] relative rounded-xl overflow-hidden border border-card-border/50 rotate-[-3deg] translate-y-4 group-hover:translate-y-2 group-hover:rotate-[-5deg] transition-all duration-500 shadow-lg">
-                         {showcaseBefore?.url ? (
-                           <Image src={showcaseBefore.url} alt={showcaseBefore.title || t("قبل", "Before")} fill className="object-cover grayscale" />
-                         ) : (
-                           <div className="w-full h-full bg-surface-2" />
-                         )}
+                         <Image src="/showcase/shawrma.jpeg" alt={t("قبل", "Before")} fill sizes="(max-width: 768px) 42vw, 26vw" className="object-cover grayscale" />
                          <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">{t("قبل", "Before")}</div>
                       </div>
                       <div className="flex-1 h-full relative rounded-xl overflow-hidden border border-primary/30 rotate-[2deg] z-10 shadow-2xl group-hover:scale-105 transition-all duration-500">
-                         {showcaseAfter?.url ? (
-                           <Image src={showcaseAfter.url} alt={showcaseAfter.title || t("بعد", "After")} fill className="object-cover" />
-                         ) : (
-                           <div className="w-full h-full bg-surface-2" />
-                         )}
+                         <Image src="/showcase/image.png" alt={t("بعد", "After")} fill sizes="(max-width: 768px) 42vw, 26vw" className="object-cover" />
                          <div className="absolute top-2 right-2 bg-primary text-white text-[10px] px-2 py-0.5 rounded">{t("بعد", "After")}</div>
                       </div>
                   </div>
@@ -442,7 +403,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
                transition={{ delay: 0.2 }}
             >
                {showcaseCard1?.url ? (
-                 <Image src={showcaseCard1.url} alt={showcaseCard1.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                 <Image src={showcaseCard1.url} alt={showcaseCard1.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill sizes="(max-width: 768px) 92vw, (max-width: 1024px) 32vw, 24vw" className="object-cover transition-transform duration-700 group-hover:scale-110" />
                ) : (
                  <div className="w-full h-full bg-surface-2" />
                )}
@@ -473,7 +434,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
                transition={{ delay: 0.4 }}
             >
                {showcaseTall?.url ? (
-                 <Image src={showcaseTall.url} alt={showcaseTall.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                 <Image src={showcaseTall.url} alt={showcaseTall.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill sizes="(max-width: 768px) 92vw, (max-width: 1024px) 32vw, 24vw" className="object-cover transition-transform duration-700 group-hover:scale-110" />
                ) : (
                  <div className="w-full h-full bg-surface-2" />
                )}
@@ -514,7 +475,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
                transition={{ delay: 0.6 }}
             >
                {showcaseCard2?.url ? (
-                 <Image src={showcaseCard2.url} alt={showcaseCard2.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                 <Image src={showcaseCard2.url} alt={showcaseCard2.title || t("تصميم مُنشأ بالذكاء الاصطناعي", "AI generated design")} fill sizes="(max-width: 768px) 92vw, (max-width: 1024px) 32vw, 24vw" className="object-cover transition-transform duration-700 group-hover:scale-110" />
                ) : (
                  <div className="w-full h-full bg-surface-2" />
                )}
@@ -523,44 +484,6 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
             </motion.div>
 
           </div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-          SECTION 3: TRUST + TESTIMONIALS
-      ═══════════════════════════════════════════════════════ */}
-      <section className="py-10 md:py-14 px-4 border-b border-card-border">
-        <div className="max-w-7xl mx-auto">
-          <AnimateOnScroll className="text-center mb-6">
-            <p className="text-sm text-muted mb-4">{t("يثق بنا أصحاب المشاريع في قطاعات مختلفة", "Trusted by business owners across multiple industries")}</p>
-            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-              {TRUST_LOGOS[locale].map((brand) => (
-                <div
-                  key={brand}
-                  className="px-4 py-2 rounded-xl border border-card-border bg-surface-1/70 text-sm font-semibold text-foreground/85"
-                >
-                  {brand}
-                </div>
-              ))}
-            </div>
-          </AnimateOnScroll>
-
-          <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-            {TESTIMONIALS.map((item) => (
-              <motion.article
-                key={item.author.en}
-                variants={STAGGER_ITEM}
-                className="rounded-2xl border border-card-border bg-surface-1/85 p-5"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <Quote size={18} className="text-primary" />
-                  <span className="text-xs font-bold text-success">{item.metric[locale]}</span>
-                </div>
-                <p className="text-sm text-muted leading-relaxed mb-4">{item.quote[locale]}</p>
-                <p className="text-xs font-semibold text-foreground">{item.author[locale]}</p>
-              </motion.article>
-            ))}
-          </StaggerOnScroll>
         </div>
       </section>
 

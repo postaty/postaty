@@ -2,17 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale } from "@/hooks/use-locale";
 
 const AUTOPLAY_MS = 3800;
 const PAUSE_AFTER_INTERACTION_MS = 7000;
 
-export function ShowcaseCarousel() {
+type ShowcaseImage = {
+  _id: string;
+  url?: string | null;
+  title?: string | null;
+  category?: string | null;
+};
+
+type ShowcaseCarouselProps = {
+  showcaseImages: readonly ShowcaseImage[] | undefined;
+};
+
+export function ShowcaseCarousel({ showcaseImages }: ShowcaseCarouselProps) {
   const { t } = useLocale();
-  const showcaseImages = useQuery(api.showcase.list);
   const sectionRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLElement | null>>([]);
@@ -21,6 +29,7 @@ export function ShowcaseCarousel() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isCoarsePointer, setIsCoarsePointer] = useState(false);
 
   const images = showcaseImages ?? [];
   const currentIndex = images.length
@@ -47,12 +56,7 @@ export function ShowcaseCarousel() {
     ) => {
       if (!images.length) return;
 
-      const {
-        behavior = "smooth",
-        syncState = true,
-        markInteraction = true,
-        requireVisible = false,
-      } = options ?? {};
+      const { syncState = true, markInteraction = true, requireVisible = false } = options ?? {};
 
       if (requireVisible && !isSectionInViewport()) {
         return;
@@ -66,7 +70,7 @@ export function ShowcaseCarousel() {
         lastInteractionRef.current = Date.now();
       }
       node.scrollIntoView({
-        behavior,
+        behavior: options?.behavior ?? (isCoarsePointer ? "auto" : "smooth"),
         inline: "center",
         block: "nearest",
       });
@@ -74,7 +78,7 @@ export function ShowcaseCarousel() {
         setActiveIndex(normalized);
       }
     },
-    [images.length, isSectionInViewport]
+    [images.length, isSectionInViewport, isCoarsePointer]
   );
 
   const goNext = () => scrollToIndex(currentIndex + 1);
@@ -86,60 +90,56 @@ export function ShowcaseCarousel() {
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, images.length);
-
-    if (!images.length) return;
-    const initialIndex = activeIndexRef.current >= images.length ? 0 : activeIndexRef.current;
-    const node = cardRefs.current[initialIndex];
-    if (!node || !isSectionInViewport()) return;
-    node.scrollIntoView({
-      behavior: "auto",
-      inline: "center",
-      block: "nearest",
-    });
-  }, [images.length, isSectionInViewport]);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !images.length) return;
-
-    let ticking = false;
-
-    const syncActiveFromScroll = () => {
-      const containerRect = el.getBoundingClientRect();
-      const containerCenter = containerRect.left + containerRect.width / 2;
-
-      let nearestIndex = 0;
-      let nearestDistance = Number.POSITIVE_INFINITY;
-
-      cardRefs.current.forEach((card, idx) => {
-        if (!card) return;
-        const rect = card.getBoundingClientRect();
-        const cardCenter = rect.left + rect.width / 2;
-        const distance = Math.abs(cardCenter - containerCenter);
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          nearestIndex = idx;
-        }
-      });
-
-      setActiveIndex((prev) => (prev === nearestIndex ? prev : nearestIndex));
-      ticking = false;
-    };
-
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(syncActiveFromScroll);
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => el.removeEventListener("scroll", onScroll);
   }, [images.length]);
 
   useEffect(() => {
-    if (!images.length) return;
+    const media = window.matchMedia("(pointer: coarse)");
+    const sync = () => setIsCoarsePointer(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    const root = scrollRef.current;
+    if (!root || !images.length) return;
+
+    const bestRatioByIndex = new Map<number, number>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = cardRefs.current.findIndex((card) => card === entry.target);
+          if (idx >= 0) {
+            bestRatioByIndex.set(idx, entry.intersectionRatio);
+          }
+        });
+
+        let bestIndex = activeIndexRef.current;
+        let bestRatio = -1;
+        bestRatioByIndex.forEach((ratio, idx) => {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            bestIndex = idx;
+          }
+        });
+
+        if (bestRatio >= 0) {
+          setActiveIndex((prev) => (prev === bestIndex ? prev : bestIndex));
+        }
+      },
+      { root, threshold: [0.35, 0.5, 0.65, 0.8, 0.95] }
+    );
+
+    cardRefs.current.forEach((card) => {
+      if (card) observer.observe(card);
+    });
+
+    return () => observer.disconnect();
+  }, [images.length]);
+
+  useEffect(() => {
+    if (!images.length || isCoarsePointer) return;
 
     const timer = setInterval(() => {
       const isRecentlyInteracted = Date.now() - lastInteractionRef.current < PAUSE_AFTER_INTERACTION_MS;
@@ -151,7 +151,28 @@ export function ShowcaseCarousel() {
     }, AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [isHovered, images.length, scrollToIndex]);
+  }, [isHovered, images.length, scrollToIndex, isCoarsePointer]);
+
+  // Show skeleton while Convex is loading (useQuery returns undefined)
+  if (showcaseImages === undefined) {
+    return (
+      <section className="py-16 md:py-24 px-4 border-t border-card-border">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="h-10 w-64 bg-surface-2 rounded-xl mx-auto mb-4 animate-pulse" />
+            <div className="h-5 w-48 bg-surface-2 rounded-lg mx-auto animate-pulse" />
+          </div>
+          <div className="flex gap-4 md:gap-6 overflow-hidden pb-4 px-1">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex-shrink-0 w-[250px] md:w-[300px]">
+                <div className="rounded-2xl border border-card-border bg-surface-1 w-full aspect-square animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   if (!images.length) return null;
 
@@ -215,6 +236,7 @@ export function ShowcaseCarousel() {
                       alt={img.title || "Showcase poster"}
                       width={600}
                       height={600}
+                      sizes="(max-width: 768px) 250px, 300px"
                       className="w-full aspect-square object-cover"
                       loading="lazy"
                     />

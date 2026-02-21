@@ -126,39 +126,109 @@ export const recordUsageBatch = mutation({
   },
 });
 
-// ── Seed initial pricing config ────────────────────────────────────
+// ── Seed / update pricing config ──────────────────────────────────
 
 export const seedPricingConfig = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const existing = await ctx.db.query("aiPricingConfig").first();
-    if (existing) return; // already seeded
-
+  args: {
+    force: v.optional(v.boolean()), // pass true to update existing records
+  },
+  handler: async (ctx, args) => {
     const now = Date.now();
 
-    // Gemini 3 Pro Image (paid) — pricing from Google docs
-    await ctx.db.insert("aiPricingConfig", {
-      model: "gemini-3-pro-image-preview",
-      effectiveFrom: now,
-      effectiveTo: undefined,
-      inputTokenCostPer1k: 0.00125, // $1.25/M input tokens
-      outputTokenCostPer1k: 0.005, // $5.00/M output tokens
-      imageGenerationCost: 0.039, // per image generated
-      notes: "Gemini 3 Pro Image Preview — paid model. Prices from Google AI Studio (Feb 2026).",
-      createdAt: now,
-    });
+    // Real pricing from Google AI Studio (Feb 2026):
+    // Gemini 3 Pro Image Preview:
+    //   Input:  $2.00/M tokens  = $0.002 per 1K tokens
+    //   Output: $12.00/M tokens (text/thinking) = $0.012 per 1K tokens
+    //   Image output: $120.00/M tokens → $0.134 per 1K/2K image (1120 tokens)
+    // Gemini 2.5 Flash (free tier): $0 all around
 
-    // Gemini 2.5 Flash Image (free tier)
-    await ctx.db.insert("aiPricingConfig", {
-      model: "gemini-2.5-flash-image",
-      effectiveFrom: now,
-      effectiveTo: undefined,
-      inputTokenCostPer1k: 0,
-      outputTokenCostPer1k: 0,
-      imageGenerationCost: 0,
-      notes: "Gemini 2.5 Flash Image — free tier model. No cost.",
-      createdAt: now,
-    });
+    const models = [
+      {
+        model: "gemini-3-pro-image-preview",
+        inputTokenCostPer1k: 0.002,   // $2.00/M input tokens
+        outputTokenCostPer1k: 0.012,  // $12.00/M output tokens (text/thinking)
+        imageGenerationCost: 0.134,   // $0.134 per 1K/2K output image
+        notes: "Gemini 3 Pro Image Preview — paid. Input $2/M, Output text $12/M, Output image $120/M (~$0.134/image). Google AI Studio Feb 2026.",
+      },
+      {
+        model: "gemini-2.5-flash-image",
+        inputTokenCostPer1k: 0,
+        outputTokenCostPer1k: 0,
+        imageGenerationCost: 0,
+        notes: "Gemini 2.5 Flash Image — free tier. No cost.",
+      },
+    ];
+
+    for (const m of models) {
+      const existing = await ctx.db
+        .query("aiPricingConfig")
+        .withIndex("by_model", (q) => q.eq("model", m.model))
+        .first();
+
+      if (existing && args.force) {
+        await ctx.db.patch(existing._id, {
+          inputTokenCostPer1k: m.inputTokenCostPer1k,
+          outputTokenCostPer1k: m.outputTokenCostPer1k,
+          imageGenerationCost: m.imageGenerationCost,
+          notes: m.notes,
+        });
+      } else if (!existing) {
+        await ctx.db.insert("aiPricingConfig", {
+          model: m.model,
+          effectiveFrom: now,
+          effectiveTo: undefined,
+          inputTokenCostPer1k: m.inputTokenCostPer1k,
+          outputTokenCostPer1k: m.outputTokenCostPer1k,
+          imageGenerationCost: m.imageGenerationCost,
+          notes: m.notes,
+          createdAt: now,
+        });
+      }
+    }
+
+    return { seeded: true };
+  },
+});
+
+// ── Backfill costs on existing events (run after seeding pricing) ──
+
+export const backfillCosts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Load all pricing configs
+    const allPricing = await ctx.db.query("aiPricingConfig").collect();
+    const pricingByModel = new Map(
+      allPricing.map((p) => [
+        p.model,
+        {
+          inputTokenCostPer1k: p.inputTokenCostPer1k,
+          outputTokenCostPer1k: p.outputTokenCostPer1k,
+          imageGenerationCost: p.imageGenerationCost,
+        },
+      ])
+    );
+
+    // Find events with 0 cost that should have cost
+    const events = await ctx.db.query("aiUsageEvents").collect();
+    let updated = 0;
+
+    for (const e of events) {
+      const pricing = pricingByModel.get(e.model);
+      if (!pricing) continue;
+
+      const inputCost = (e.inputTokens / 1000) * pricing.inputTokenCostPer1k;
+      const outputCost = (e.outputTokens / 1000) * pricing.outputTokenCostPer1k;
+      const imageCost = e.imagesGenerated * pricing.imageGenerationCost;
+      const newCost = inputCost + outputCost + imageCost;
+
+      // Only update if the cost changed
+      if (Math.abs(newCost - e.estimatedCostUsd) > 0.000001) {
+        await ctx.db.patch(e._id, { estimatedCostUsd: newCost });
+        updated++;
+      }
+    }
+
+    return { totalEvents: events.length, updated };
   },
 });
 

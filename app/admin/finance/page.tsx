@@ -68,7 +68,7 @@ export default function AdminFinancePage() {
           </span>
           <Minus size={20} className="text-muted" />
           <span className="px-4 py-2 bg-destructive/10 text-destructive rounded-xl font-bold">
-            ${overview.estimatedStripeFees.toFixed(2)}
+            ${overview.stripeFees.toFixed(2)}
           </span>
           <Minus size={20} className="text-muted" />
           <span className="px-4 py-2 bg-accent/10 text-accent rounded-xl font-bold">
@@ -103,9 +103,12 @@ export default function AdminFinancePage() {
           bgColor="bg-success/10"
         />
         <MetricCard
-          label="رسوم Stripe المقدرة"
-          value={`$${overview.estimatedStripeFees.toFixed(2)}`}
-          description="تقدير بنسبة 2.9% + $0.30 لكل معاملة."
+          label={overview.hasActualFees ? "رسوم Stripe الفعلية" : "رسوم Stripe المقدرة"}
+          value={`$${overview.stripeFees.toFixed(2)}`}
+          description={overview.hasActualFees
+            ? "رسوم فعلية من Stripe (balance transaction)."
+            : "تقدير بنسبة 2.9% + $0.30 لكل معاملة."
+          }
           icon={CreditCard}
           color="text-destructive"
           bgColor="bg-destructive/10"

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internalMutation, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 // ── Admin guard helper ─────────────────────────────────────────────
@@ -111,26 +111,36 @@ export const getFinancialOverview = query({
       .collect();
     const periodRevenueEvents = revenueEvents.filter((e) => e.createdAt >= cutoff);
 
-    // Current implementation reports USD totals from tracked Stripe events.
+    // Revenue totals — include all currencies converted display will be in USD.
     const usdRevenueEvents = periodRevenueEvents.filter((e) => e.currency === "USD");
     const totalGrossRevenue =
       usdRevenueEvents.reduce((sum, e) => sum + e.amountCents, 0) / 100;
-    const estimatedStripeFees =
-      usdRevenueEvents.reduce((sum, e) => sum + e.estimatedStripeFeeCents, 0) / 100;
 
-    // MRR remains an estimate based on active subscription plans.
+    // Stripe fees: prefer actual fees from balance_transaction, fall back to estimate.
+    const totalStripeFeeCents = usdRevenueEvents.reduce((sum, e) => {
+      return sum + (e.actualStripeFeeCents ?? e.estimatedStripeFeeCents);
+    }, 0);
+    const stripeFees = totalStripeFeeCents / 100;
+    const hasActualFees = usdRevenueEvents.some((e) => e.actualStripeFeeCents != null);
+
+    // MRR: use real prices from countryPricing table (US default).
     const allBilling = await ctx.db.query("billing").collect();
     const activeSubs = allBilling.filter(
       (b) => b.status === "active" || b.status === "trialing"
     );
 
-    // Plan pricing (approximate monthly USD)
-    const planPricing: Record<string, number> = {
-      starter: 9.99,
-      growth: 19.99,
-      dominant: 49.99,
-      none: 0,
-    };
+    // Load real plan prices from countryPricing (US as base currency)
+    const countryPrices = await ctx.db
+      .query("countryPricing")
+      .withIndex("by_countryCode", (q) => q.eq("countryCode", "US"))
+      .collect();
+
+    const planPricing: Record<string, number> = { none: 0 };
+    for (const cp of countryPrices) {
+      if (cp.isActive) {
+        planPricing[cp.planKey] = cp.monthlyAmountCents / 100;
+      }
+    }
 
     const monthlySubRevenue = activeSubs.reduce(
       (sum, b) => sum + (planPricing[b.planKey] ?? 0),
@@ -147,12 +157,13 @@ export const getFinancialOverview = query({
     const periodUsage = allUsage.filter((e) => e.createdAt >= cutoff);
     const apiCostUsd = periodUsage.reduce((sum, e) => sum + e.estimatedCostUsd, 0);
 
-    const netProfit = totalGrossRevenue - estimatedStripeFees - apiCostUsd;
+    const netProfit = totalGrossRevenue - stripeFees - apiCostUsd;
 
     return {
       periodDays: args.periodDays ?? 30,
       grossRevenue: totalGrossRevenue,
-      estimatedStripeFees,
+      stripeFees,
+      hasActualFees,
       apiCostUsd,
       netProfit,
       activeSubscriptions: activeSubs.length,
@@ -1035,5 +1046,41 @@ export const sendBulkNotification = mutation({
         createdAt: now,
       });
     }
+  },
+});
+
+// ── One-time data cleanup for production launch ─────────────────
+
+export const cleanupForLaunch = internalMutation({
+  args: {
+    confirm: v.literal("DELETE_FINANCE_AND_AI_DATA"),
+  },
+  handler: async (ctx) => {
+
+    const tablesToClear = [
+      "aiUsageEvents",
+      "stripeRevenueEvents",
+      "stripeEvents",
+      "creditLedger",
+      "credits_ledger",
+      "audit_logs",
+      "feedback",
+      "billing",
+      "generations",
+      "poster_jobs",
+      "notifications",
+    ] as const;
+
+    const results: Record<string, number> = {};
+
+    for (const table of tablesToClear) {
+      const rows = await ctx.db.query(table).collect();
+      for (const row of rows) {
+        await ctx.db.delete(row._id);
+      }
+      results[table] = rows.length;
+    }
+
+    return results;
   },
 });
