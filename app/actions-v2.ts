@@ -109,12 +109,21 @@ export async function generatePosters(
     const errUsage = extractUsageFromUnknown(err);
     if (errUsage) usages.push(errUsage);
 
+    const errorMessage = err instanceof Error ? err.message : "Generation failed";
+    let errorType: "quota" | "capacity" | "generation" = "generation";
+    if (/quota|exceeded.*quota|429|resource exhausted/i.test(errorMessage)) {
+      errorType = "quota";
+    } else if (/capacity|overloaded|503|high demand/i.test(errorMessage)) {
+      errorType = "capacity";
+    }
+
     const main: GeneratePostersResult["main"] = {
       designIndex: 0,
       format,
       html: "",
       status: "error",
-      error: err instanceof Error ? err.message : "Generation failed",
+      error: errorMessage,
+      errorType,
       designName: "AI Design",
       designNameAr: "تصميم بالذكاء الاصطناعي",
     };

@@ -23,6 +23,7 @@ import {
   Maximize2,
   Megaphone,
   LayoutGrid,
+  RotateCcw,
 } from "lucide-react";
 import type { PosterResult, PosterGenStep } from "@/lib/types";
 import { LoadingSlideshow } from "./loading-slideshow";
@@ -522,6 +523,15 @@ export function PosterGrid({
             <p className="max-w-md mx-auto text-muted bg-danger/5 border border-danger/10 rounded-lg p-3 text-sm">
               {error}
             </p>
+          )}
+          {onGenerateMore && canGenerateMore && (
+            <button
+              onClick={onGenerateMore}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-primary-hover text-primary-foreground rounded-xl font-bold shadow-sm shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <RotateCcw size={16} />
+              {t("إعادة المحاولة", "Try Again")}
+            </button>
           )}
         </div>
       )}

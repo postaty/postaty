@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Store, ShoppingBasket, Scale, Clock, Phone, MousePointerClick, Tag, Percent, FileText, CalendarDays, Package } from "lucide-react";
 import type { SupermarketFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { SUPERMARKET_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { MultiImageUpload } from "../multi-image-upload";
@@ -81,7 +82,7 @@ export function SupermarketForm({ onSubmit, onPrewarmHint, isLoading, defaultVal
 
     const postTypeLabel = fd.get("postType") as string;
 
-    onSubmit({
+    const formData: SupermarketFormData = {
       category: "supermarket",
       campaignType,
       posterLanguage,
@@ -100,7 +101,12 @@ export function SupermarketForm({ onSubmit, onPrewarmHint, isLoading, defaultVal
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) { setErrors(zodErrors); return; }
+
+    onSubmit(formData);
   };
 
   return (

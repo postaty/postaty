@@ -61,26 +61,35 @@ export async function generateMenuAction(
 
   checkRateLimit(userId);
 
-  const validation = menuFormDataSchema.safeParse(data);
+  // Sanitize: React server action serialization can convert undefined → null
+  const sanitized = Object.fromEntries(
+    Object.entries(data).map(([k, v]) => [k, v === null ? undefined : v])
+  ) as MenuFormData;
+
+  const validation = menuFormDataSchema.safeParse(sanitized);
   if (!validation.success) {
     console.error("[generateMenuAction] validation_failed", {
-      issues: validation.error.issues.map((i) => i.message),
+      issues: validation.error.issues.map((i) => ({
+        path: i.path.join("."),
+        message: i.message,
+        received: (i as any).received,
+      })),
     });
     throw new Error(
-      `Validation failed: ${validation.error.issues.map((i) => i.message).join(", ")}`
+      `Validation failed: ${validation.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ")}`
     );
   }
 
   console.info("[generateMenuAction] start", {
-    menuCategory: data.menuCategory,
-    itemCount: data.items.length,
+    menuCategory: sanitized.menuCategory,
+    itemCount: sanitized.items.length,
     userId,
   });
 
   const usages: GenerationUsage[] = [];
 
   try {
-    const design = await generateMenu(data, brandKit);
+    const design = await generateMenu(sanitized, brandKit);
     usages.push(design.usage);
     console.info("[generateMenuAction] success");
 
@@ -100,12 +109,21 @@ export async function generateMenuAction(
     const errUsage = extractUsageFromUnknown(err);
     if (errUsage) usages.push(errUsage);
 
+    const errorMessage = err instanceof Error ? err.message : "Menu generation failed";
+    let errorType: "quota" | "capacity" | "generation" = "generation";
+    if (/quota|exceeded.*quota|429|resource exhausted/i.test(errorMessage)) {
+      errorType = "quota";
+    } else if (/capacity|overloaded|503|high demand/i.test(errorMessage)) {
+      errorType = "capacity";
+    }
+
     const main: PosterResult = {
       designIndex: 0,
       format: "instagram-square",
       html: "",
       status: "error",
-      error: err instanceof Error ? err.message : "Menu generation failed",
+      error: errorMessage,
+      errorType,
       designName: "Menu Design",
       designNameAr: "تصميم قائمة",
     };

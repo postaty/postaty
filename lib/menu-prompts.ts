@@ -108,6 +108,7 @@ ${MENU_CAMPAIGN_GUIDANCE[data.campaignType] ? `\n${MENU_CAMPAIGN_GUIDANCE[data.c
   - Taglines or slogans (e.g. "The Best Spices", "Order Now", "اطلب الآن")
   - Old/crossed-out prices or discount percentages — ONLY show if the user explicitly provided an old price
   - CTA phrases, hashtags, or any decorative text
+  - Website URLs, social media handles, usernames, or account names (e.g., www.example.com, @brandname) — NEVER fabricate these
 - If no old prices are given, treat ALL prices as regular prices with clean styling — no discount formatting
 - The design should be visually rich and professional using colors, shapes, borders, and layout — NOT invented text
 

@@ -322,56 +322,64 @@ function MenuPageContent() {
     const startTime = getNowMs();
     const idempotencyKey = `menu_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
-    // Consume 3 credits BEFORE calling AI
+    // Generate first, consume credits only on success.
+    // This prevents users from losing credits when Gemini API fails.
     try {
-      const creditRes = await fetch("/api/billing/consume-credit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idempotencyKey, amount: MENU_CONFIG.creditsPerMenu }),
-      });
-      const creditResult = await creditRes.json();
-      if (!creditRes.ok || !creditResult.ok) {
-        throw new Error(t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits"));
+      const { main: menuResult, usages } = await generateMenuAction(data, brandKitPromptData);
+      void persistUsageEvents(usages);
+
+      // Only consume credits if generation succeeded
+      if (menuResult.status === "complete" && menuResult.imageBase64) {
+        try {
+          const creditRes = await fetch("/api/billing/consume-credit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idempotencyKey, amount: MENU_CONFIG.creditsPerMenu }),
+          });
+          const creditBody = await creditRes.json();
+          if (!creditRes.ok || !creditBody.ok) {
+            console.error("[runGeneration:menu] credit consumption failed after successful generation");
+          }
+          mutateCreditState();
+        } catch (creditErr) {
+          console.error("[runGeneration:menu] credit consumption error", creditErr);
+          mutateCreditState();
+        }
+
+        saveToSupabase(data, menuResult, startTime);
       }
-      mutateCreditState();
-    } catch (err) {
-      const msg = toLocalizedErrorMessage(err);
-      setError(msg);
-      setGenStep("error");
+
+      setResults([menuResult]);
+      setGenStep(menuResult.status === "complete" ? "complete" : "error");
+      if (menuResult.status === "error") {
+        if (menuResult.errorType === "quota") {
+          setError(t("الخدمة مشغولة حالياً. حاول بعد دقيقة.", "Service is busy right now. Please try again in a minute."));
+        } else if (menuResult.errorType === "capacity") {
+          setError(t("الخوادم مزدحمة. حاول مرة أخرى.", "Servers are busy. Please try again."));
+        } else {
+          setError(toLocalizedErrorMessage(new Error(menuResult.error ?? "Menu generation failed")));
+        }
+      }
       setIsGenerating(false);
       generatingRef.current = false;
-      return;
+    } catch (err) {
+      // Server action threw — no credit consumed
+      const localizedMessage = toLocalizedErrorMessage(err);
+      const errorResult: PosterResult = {
+        designIndex: 0,
+        format: "instagram-square",
+        html: "",
+        status: "error",
+        error: localizedMessage,
+        designName: "Menu Design",
+        designNameAr: "تصميم قائمة",
+      };
+      setResults([errorResult]);
+      setGenStep("error");
+      setError(localizedMessage);
+      setIsGenerating(false);
+      generatingRef.current = false;
     }
-
-    generateMenuAction(data, brandKitPromptData)
-      .then(({ main: menuResult, usages }) => {
-        void persistUsageEvents(usages);
-        setResults([menuResult]);
-        setGenStep("complete");
-        setIsGenerating(false);
-        generatingRef.current = false;
-
-        if (menuResult.status === "complete" && menuResult.imageBase64) {
-          saveToSupabase(data, menuResult, startTime);
-        }
-      })
-      .catch((err) => {
-        const localizedMessage = toLocalizedErrorMessage(err);
-        const errorResult: PosterResult = {
-          designIndex: 0,
-          format: "instagram-square",
-          html: "",
-          status: "error",
-          error: localizedMessage,
-          designName: "Menu Design",
-          designNameAr: "تصميم قائمة",
-        };
-        setResults([errorResult]);
-        setGenStep("error");
-        setError(localizedMessage);
-        setIsGenerating(false);
-        generatingRef.current = false;
-      });
   };
 
   if (!isAuthLoaded) {

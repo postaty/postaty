@@ -15,6 +15,7 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import type { BeautyFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { BEAUTY_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
@@ -99,7 +100,7 @@ export function BeautyForm({ onSubmit, onPrewarmHint, isLoading, defaultValues }
     const postTypeLabel = fd.get("postType") as string;
     const bookingConditionLabel = fd.get("bookingCondition") as string;
 
-    onSubmit({
+    const formData: BeautyFormData = {
       category: "beauty",
       campaignType,
       posterLanguage,
@@ -118,7 +119,12 @@ export function BeautyForm({ onSubmit, onPrewarmHint, isLoading, defaultValues }
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) { setErrors(zodErrors); return; }
+
+    onSubmit(formData);
   };
 
   return (

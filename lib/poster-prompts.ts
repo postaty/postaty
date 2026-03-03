@@ -111,6 +111,7 @@ ${preTranslated
 - Every word on the poster MUST be copied EXACTLY, character-by-character, from the inventory — treat each string as a pre-rendered label you paste into the design
 - Do NOT paraphrase, abbreviate, rephrase, merge, or "improve" any user-provided text
 - Do NOT invent, hallucinate, or generate ANY text that is not in the inventory
+- ABSOLUTELY NO website URLs, social media handles, usernames, or account names (e.g., www.example.com, @brandname, instagram.com/brand) — NEVER fabricate these. Only include a URL or handle if it appears EXACTLY in the inventory
 - ABSOLUTELY NO creative slogans, taglines, promotional phrases, marketing headlines, or catchy lines — if it's not in the inventory, it MUST NOT appear on the poster
 - Do NOT add labels, headings, categories, or descriptive words (e.g., do NOT add "menu", "discount", "delivery", "offer", "sale", "new", "free", "special", "limited" unless they appear in the inventory)
 - Do NOT add decorative Arabic/English text like "عرض خاص", "لا تفوت الفرصة", "اليوم فقط", "Don't miss out", etc. unless explicitly in the inventory
@@ -167,6 +168,7 @@ You will receive reference poster designs. Match or exceed their professional qu
 - No duplicate product images — show the product exactly once
 - No duplicate logos — show the logo exactly once
 - No fictional or hallucinated text on product packaging or labels
+- No fabricated website URLs, social media handles, qrcodes , usernames, or account names — if the user didn't provide it, it MUST NOT appear
 - No tiny, unreadable text anywhere on the poster
 - No mixed languages — all text in the resolved target language (except business/brand names which are proper nouns)
 - No watermarks or stock photo badges

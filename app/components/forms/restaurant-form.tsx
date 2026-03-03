@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Store, Utensils, Tag, Clock, Phone, MousePointerClick, Truck, MapPin, FileText, Award } from "lucide-react";
 import type { RestaurantFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { RESTAURANT_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
@@ -99,7 +100,7 @@ export function RestaurantForm({ onSubmit, onPrewarmHint, isLoading, defaultValu
     const offerBadgeLabel = fd.get("offerBadge") as string;
     const deliveryLabel = fd.get("deliveryType") as string;
 
-    onSubmit({
+    const formData: RestaurantFormData = {
       category: "restaurant",
       campaignType,
       posterLanguage,
@@ -119,7 +120,16 @@ export function RestaurantForm({ onSubmit, onPrewarmHint, isLoading, defaultValu
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    // Zod validation — catches anything the manual checks above missed
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) {
+      setErrors(zodErrors);
+      return;
+    }
+
+    onSubmit(formData);
   };
 
   return (

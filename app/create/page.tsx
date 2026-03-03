@@ -517,84 +517,83 @@ function CreatePageContent() {
     const requestId = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     const idempotencyKey = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
-    // Run credit consumption AND server-side generation in parallel.
-    // The server action does auth/validation/image-prep (~500ms) before the
-    // expensive AI call, so overlapping credit check with that prep saves time.
-    logTimeline(requestId, "credit.consume.start");
-    const creditPromise = fetchWithTimeout('/api/billing/consume-credit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idempotencyKey }),
-    }).then(async (res) => {
-      const body = await res.json();
-      if (!res.ok || !body.ok) {
-        throw new Error(t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits"));
-      }
-      logTimeline(requestId, "credit.consume.end");
-      mutateCreditState();
-    });
-
     let generationId: string | undefined;
     if (GEN_EARLY_PERSIST_ENABLED) {
       generationId = await createGenerationRecord(data);
     }
 
+    // Generate first, consume credit only on success.
+    // This prevents users from losing credits when Gemini API fails.
     logTimeline(requestId, "server.generate.start");
-    const generationPromise = generatePosters(data, brandKitPromptData);
-
-    // Wait for credit to succeed first — abort if it fails
     try {
-      await creditPromise;
-    } catch (err) {
-      const msg = toLocalizedErrorMessage(err);
-      setError(msg);
-      setGenStep("error");
+      const { main: posterResult, usages } = await generatePosters(data, brandKitPromptData);
+      logTimeline(requestId, "server.generate.end");
+      void persistUsageEvents(usages);
+
+      // Only consume credit if generation succeeded
+      if (posterResult.status === "complete" && posterResult.imageBase64) {
+        logTimeline(requestId, "credit.consume.start");
+        try {
+          const creditRes = await fetchWithTimeout('/api/billing/consume-credit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idempotencyKey }),
+          });
+          const creditBody = await creditRes.json();
+          if (!creditRes.ok || !creditBody.ok) {
+            console.error("[runGeneration] credit consumption failed after successful generation");
+          }
+          logTimeline(requestId, "credit.consume.end");
+          mutateCreditState();
+        } catch (creditErr) {
+          // Show result anyway — under-charge is better than losing the user's work
+          console.error("[runGeneration] credit consumption error", creditErr);
+          mutateCreditState();
+        }
+
+        void saveToSupabase(data, posterResult, startTime, requestId, generationId);
+      }
+
+      setResults([posterResult]);
+      logTimeline(requestId, "ui.result.rendered", { status: posterResult.status });
+      setGenStep(posterResult.status === "complete" ? "complete" : "error");
+      if (posterResult.status === "error") {
+        if (posterResult.errorType === "quota") {
+          setError(t("الخدمة مشغولة حالياً. حاول بعد دقيقة.", "Service is busy right now. Please try again in a minute."));
+        } else if (posterResult.errorType === "capacity") {
+          setError(t("الخوادم مزدحمة. حاول مرة أخرى.", "Servers are busy. Please try again."));
+        } else {
+          setError(toLocalizedErrorMessage(new Error(posterResult.error ?? "Generation failed")));
+        }
+      }
       setIsGenerating(false);
       generatingRef.current = false;
-      // Generation is already in-flight but its result will be discarded
-      generationPromise.catch(() => {}); // suppress unhandled rejection
-      return;
-    }
-
-    generationPromise
-      .then(({ main: posterResult, usages }) => {
-        logTimeline(requestId, "server.generate.end");
-        void persistUsageEvents(usages);
-        setResults([posterResult]);
-        logTimeline(requestId, "ui.result.rendered", { status: posterResult.status });
-        setGenStep("complete");
-        setIsGenerating(false);
-        generatingRef.current = false;
-
-        if (posterResult.status === "complete" && posterResult.imageBase64) {
-          void saveToSupabase(data, posterResult, startTime, requestId, generationId);
-        }
-      })
-      .catch((err) => {
-        logTimeline(requestId, "server.generate.end", { error: true });
-        if (generationId) {
-          void patchGenerationStatus(generationId, {
-            status: "error",
-            error: err instanceof Error ? err.message : "Generation failed",
-            duration_ms: getNowMs() - startTime,
-          });
-        }
-        const localizedMessage = toLocalizedErrorMessage(err);
-        const errorResult: PosterResult = {
-          designIndex: 0,
-          format: data.format,
-          html: "",
+    } catch (err) {
+      // Server action threw — no credit consumed
+      logTimeline(requestId, "server.generate.end", { error: true });
+      if (generationId) {
+        void patchGenerationStatus(generationId, {
           status: "error",
-          error: localizedMessage,
-          designName: "Design",
-          designNameAr: locale === "ar" ? "تصميم" : "Design",
-        };
-        setResults([errorResult]);
-        setGenStep("error");
-        setError(localizedMessage);
-        setIsGenerating(false);
-        generatingRef.current = false;
-      });
+          error: err instanceof Error ? err.message : "Generation failed",
+          duration_ms: getNowMs() - startTime,
+        });
+      }
+      const localizedMessage = toLocalizedErrorMessage(err);
+      const errorResult: PosterResult = {
+        designIndex: 0,
+        format: data.format,
+        html: "",
+        status: "error",
+        error: localizedMessage,
+        designName: "Design",
+        designNameAr: locale === "ar" ? "تصميم" : "Design",
+      };
+      setResults([errorResult]);
+      setGenStep("error");
+      setError(localizedMessage);
+      setIsGenerating(false);
+      generatingRef.current = false;
+    }
   };
 
   const createGenerationRecord = async (data: PostFormData): Promise<string | undefined> => {

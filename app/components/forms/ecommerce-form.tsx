@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Store, ShoppingBag, Tag, Truck, Phone, MousePointerClick, FileText, Palette, Package, Link } from "lucide-react";
 import type { EcommerceFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { ECOMMERCE_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
@@ -88,7 +89,7 @@ export function EcommerceForm({ onSubmit, onPrewarmHint, isLoading, defaultValue
     const postTypeLabel = fd.get("postType") as string;
     const availabilityLabel = fd.get("availability") as string;
 
-    onSubmit({
+    const formData: EcommerceFormData = {
       category: "ecommerce",
       campaignType,
       posterLanguage,
@@ -107,7 +108,12 @@ export function EcommerceForm({ onSubmit, onPrewarmHint, isLoading, defaultValue
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) { setErrors(zodErrors); return; }
+
+    onSubmit(formData);
   };
 
   return (

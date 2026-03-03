@@ -188,6 +188,7 @@ Example: {"fieldName1": "translated value", "fieldName2": "translated value"}`;
 
   const result = await generateText({
     model: translationModel,
+    maxRetries: 0, // Fail fast on quota — caller handles fallback gracefully
     tools: { google_search: google.tools.googleSearch({}) },
     prompt,
   });
@@ -254,6 +255,7 @@ Respond with ONLY the brief text. No JSON, no headers.`;
 
   const result = await generateText({
     model: translationModel,
+    maxRetries: 0, // Fail fast on quota — caller handles fallback gracefully
     messages: [{ role: "user" as const, content: contentParts }],
   });
 

@@ -16,6 +16,7 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import type { ServicesFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { SERVICES_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
@@ -130,7 +131,7 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
     }
     setErrors({});
 
-    onSubmit({
+    const formData: ServicesFormData = {
       category: "services",
       campaignType,
       posterLanguage,
@@ -150,7 +151,12 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) { setErrors(zodErrors); return; }
+
+    onSubmit(formData);
   };
 
   return (

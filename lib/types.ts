@@ -346,6 +346,7 @@ export interface PosterResult {
   imageBase64?: string;
   status: "complete" | "error";
   error?: string;
+  errorType?: "quota" | "capacity" | "generation";
   designName: string;
   designNameAr: string;
   isGift?: boolean;

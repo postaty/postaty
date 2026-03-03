@@ -14,6 +14,7 @@ import {
   MousePointerClick,
 } from "lucide-react";
 import type { FashionFormData, OutputFormat, CampaignType } from "@/lib/types";
+import { validatePostForm } from "@/lib/validation-client";
 import { FASHION_CTA_OPTIONS } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
 import { FormatSelector } from "../format-selector";
@@ -90,7 +91,7 @@ export function FashionForm({ onSubmit, onPrewarmHint, isLoading, defaultValues 
 
     const postTypeLabel = fd.get("postType") as string;
 
-    onSubmit({
+    const formData: FashionFormData = {
       category: "fashion",
       campaignType,
       posterLanguage,
@@ -109,7 +110,12 @@ export function FashionForm({ onSubmit, onPrewarmHint, isLoading, defaultValues 
       whatsapp: whatsapp!,
       cta: (fd.get("cta") as string) ?? "",
       format,
-    });
+    };
+
+    const zodErrors = validatePostForm(formData);
+    if (zodErrors) { setErrors(zodErrors); return; }
+
+    onSubmit(formData);
   };
 
   return (
