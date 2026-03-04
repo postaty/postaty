@@ -300,6 +300,10 @@ export function GenerationCard({ generation, imageType = "all" }: GenerationCard
         onClose={() => setEditData(null)}
         result={editPosterResult}
         generationId={generation.id}
+        generationType="poster"
+        onEditComplete={(newBase64) =>
+          setEditData((prev) => prev ? { ...prev, base64: newBase64 } : null)
+        }
       />
 
       {marketingOutput && generation.inputs && (

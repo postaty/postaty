@@ -26,7 +26,7 @@ export async function editDesign(input: {
   model?: "edit" | "free";
 }): Promise<{ imageBase64: string }> {
   const { imageBase64, editPrompt, aspectRatio, width, height, model = "edit" } = input;
-  const aiModel = model === "free" ? freeImageModel : editImageModel;
+  const aiModel = model === "free" ? freeImageModel : gatewayEditImageModel;
 
   // Decode base64 data URL → Buffer
   const match = imageBase64.match(/^data:(image\/[^;]+);base64,(.+)$/);
@@ -65,8 +65,8 @@ export async function editDesign(input: {
     result = await generateText({ model: aiModel, maxRetries: 0, ...editRequest });
   } catch (primaryErr) {
     if (model !== "edit") throw primaryErr;
-    console.warn("[editDesign] primary failed, falling back to gateway", primaryErr instanceof Error ? primaryErr.message : primaryErr);
-    result = await generateText({ model: gatewayEditImageModel, ...editRequest });
+    console.warn("[editDesign] primary failed, falling back to direct", primaryErr instanceof Error ? primaryErr.message : primaryErr);
+    result = await generateText({ model: editImageModel, ...editRequest });
   }
 
   const durationMs = Date.now() - startTime;

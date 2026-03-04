@@ -34,7 +34,7 @@ export interface PosterImageData {
 interface PosterGalleryProps {
   category?: Category;
   imageType?: "all" | "pro" | "gift";
-  onCountChange?: (count: number) => void;
+  onCountChange?: (displayed: number, totalGenerations: number) => void;
 }
 
 const CATEGORY_LABELS_EN: Record<Category, string> = {
@@ -77,6 +77,7 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
   useEffect(() => { setMounted(true); }, []);
   const [allResults, setAllResults] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [totalGenerations, setTotalGenerations] = useState(0);
   const pageSize = 8; // Load 8 items initially (approx 2 rows)
 
   const params = new URLSearchParams({
@@ -112,6 +113,7 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
         });
       }
       setHasMore(gens.length >= pageSize);
+      if (data.total != null) setTotalGenerations(data.total);
     }
   }, [data, offset]);
 
@@ -194,8 +196,8 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
 
   // Report count to parent
   useEffect(() => {
-    onCountChange?.(allImages.length);
-  }, [allImages.length, onCountChange]);
+    onCountChange?.(allImages.length, totalGenerations);
+  }, [allImages.length, totalGenerations, onCountChange]);
 
   // Escape key to close modal
   useEffect(() => {
@@ -357,7 +359,14 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
                     {locale === "ar" ? "جاري التحميل..." : "Loading..."}
                   </>
                 ) : (
-                  locale === "ar" ? "عرض المزيد" : "Load More"
+                  <>
+                    {locale === "ar" ? "عرض المزيد" : "Load More"}
+                    {totalGenerations > allResults.length && (
+                      <span className="text-xs font-normal text-muted">
+                        ({totalGenerations - allResults.length} {locale === "ar" ? "متبقية" : "remaining"})
+                      </span>
+                    )}
+                  </>
                 )}
               </button>
             </div>
@@ -461,6 +470,10 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
         }}
         result={editPosterResult}
         generationId={editImage?.image.generationId}
+        generationType="poster"
+        onEditComplete={(newBase64) =>
+          setEditImage((prev) => prev ? { ...prev, base64: newBase64 } : null)
+        }
       />
 
       {marketingImage && marketingImage.inputs && (

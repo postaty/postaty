@@ -59,7 +59,7 @@ export default function HistoryPage() {
   const [viewMode, setViewMode] = useState<"gallery" | "list">("gallery");
   const [selectedCategory, setSelectedCategory] = useState<"all" | Category>("all");
   const [imageType, setImageType] = useState<ImageTypeFilter>("all");
-  const [galleryCount, setGalleryCount] = useState<number | null>(null);
+  const [galleryInfo, setGalleryInfo] = useState<{ count: number; total: number } | null>(null);
 
   const categoryFilter = selectedCategory === "all" ? undefined : selectedCategory;
 
@@ -120,9 +120,12 @@ export default function HistoryPage() {
 
             <div className="flex items-center gap-2">
               {/* Results count */}
-              {viewMode === "gallery" && galleryCount !== null && (
+              {viewMode === "gallery" && galleryInfo !== null && (
                 <span className="text-xs text-muted font-medium px-2 py-1 bg-surface-2 rounded-lg border border-card-border">
-                  {galleryCount} {t("صورة", "images")}
+                  {galleryInfo.count} {t("صورة", "images")}
+                  {galleryInfo.total > 0 && (
+                    <span className="text-muted/60"> / {galleryInfo.total} {t("إجمالي", "total")}</span>
+                  )}
                 </span>
               )}
               {viewMode === "list" && filteredGenerations !== undefined && (
@@ -173,7 +176,7 @@ export default function HistoryPage() {
             </Link>
           </div>
         ) : viewMode === "gallery" ? (
-          <PosterGallery category={categoryFilter} imageType={imageType} onCountChange={setGalleryCount} />
+          <PosterGallery category={categoryFilter} imageType={imageType} onCountChange={(count, total) => setGalleryInfo({ count, total })} />
         ) : (
           <div className="max-w-5xl mx-auto space-y-4">
             {!isLoaded || isListLoading || generations === undefined ? (

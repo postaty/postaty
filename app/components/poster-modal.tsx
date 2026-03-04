@@ -16,12 +16,14 @@ import {
   Send,
   Undo2,
   Maximize,
+  Coins,
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef, type ReactPortal } from "react";
+import useSWR from "swr";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { removeOverlayBackground } from "@/app/actions-v2";
-import { editDesignAction } from "@/app/actions-edit";
+import { editDesignAction, resizeImageAction } from "@/app/actions-edit";
 import { renderEditedGiftToBlob } from "@/lib/gift-editor/export-edited-gift";
 import type { GiftEditorState, PosterResult, OutputFormat } from "@/lib/types";
 import { FORMAT_CONFIGS, POSTER_GENERATION_FORMATS } from "@/lib/constants";
@@ -158,10 +160,16 @@ export function PosterModal({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(result?.format ?? "instagram-square");
+  const [previousFormat, setPreviousFormat] = useState<OutputFormat | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
   const { isSignedIn } = useAuth();
+  const { data: creditState } = useSWR(
+    isSignedIn ? "/api/billing" : null,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
+  );
 
   const isGift = GIFT_EDITOR_ENABLED && Boolean(result?.isGift);
   const defaultGiftLabel = useMemo(
@@ -198,6 +206,7 @@ export function PosterModal({
     setEditError(null);
     setEditHistory([]);
     setSelectedFormat(result?.format ?? "instagram-square");
+    setPreviousFormat(null);
     setIsResizing(false);
   }, [result, isOpen, defaultGiftLabel]);
 
@@ -410,6 +419,10 @@ export function PosterModal({
     if (!previousImage) return;
     setDisplayImage(previousImage);
     setPreviousImage(null);
+    if (previousFormat) {
+      setSelectedFormat(previousFormat);
+      setPreviousFormat(null);
+    }
     setIsViewingOriginal(false);
   };
 
@@ -417,28 +430,12 @@ export function PosterModal({
     if (fmt === selectedFormat || isResizing || !currentImage) return;
     setIsResizing(true);
     try {
-      const cfg = FORMAT_CONFIGS[fmt];
-      const label = FORMAT_LABELS[fmt];
-      const reframePrompt = locale === "ar"
-        ? `أعد تأطير هذا التصميم ليناسب تنسيق ${label.ar} (${cfg.width}×${cfg.height} بكسل، نسبة ${cfg.aspectRatio}). حافظ على نفس المحتوى والنصوص والألوان والعلامة التجارية مع تعديل التخطيط ليملأ الأبعاد الجديدة بشكل مناسب.`
-        : `Reframe this design for ${label.en} format (${cfg.width}×${cfg.height}px, ${cfg.aspectRatio} ratio). Keep the same content, text, colors, and branding but adapt the layout composition to properly fill the new dimensions.`;
-
-      const editResult = await editDesignAction(currentImage, reframePrompt, fmt, "free");
-      if (editResult.status === "complete") {
-        setDisplayImage(editResult.imageBase64);
+      const resizeResult = await resizeImageAction(currentImage, fmt);
+      if (resizeResult.status === "complete") {
+        setPreviousImage(currentImage);
+        setPreviousFormat(selectedFormat);
+        setDisplayImage(resizeResult.imageBase64);
         setSelectedFormat(fmt);
-        try {
-          const idempotencyKey = `reframe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-          await fetch("/api/billing/consume-credit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idempotencyKey, amount: 0.5 }),
-          });
-          onCreditConsumed?.();
-        } catch (creditErr) {
-          console.error("[handleFormatChange] credit error", creditErr);
-          onCreditConsumed?.();
-        }
       }
     } catch (err) {
       console.error("[handleFormatChange] failed", err);
@@ -513,7 +510,7 @@ export function PosterModal({
                           />
                           {!isEditing && !isResizing && previousImage && (
                             <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-md backdrop-blur-sm ${isViewingOriginal ? "bg-black/60 text-white/90" : "bg-primary text-white"}`}>
-                              {isViewingOriginal ? t("قبل التعديل", "Before") : t("بعد التعديل", "After")}
+                              {isViewingOriginal ? t("قبل", "Before") : t("بعد", "After")}
                             </div>
                           )}
                           {!isEditing && !isResizing && (
@@ -581,6 +578,10 @@ export function PosterModal({
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1 text-[11px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-500/20 shrink-0">
+                              <Coins size={11} />
+                              <span>{creditState?.totalRemaining ?? "—"}</span>
+                            </div>
                             {editError && (
                               <span className="text-[10px] text-destructive font-medium bg-destructive/10 px-2 py-0.5 rounded-full">
                                 {editError}
