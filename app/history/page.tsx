@@ -75,10 +75,9 @@ export default function HistoryPage() {
 
   const listParams = new URLSearchParams({ limit: '50' });
   if (categoryFilter) listParams.set('category', categoryFilter);
-  const { data: listData, isLoading: isListLoading } = useSWR(
-    isSignedIn && viewMode === "list"
-      ? `/api/generations?${listParams.toString()}`
-      : null,
+  const listKey = isSignedIn && viewMode === "list" ? `/api/generations?${listParams.toString()}` : null;
+  const { data: listData, isLoading: isListLoading, mutate: mutateList } = useSWR(
+    listKey,
     fetcher,
     { keepPreviousData: true }
   );
@@ -202,7 +201,15 @@ export default function HistoryPage() {
               </div>
             ) : (
               filteredGenerations!.map((gen: any) => (
-                <GenerationCard key={gen.id} generation={gen} imageType={imageType} />
+                <GenerationCard
+                  key={gen.id}
+                  generation={gen}
+                  imageType={imageType}
+                  onDeleted={() => mutateList(
+                    (prev: any) => prev ? { ...prev, generations: prev.generations.filter((g: any) => g.id !== gen.id) } : prev,
+                    { revalidate: false }
+                  )}
+                />
               ))
             )}
           </div>

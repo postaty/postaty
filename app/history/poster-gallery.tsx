@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import useSWR from "swr";
-import { Download, Calendar, Tag, Loader2, Image as ImageIcon, Gift, Megaphone, X, Maximize2, WandSparkles } from "lucide-react";
+import { Download, Calendar, Tag, Loader2, Image as ImageIcon, Gift, Megaphone, X, Maximize2, WandSparkles, Trash2, AlertTriangle } from "lucide-react";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
 import type { Category, OutputFormat, PosterResult } from "@/lib/types";
 import { useLocale } from "@/hooks/use-locale";
@@ -86,7 +86,7 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
   });
   if (category) params.set('category', category);
 
-  const { data, isLoading, mutate } = useSWR(
+  const { data, isLoading } = useSWR(
     `/api/generations?${params.toString()}`,
     fetcher,
     { keepPreviousData: true }
@@ -121,6 +121,25 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
   const [marketingImage, setMarketingImage] = useState<PosterImageData | null>(null);
   const [editImage, setEditImage] = useState<{ image: PosterImageData; base64: string } | null>(null);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null); // generationId
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteGeneration = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/generations/${deleteTarget}`, { method: "DELETE" });
+      if (res.ok) {
+        setAllResults(prev => prev.filter(g => g.id !== deleteTarget));
+        setTotalGenerations(prev => Math.max(0, prev - 1));
+      }
+    } catch {
+      // silent
+    } finally {
+      setIsDeleting(false);
+      setDeleteTarget(null);
+    }
+  };
 
   const loadMore = useCallback(() => {
     if (hasMore && !isLoading) {
@@ -303,6 +322,13 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
                           className="flex items-center gap-1.5 px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold hover:bg-white/90 transition-colors shadow-lg disabled:opacity-50"
                           onClick={e => e.stopPropagation()}
                         />
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setDeleteTarget(image.generationId); }}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors shadow-lg"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                       {/* Expand hint icon */}
                       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -483,6 +509,41 @@ export function PosterGallery({ category, imageType = "all", onCountChange }: Po
           businessName={marketingImage.businessName}
           onClose={() => setMarketingImage(null)}
         />
+      )}
+
+      {/* Delete confirmation dialog */}
+      {deleteTarget && mounted && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-surface-1 rounded-2xl border border-card-border shadow-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                <AlertTriangle size={18} className="text-red-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground text-sm">{t("حذف الإنشاء", "Delete generation")}</p>
+                <p className="text-xs text-muted mt-0.5">{t("لا يمكن التراجع عن هذا الإجراء", "This action cannot be undone")}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl border border-card-border text-foreground text-sm font-bold hover:bg-surface-2 transition-colors disabled:opacity-50"
+              >
+                {t("إلغاء", "Cancel")}
+              </button>
+              <button
+                onClick={handleDeleteGeneration}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {t("حذف", "Delete")}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

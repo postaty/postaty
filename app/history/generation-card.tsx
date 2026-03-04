@@ -13,6 +13,8 @@ import {
   Megaphone,
   WandSparkles,
   Loader2,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { CATEGORY_LABELS, FORMAT_CONFIGS } from "@/lib/constants";
 import type { Category, OutputFormat, PosterResult } from "@/lib/types";
@@ -43,6 +45,7 @@ interface GenerationData {
 interface GenerationCardProps {
   generation: GenerationData;
   imageType?: "all" | "pro" | "gift";
+  onDeleted?: () => void;
 }
 
 const CATEGORY_LABELS_EN: Record<Category, string> = {
@@ -54,12 +57,29 @@ const CATEGORY_LABELS_EN: Record<Category, string> = {
   beauty: "Beauty & Care",
 };
 
-export function GenerationCard({ generation, imageType = "all" }: GenerationCardProps) {
+export function GenerationCard({ generation, imageType = "all", onDeleted }: GenerationCardProps) {
   const { locale, t } = useLocale();
   const [expanded, setExpanded] = useState(false);
   const [marketingOutput, setMarketingOutput] = useState<{ url: string } | null>(null);
   const [editData, setEditData] = useState<{ base64: string; format: string } | null>(null);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/generations/${generation.id}`, { method: "DELETE" });
+      if (res.ok) {
+        onDeleted?.();
+      }
+    } catch {
+      // silent
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const handleEditClick = async (url: string, format: string) => {
     setIsLoadingEdit(true);
@@ -190,6 +210,13 @@ export function GenerationCard({ generation, imageType = "all" }: GenerationCard
               )
             )}
           </div>
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); setShowDeleteConfirm(true); }}
+            className="shrink-0 p-1 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={14} />
+          </button>
           <div className="shrink-0 text-muted-foreground">
             {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </div>
@@ -313,6 +340,40 @@ export function GenerationCard({ generation, imageType = "all" }: GenerationCard
           businessName={generation.business_name}
           onClose={() => setMarketingOutput(null)}
         />
+      )}
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-surface-1 rounded-2xl border border-card-border shadow-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 border border-red-200 flex items-center justify-center shrink-0">
+                <AlertTriangle size={18} className="text-red-500" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground text-sm">{t("حذف الإنشاء", "Delete generation")}</p>
+                <p className="text-xs text-muted mt-0.5">{t("لا يمكن التراجع عن هذا الإجراء", "This action cannot be undone")}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl border border-card-border text-foreground text-sm font-bold hover:bg-surface-2 transition-colors disabled:opacity-50"
+              >
+                {t("إلغاء", "Cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                {t("حذف", "Delete")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

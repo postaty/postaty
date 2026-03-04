@@ -23,7 +23,7 @@ import useSWR from "swr";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { removeOverlayBackground } from "@/app/actions-v2";
-import { editDesignAction, resizeImageAction } from "@/app/actions-edit";
+import { editDesignAction } from "@/app/actions-edit";
 import { renderEditedGiftToBlob } from "@/lib/gift-editor/export-edited-gift";
 import type { GiftEditorState, PosterResult, OutputFormat } from "@/lib/types";
 import { FORMAT_CONFIGS, POSTER_GENERATION_FORMATS } from "@/lib/constants";
@@ -430,12 +430,30 @@ export function PosterModal({
     if (fmt === selectedFormat || isResizing || !currentImage) return;
     setIsResizing(true);
     try {
-      const resizeResult = await resizeImageAction(currentImage, fmt);
-      if (resizeResult.status === "complete") {
+      const cfg = FORMAT_CONFIGS[fmt];
+      const label = FORMAT_LABELS[fmt];
+      const reframePrompt = locale === "ar"
+        ? `أعد تأطير هذا التصميم ليناسب تنسيق ${label.ar} (${cfg.width}×${cfg.height} بكسل، نسبة ${cfg.aspectRatio}). حافظ على نفس المحتوى والنصوص والألوان والعلامة التجارية مع تعديل التخطيط ليملأ الأبعاد الجديدة بشكل مناسب.`
+        : `Reframe this design for ${label.en} format (${cfg.width}×${cfg.height}px, ${cfg.aspectRatio} ratio). Keep the same content, text, colors, and branding but adapt the layout composition to properly fill the new dimensions.`;
+
+      const editResult = await editDesignAction(currentImage, reframePrompt, fmt, "edit");
+      if (editResult.status === "complete") {
         setPreviousImage(currentImage);
         setPreviousFormat(selectedFormat);
-        setDisplayImage(resizeResult.imageBase64);
+        setDisplayImage(editResult.imageBase64);
         setSelectedFormat(fmt);
+        try {
+          const idempotencyKey = `reframe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+          await fetch("/api/billing/consume-credit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idempotencyKey, amount: 0.5 }),
+          });
+          onCreditConsumed?.();
+        } catch (creditErr) {
+          console.error("[handleFormatChange] credit error", creditErr);
+          onCreditConsumed?.();
+        }
       }
     } catch (err) {
       console.error("[handleFormatChange] failed", err);
