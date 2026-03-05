@@ -52,8 +52,8 @@ export async function compressImageFromDataUrl(
 
 export async function compressLogoFromDataUrl(
   dataUrl: string,
-  maxWidth = 400,
-  maxHeight = 400
+  maxWidth = 512,
+  maxHeight = 512
 ): Promise<{ image: Buffer; mediaType: "image/png" } | null> {
   const match = dataUrl.match(/^data:(image\/[^;]+);base64,(.+)$/);
   if (!match) return null;
