@@ -690,14 +690,24 @@ export async function POST(request: Request) {
         const REGIONAL_PLANS: Record<
           string,
           {
+            currency: string;
             plans: { planKey: string; label: string; amountCents: number }[];
           }
         > = {
           mena_local: {
+            currency: "usd",
             plans: [
               { planKey: "starter", label: "Basic (MENA)", amountCents: 1300 },
               { planKey: "growth", label: "Pro (MENA)", amountCents: 2200 },
               { planKey: "dominant", label: "Premium (MENA)", amountCents: 3700 },
+            ],
+          },
+          egypt: {
+            currency: "egp",
+            plans: [
+              { planKey: "starter", label: "Basic (Egypt)", amountCents: 49900 },
+              { planKey: "growth", label: "Pro (Egypt)", amountCents: 99900 },
+              { planKey: "dominant", label: "Premium (Egypt)", amountCents: 193000 },
             ],
           },
         };
@@ -743,7 +753,7 @@ export async function POST(request: Request) {
           const price = await stripe.prices.create({
             product: product.id,
             unit_amount: plan.amountCents,
-            currency: "usd",
+            currency: regionConfig.currency,
             recurring: { interval: "month" },
             lookup_key: mappingKey,
           });

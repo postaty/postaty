@@ -114,6 +114,7 @@ const CHECK_COLORS: Record<PlanKey, string> = {
 export type PricingCardProps = {
   planKey: PlanKey;
   monthlyPrice: number;
+  currencySymbol?: string;
   isPopular?: boolean;
   locale: AppLocale;
   ctaButton: React.ReactNode;
@@ -122,6 +123,7 @@ export type PricingCardProps = {
 export function PricingCard({
   planKey,
   monthlyPrice,
+  currencySymbol = "$",
   isPopular,
   locale,
   ctaButton,
@@ -150,7 +152,7 @@ export function PricingCard({
         {PLAN_LABELS[planKey][locale]}
       </div>
       <div className="text-4xl font-black mb-1">
-        {formatPrice(monthlyPrice)}{" "}
+        {formatPrice(monthlyPrice, currencySymbol)}{" "}
         <span className="text-lg text-muted font-medium">{locale === "ar" ? "/ شهر" : "/ month"}</span>
       </div>
 

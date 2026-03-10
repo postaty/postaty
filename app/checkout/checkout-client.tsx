@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -11,6 +11,7 @@ import {
 import { useLocale } from "@/hooks/use-locale";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import VodafoneCashSection from "@/app/pricing/vodafone-cash-section";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -24,10 +25,23 @@ const PLAN_LABELS: Record<string, { ar: string; en: string }> = {
   addon_10: { ar: "100 رصيد", en: "100 credits" },
 };
 
+function useIsEgypt() {
+  const [isEgypt, setIsEgypt] = useState(false);
+  useEffect(() => {
+    const country = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith("pst_country="))
+      ?.split("=")[1];
+    setIsEgypt(country === "EG");
+  }, []);
+  return isEgypt;
+}
+
 export default function CheckoutClient() {
   const searchParams = useSearchParams();
   const { isSignedIn, isLoaded } = useAuth();
   const { locale, t } = useLocale();
+  const isEgypt = useIsEgypt();
 
   const planKey = searchParams.get("plan") as
     | "starter"
@@ -137,6 +151,9 @@ export default function CheckoutClient() {
             {t("أكمل عملية الدفع أدناه", "Complete checkout below")}
           </p>
         </div>
+
+        {/* Vodafone Cash option for Egyptian users */}
+        {isEgypt && <VodafoneCashSection />}
 
         {/* Embedded Checkout */}
         <div id="checkout" className="bg-surface-1 border border-card-border rounded-2xl overflow-hidden">

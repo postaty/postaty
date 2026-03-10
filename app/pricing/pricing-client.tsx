@@ -52,6 +52,7 @@ export default function PricingClient({ countryCode, fallbackPricing, isEgypt }:
               key={planKey}
               planKey={planKey}
               monthlyPrice={prices[planKey].monthly}
+              currencySymbol={prices.symbol}
               isPopular={planKey === "growth"}
               locale={locale}
               ctaButton={

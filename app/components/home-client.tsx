@@ -34,6 +34,7 @@ import type { PricingSet } from "@/lib/country-pricing";
 import { formatPrice } from "@/lib/country-pricing";
 import type { AppLocale } from "@/lib/i18n";
 import { ShowcaseCarousel } from "./showcase-carousel";
+import VodafoneCashSection from "@/app/pricing/vodafone-cash-section";
 
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error('API error');
@@ -667,12 +668,14 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
             </p>
           </AnimateOnScroll>
 
+          {countryCode === "EG" && <VodafoneCashSection />}
+
           <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Starter Plan */}
             <motion.div variants={STAGGER_ITEM} className="bg-surface-1 border border-card-border rounded-2xl p-8 flex flex-col">
               <div className="text-sm font-bold text-muted mb-2">{t("خطة أساسي (Starter)", "Starter Plan")}</div>
               <div className="text-4xl font-black mb-1">
-                {formatPrice(pricing.starter.monthly)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
+                {formatPrice(pricing.starter.monthly, pricing.symbol)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
               </div>
               
               <p className="text-sm font-medium text-foreground mt-4 mb-6 leading-relaxed">
@@ -697,7 +700,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
               <div className="absolute -top-3 right-6 bg-gradient-to-r from-primary to-accent text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">{t("الأكثر شعبية", "Most popular")}</div>
               <div className="text-sm font-bold text-primary mb-2">{t("خطة احترافي (Pro)", "Pro Plan")}</div>
               <div className="text-4xl font-black mb-1">
-                {formatPrice(pricing.growth.monthly)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
+                {formatPrice(pricing.growth.monthly, pricing.symbol)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
               </div>
               
               <p className="text-sm font-medium text-foreground mt-4 mb-6 leading-relaxed">
@@ -721,7 +724,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
             <motion.div variants={STAGGER_ITEM} className="bg-surface-1 border border-card-border rounded-2xl p-8 flex flex-col">
               <div className="text-sm font-bold text-muted mb-2">{t("خطة بريميوم (Premium)", "Premium Plan")}</div>
               <div className="text-4xl font-black mb-1">
-                {formatPrice(pricing.dominant.monthly)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
+                {formatPrice(pricing.dominant.monthly, pricing.symbol)} <span className="text-lg text-muted font-medium">{t("/ شهر", "/ month")}</span>
               </div>
               
               <p className="text-sm font-medium text-foreground mt-4 mb-6 leading-relaxed">

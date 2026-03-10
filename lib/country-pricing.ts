@@ -3,8 +3,8 @@ export type PlanPricing = {
 };
 
 export type PricingSet = {
-  currency: "USD";
-  symbol: "$";
+  currency: string;
+  symbol: string;
   starter: PlanPricing;
   growth: PlanPricing;
   dominant: PlanPricing;
@@ -38,6 +38,16 @@ const REGIONAL_PRICING: Record<
       dominant: { monthly: 37 },
     },
   },
+  egypt: {
+    countries: ["EG"],
+    pricing: {
+      currency: "EGP",
+      symbol: "EGP",
+      starter: { monthly: 499 },
+      growth: { monthly: 999 },
+      dominant: { monthly: 1930 },
+    },
+  },
 };
 
 export function normalizeCountry(country?: string | null) {
@@ -67,7 +77,8 @@ export function getPricingForCountry(country?: string | null): PricingSet {
   return USD_PRICING;
 }
 
-export function formatPrice(value: number) {
-  if (Number.isInteger(value)) return `$${value}`;
-  return `$${value.toFixed(1)}`;
+export function formatPrice(value: number, symbol = "$") {
+  const formatted = Number.isInteger(value) ? `${value}` : `${value.toFixed(1)}`;
+  if (symbol === "$") return `$${formatted}`;
+  return `${formatted} ${symbol}`;
 }

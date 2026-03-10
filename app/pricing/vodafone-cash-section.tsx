@@ -17,9 +17,9 @@ import Link from "next/link";
 const VODAFONE_NUMBER = "01008519199";
 
 const EGP_PLANS = [
-  { key: "starter", label: "Starter", labelAr: "المبتدئ", credits: 150, egp: 350 },
-  { key: "growth", label: "Growth", labelAr: "النمو", credits: 350, egp: 700 },
-  { key: "dominant", label: "Dominant", labelAr: "المهيمن", credits: 700, egp: 1350 },
+  { key: "starter", label: "Starter", labelAr: "المبتدئ", credits: 150, egp: 499 },
+  { key: "growth", label: "Growth", labelAr: "النمو", credits: 350, egp: 999 },
+  { key: "dominant", label: "Dominant", labelAr: "المهيمن", credits: 700, egp: 1930 },
 ] as const;
 
 export default function VodafoneCashSection() {
