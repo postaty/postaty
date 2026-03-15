@@ -43,10 +43,10 @@ export type GenerationUsage = {
 
 // ── Model IDs ───────────────────────────────────────────────────────
 
-const PRIMARY_MODEL_ID = "gemini-3-pro-image-preview";
+const PRIMARY_MODEL_ID = "gemini-3.1-flash-image-preview";
 const FALLBACK_MODEL_ID = "gemini-3-pro-image-preview (gateway)";
 const FREE_MODEL_ID = "gemini-2.5-flash-image";
-const PRIMARY_PROVIDER_MODEL_ID = "gemini-3-pro-image-preview";
+const PRIMARY_PROVIDER_MODEL_ID = "gemini-3.1-flash-image-preview";
 const FALLBACK_PROVIDER_MODEL_ID = "google/gemini-3-pro-image-preview";
 const FREE_PROVIDER_MODEL_ID = "gemini-2.5-flash-image";
 const MARKETING_PROVIDER_MODEL_ID = "gemini-3-flash-preview";
@@ -129,16 +129,10 @@ export async function generatePoster(
     ? await Promise.all([loadInspiration(), compressProduct(), compressLogo()])
     : [await loadInspiration(), await compressProduct(), await compressLogo()];
 
-  // Phase 2 removed — no pre-translation or design brief; Gemini handles translation inline
-  const translatedData = data;
-  const wasTranslated = false;
-  const designBrief: string | null = null;
-  const translatedDropdowns: { offerBadgeText?: string; deliveryText?: string } | null = null;
-
-  // Build prompts using original data (Gemini will translate inline if needed)
+  // Build prompts — pass original data directly to the image model (no pre-translation step).
   const promptBuildStart = Date.now();
-  const systemPrompt = getImageDesignSystemPrompt(translatedData, resolvedLanguage, brandKit, wasTranslated);
-  let userMessage = getImageDesignUserMessage(translatedData, resolvedLanguage, wasTranslated, translatedDropdowns);
+  const systemPrompt = getImageDesignSystemPrompt(data, resolvedLanguage, brandKit, false);
+  let userMessage = getImageDesignUserMessage(data, resolvedLanguage, false, null);
 
   if (recipe) {
     const recipeDirective = formatRecipeForPrompt(recipe, data.campaignType);
@@ -162,7 +156,6 @@ export async function generatePoster(
     prepTotalMs,
     mode: GEN_PARALLEL_PREP_ENABLED ? "parallel" : "sequential",
     resolvedLanguage,
-    preTranslated: wasTranslated,
   });
 
   if (VERBOSE_TIMING) {
@@ -215,6 +208,7 @@ export async function generatePoster(
   if (inspirationImages.length > 0) {
     contextText += `The first ${inspirationImages.length} image(s) are professional reference posters — use them for LAYOUT STRUCTURE and COMPOSITION IDEAS only (element placement, spacing, hierarchy, typography sizing).\n`;
     contextText += `CRITICAL: Do NOT copy the color scheme, background color, decorative style, or visual motifs from the reference images. Colors MUST come from the business logo provided — not from these references.\n`;
+    contextText += `CRITICAL: If the reference images contain speech bubbles, callout boxes, text balloons, or floating labels around the product — do NOT replicate that pattern. Those elements contain text you cannot read, and copying the pattern will produce garbled nonsense. Use clean typography layouts instead.\n`;
     if (data.campaignType === "standard") {
       contextText += `IMPORTANT: If the reference images contain seasonal or religious motifs (Ramadan, Eid, crescents, lanterns, Islamic arches), IGNORE those motifs entirely.\n`;
     }
@@ -227,14 +221,7 @@ export async function generatePoster(
     contextText += `The last image is the business logo — embed it as-is like pasting a sticker. Do NOT redraw, recreate, or re-render the logo. If the logo has text in it, that text is part of the image — do NOT re-type it. Place the logo EXACTLY ONCE.\n`;
     contextText += `CRITICAL COLOR RULE: Extract the dominant colors from this logo image and build the ENTIRE poster palette around them. The background, shapes, badges, and text colors must all match and complement the logo's actual colors. The poster must look like it belongs to the same brand as the logo.\n`;
   }
-  // Inject AI-generated design brief from context prep
-  if (designBrief) {
-    contextText += `\n## Creative Director's Brief (from visual analysis of all images above)\n${designBrief}\n`;
-  }
-
-  contextText += wasTranslated
-    ? `\nCRITICAL REMINDER: All text in the EXACT TEXT INVENTORY below has already been pre-translated to the target language. Render EVERY text string EXACTLY as written — character-for-character. Do NOT translate, transliterate, or modify any text. Do NOT invent any text, slogans, taglines, or promotional phrases. Do NOT add text to the product image. Show the product EXACTLY once. Show the logo EXACTLY once.\n`
-    : `\nCRITICAL REMINDER: Render ONLY text from the EXACT TEXT INVENTORY below — nothing else. Translate inventory text to the target poster language if needed. Do NOT invent any text, slogans, taglines, or promotional phrases. Do NOT add text to the product image. Show the product EXACTLY once. Show the logo EXACTLY once.\n`;
+  contextText += `\nCRITICAL REMINDER: Render ONLY text from the EXACT TEXT INVENTORY below — nothing else. Translate inventory text to the target poster language if needed. Do NOT invent any text, slogans, taglines, or promotional phrases. Do NOT add text to the product image. Show the product EXACTLY once. Show the logo EXACTLY once.\n`;
   contextText += `\n${userMessage}`;
 
   contentParts.push({ type: "text" as const, text: contextText });
@@ -245,7 +232,7 @@ export async function generatePoster(
   let usedModelId = PRIMARY_MODEL_ID;
 
   const generateRequest = {
-    providerOptions: buildImageProviderOptions(formatConfig.aspectRatio, "1K"),
+    providerOptions: buildImageProviderOptions(formatConfig.aspectRatio, "1K", undefined, true),
     system: systemPrompt,
     messages: [{ role: "user" as const, content: contentParts }],
   };

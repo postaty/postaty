@@ -456,9 +456,9 @@ export function PosterModal({
   };
 
   return createPortal(
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+        <div key="modal-root" className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -468,20 +468,20 @@ export function PosterModal({
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-6xl h-full max-h-[90vh] bg-surface-1 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+            className="relative w-full max-w-6xl h-[92vh] md:h-full md:max-h-[90vh] bg-surface-1 rounded-t-[2.5rem] md:rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 z-30 p-2 bg-black/20 text-white rounded-full backdrop-blur-md md:hidden"
+              className="absolute top-4 right-4 z-[60] p-2.5 bg-black/20 text-white rounded-full backdrop-blur-md md:hidden"
             >
               <X size={20} />
             </button>
 
-            <div className="flex-1 bg-surface-2 relative flex items-center justify-center p-4 md:p-8 overflow-auto">
+            <div className="flex-none h-[50vh] md:h-auto md:flex-1 bg-surface-2 relative flex items-center justify-center p-2 md:p-8 overflow-hidden">
               <div
                 className="absolute inset-0 opacity-10"
                 style={{
@@ -505,11 +505,11 @@ export function PosterModal({
                   />
                 </div>
               ) : (
-                <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 py-4">
+                <div className="relative w-full h-full flex flex-col items-center justify-center gap-4">
                   <div className="flex-1 min-h-0 w-full flex items-center justify-center">
                     <motion.div
                       layoutId={`poster-img-${result.designIndex}`}
-                      className="relative max-h-full max-w-full  rounded-lg overflow-hidden z-10 flex shrink-0 group"
+                      className="relative max-h-full max-w-full rounded-lg overflow-hidden z-10 flex shrink-0 group"
                     >
                       {currentImage ? (
                         <>
@@ -571,9 +571,9 @@ export function PosterModal({
                     </motion.div>
                   </div>
 
-                  {/* Floating AI Edit Input */}
+                  {/* Floating AI Edit Input (Desktop Only) */}
                   {isSignedIn && currentImage && (
-                    <div className="w-full max-w-xl px-4 z-50 shrink-0 transition-all duration-300 transform translate-y-0 opacity-100">
+                    <div className="hidden md:block w-full max-w-xl px-4 z-50 shrink-0 transition-all duration-300 transform translate-y-0 opacity-100">
                       <div className="bg-background/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-2xl p-2.5 flex flex-col gap-2 relative overflow-hidden">
                         
                         {isEditing && (
@@ -676,7 +676,7 @@ export function PosterModal({
               )}
             </div>
 
-            <div className="w-full md:w-[360px] bg-surface-1 border-l border-card-border p-6 flex flex-col gap-5 z-20 overflow-y-auto">
+            <div className="flex-1 w-full md:w-[360px] bg-surface-1 border-l border-card-border p-5 md:p-6 flex flex-col gap-4 md:gap-5 z-20 overflow-y-auto">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">
                   {isGift ? t("تفاصيل وتحرير الهدية", "Gift details and editing") : t("تفاصيل التصميم", "Design details")}
@@ -688,6 +688,91 @@ export function PosterModal({
                   <X size={20} />
                 </button>
               </div>
+
+              {/* AI Edit Input (Mobile Only) */}
+              {isSignedIn && currentImage && (
+                <div className="block md:hidden w-full z-10 shrink-0">
+                  <div className="bg-surface-2 border border-card-border shadow-sm rounded-2xl p-2.5 flex flex-col gap-2 relative overflow-hidden">
+                    
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full animate-[shimmer_1.5s_infinite]" />
+                    )}
+
+                    <div className="flex items-center justify-between px-2">
+                      <div className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 flex-wrap">
+                        <WandSparkles size={13} className="text-primary animate-pulse" />
+                        <span>{t("تعديل بواسطة Postaty AI", "Edit with Postaty AI")}</span>
+                        <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">
+                          ({t(`يستهلك ${POSTER_CONFIG.creditsPerEdit} أرصدة`, `costs ${POSTER_CONFIG.creditsPerEdit} credits`)})
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-500/20 shrink-0">
+                          <Coins size={10} />
+                          <span>{creditState?.totalRemaining ?? "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {editError && (
+                      <div className="px-2">
+                        <span className="text-[10px] text-destructive font-medium bg-destructive/10 px-2 py-0.5 rounded-full">
+                          {editError}
+                        </span>
+                      </div>
+                    )}
+
+                    {previousImage && !isEditing && (
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center bg-surface-1 rounded-lg p-0.5 border border-card-border/50 text-[10px] font-bold">
+                          <button
+                            onClick={() => setIsViewingOriginal(false)}
+                            className={`px-2 py-0.5 rounded-md transition-all ${!isViewingOriginal ? "bg-primary text-white shadow-sm" : "text-muted"}`}
+                          >
+                            {t("بعد", "After")}
+                          </button>
+                          <button
+                            onClick={() => setIsViewingOriginal(true)}
+                            className={`px-2 py-0.5 rounded-md transition-all ${isViewingOriginal ? "bg-background text-foreground shadow-sm" : "text-muted"}`}
+                          >
+                            {t("قبل", "Before")}
+                          </button>
+                        </div>
+                        <button
+                          onClick={handleUndoEdit}
+                          className="flex items-center gap-1 text-[10px] font-medium text-muted hover:text-foreground transition-colors bg-surface-1 px-2 py-0.5 rounded-md border border-card-border/50"
+                        >
+                          <Undo2 size={11} />
+                          {t("تراجع", "Undo")}
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 relative z-10 items-end">
+                      <textarea
+                        value={editPrompt}
+                        onChange={(e) => setEditPrompt(e.target.value)}
+                        placeholder={t("مثال: غيّر لون الخلفية إلى أزرق...", "e.g. Change the background color to blue...")}
+                        disabled={isEditing}
+                        rows={1}
+                        style={{ minHeight: '40px', maxHeight: '80px' }}
+                        className="flex-1 bg-surface-1 border border-card-border/50 text-sm rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all disabled:opacity-50 text-foreground"
+                      />
+                      <button
+                        onClick={handleEditDesign}
+                        disabled={isEditing || !editPrompt.trim()}
+                        className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary-hover active:scale-95 transition-all disabled:opacity-50 h-[40px] w-[40px] flex items-center justify-center shrink-0"
+                      >
+                        {isEditing ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Send size={16} className={locale === 'ar' ? "rotate-180" : ""} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {isGift && (
                 <div className="grid grid-cols-2 gap-2">
@@ -926,24 +1011,14 @@ export function PosterModal({
                   <span>{isGift && tab === "edit" ? t("تحميل النسخة المعدلة", "Download edited version") : previousImage ? t("تحميل النسخة المعدلة", "Download edited version") : t("تحميل الصورة", "Download image")}</span>
                 </button>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex gap-3">
                   {typeof navigator !== "undefined" && "share" in navigator && (
                     <button
                       onClick={handleShare}
-                      className="flex items-center justify-center gap-2 py-3.5 px-4 bg-surface-1 border border-card-border hover:bg-surface-2 text-foreground rounded-xl font-semibold transition-all active:scale-95"
+                      className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 bg-surface-1 border border-card-border hover:bg-surface-2 text-foreground rounded-xl font-semibold transition-all active:scale-95"
                     >
                       <Share2 size={18} />
                       <span>{t("مشاركة", "Share")}</span>
-                    </button>
-                  )}
-
-                  {onSaveAsTemplate && (
-                    <button
-                      onClick={() => onSaveAsTemplate(result.designIndex)}
-                      className="flex items-center justify-center gap-2 py-3.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-semibold transition-all active:scale-95 col-span-1"
-                    >
-                      <Save size={18} />
-                      <span>{t("حفظ", "Save")}</span>
                     </button>
                   )}
                 </div>
@@ -955,7 +1030,7 @@ export function PosterModal({
 
       {/* Fullscreen Image Modal */}
       {isFullscreen && currentImage && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 md:p-8">
+        <div key="fullscreen-root" className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 md:p-8">
           <button
             onClick={() => setIsFullscreen(false)}
             className="absolute top-6 right-6 z-50 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-all duration-200"

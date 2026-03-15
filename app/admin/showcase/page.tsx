@@ -9,13 +9,28 @@ import {
   Trash2,
   GripVertical,
   ImagePlus,
-  ArrowUp,
-  ArrowDown,
   Check,
   Plus,
   Filter,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error('API error');
@@ -23,6 +38,98 @@ const fetcher = (url: string) => fetch(url).then(r => {
 });
 
 const ALL_CATEGORIES = Object.entries(CATEGORY_LABELS) as [Category, string][];
+
+function SortableShowcaseItem({
+  img,
+  index,
+  deletingId,
+  onDelete,
+}: {
+  img: any;
+  index: number;
+  deletingId: string | null;
+  onDelete: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: img.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`bg-surface-1 border border-card-border rounded-2xl p-4 flex items-center gap-4 group hover:border-primary/20 transition-colors ${
+        isDragging ? "shadow-xl ring-2 ring-primary/30" : ""
+      }`}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="flex flex-col items-center gap-1 text-muted cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical size={16} />
+        <span className="text-xs font-bold">{index + 1}</span>
+      </button>
+
+      {/* Thumbnail */}
+      <div className="w-20 h-20 rounded-xl overflow-hidden border border-card-border flex-shrink-0 bg-surface-2">
+        {img.url ? (
+          <img
+            src={img.url}
+            alt={img.title || "Showcase"}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted">
+            <Loader2 size={16} className="animate-spin" />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-bold text-sm truncate">
+          {img.title || "بدون عنوان"}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className="inline-block bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
+            {(CATEGORY_LABELS as Record<string, string>)[img.category] ?? img.category}
+          </span>
+          <span className="text-xs text-muted">
+            {new Date(img.created_at).toLocaleDateString("ar-SA-u-nu-latn")}
+          </span>
+        </div>
+      </div>
+
+      {/* Delete */}
+      <button
+        onClick={() => onDelete(img.id)}
+        disabled={deletingId === img.id}
+        className="p-2 rounded-lg text-muted hover:text-destructive hover:bg-destructive/10 disabled:opacity-50 transition-all"
+        title="حذف"
+      >
+        {deletingId === img.id ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          <Trash2 size={16} />
+        )}
+      </button>
+    </div>
+  );
+}
 
 export default function AdminShowcasePage() {
   // ── Showcase (selected) images ──
@@ -107,42 +214,39 @@ export default function AdminShowcasePage() {
     }
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (!showcaseImages || index <= 0) return;
-    const current = showcaseImages[index];
-    const prev = showcaseImages[index - 1];
-    await Promise.all([
-      fetch('/api/showcase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', id: current.id ?? current._id, order: prev.display_order }),
-      }),
-      fetch('/api/showcase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', id: prev.id ?? prev._id, order: current.display_order }),
-      }),
-    ]);
-    mutateShowcase();
-  };
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
-  const handleMoveDown = async (index: number) => {
-    if (!showcaseImages || index >= showcaseImages.length - 1) return;
-    const current = showcaseImages[index];
-    const next = showcaseImages[index + 1];
-    await Promise.all([
-      fetch('/api/showcase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', id: current.id ?? current._id, order: next.display_order }),
-      }),
-      fetch('/api/showcase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reorder', id: next.id ?? next._id, order: current.display_order }),
-      }),
-    ]);
-    mutateShowcase();
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !showcaseImages) return;
+
+    const oldIndex = showcaseImages.findIndex((img: any) => img.id === active.id);
+    const newIndex = showcaseImages.findIndex((img: any) => img.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistic reorder
+    const reordered = arrayMove(showcaseImages, oldIndex, newIndex);
+    mutateShowcase({ ...showcaseData, showcaseImages: reordered }, false);
+
+    // Persist new order for all affected items
+    try {
+      await Promise.all(
+        reordered.map((img: any, idx: number) =>
+          fetch('/api/showcase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'reorder', id: img.id, order: idx }),
+          })
+        )
+      );
+      mutateShowcase();
+    } catch {
+      mutateShowcase(); // revert on error
+      toast.error("فشل إعادة الترتيب");
+    }
   };
 
   if (!showcaseImages) {
@@ -172,85 +276,28 @@ export default function AdminShowcasePage() {
         </h2>
 
         {showcaseImages.length > 0 ? (
-          <div className="space-y-3">
-            {showcaseImages.map((img: any, index: number) => {
-              const imgId = img.id;
-              return (
-                <div
-                  key={imgId}
-                  className="bg-surface-1 border border-card-border rounded-2xl p-4 flex items-center gap-4 group hover:border-primary/20 transition-colors"
-                >
-                  {/* Order */}
-                  <div className="flex flex-col items-center gap-1 text-muted">
-                    <GripVertical size={16} />
-                    <span className="text-xs font-bold">{index + 1}</span>
-                  </div>
-
-                  {/* Thumbnail */}
-                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-card-border flex-shrink-0 bg-surface-2">
-                    {img.url ? (
-                      <img
-                        src={img.url}
-                        alt={img.title || "Showcase"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted">
-                        <Loader2 size={16} className="animate-spin" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm truncate">
-                      {img.title || "بدون عنوان"}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="inline-block bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                        {(CATEGORY_LABELS as Record<string, string>)[img.category] ?? img.category}
-                      </span>
-                      <span className="text-xs text-muted">
-                        {new Date(img.created_at).toLocaleDateString("ar-SA-u-nu-latn")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleMoveUp(index)}
-                      disabled={index === 0}
-                      className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="تقديم"
-                    >
-                      <ArrowUp size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleMoveDown(index)}
-                      disabled={index === showcaseImages.length - 1}
-                      className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="تأخير"
-                    >
-                      <ArrowDown size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(imgId)}
-                      disabled={deletingId === imgId}
-                      className="p-2 rounded-lg text-muted hover:text-destructive hover:bg-destructive/10 disabled:opacity-50 transition-all"
-                      title="حذف"
-                    >
-                      {deletingId === imgId ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={16} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={showcaseImages.map((img: any) => img.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {showcaseImages.map((img: any, index: number) => (
+                  <SortableShowcaseItem
+                    key={img.id}
+                    img={img}
+                    index={index}
+                    deletingId={deletingId}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
           <div className="bg-surface-1 border border-card-border rounded-2xl p-8 text-center">
             <ImagePlus size={40} className="text-muted mx-auto mb-3" />

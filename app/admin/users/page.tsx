@@ -764,6 +764,7 @@ export default function AdminUsersPage() {
                   <th className="text-right py-3 px-4 font-medium text-muted">الاشتراك</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الدولة</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">الأرصدة</th>
+                  <th className="text-right py-3 px-4 font-medium text-muted">مستخدم</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">التوليدات</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">تكلفة AI</th>
                   <th className="text-right py-3 px-4 font-medium text-muted">إجراءات</th>
@@ -838,6 +839,7 @@ export default function AdminUsersPage() {
                         <span className="text-xs text-muted">--</span>
                       )}
                     </td>
+                    <td className="py-3 px-4 font-bold text-xs">{user.totalCreditsUsed > 0 ? user.totalCreditsUsed : "—"}</td>
                     <td className="py-3 px-4 font-bold">{user.totalGenerations ?? "—"}</td>
                     <td className="py-3 px-4 font-mono text-xs">{user.totalCostUsd != null ? `$${Number(user.totalCostUsd).toFixed(4)}` : "—"}</td>
                     <td className="py-3 px-4">

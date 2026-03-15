@@ -87,6 +87,13 @@ export async function GET() {
     const pastDue = items.filter((b) => b.status === "past_due").length;
     const canceled = items.filter((b) => b.status === "canceled").length;
 
+    // Plan breakdown
+    const planBreakdown: Record<string, number> = {};
+    for (const b of items) {
+      const key = b.plan_key ?? "unknown";
+      planBreakdown[key] = (planBreakdown[key] || 0) + 1;
+    }
+
     return NextResponse.json({
       subscriptions: enrichedSubscriptions,
       summary: {
@@ -95,6 +102,7 @@ export async function GET() {
         trialing,
         past_due: pastDue,
         canceled,
+        planBreakdown,
       },
     });
   } catch (error) {

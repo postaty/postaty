@@ -17,7 +17,8 @@ export async function getSharp() {
 export function buildImageProviderOptions(
   aspectRatio: string,
   imageSize?: "1K" | "2K" | "4K",
-  mediaResolution?: "low" | "medium" | "high"
+  mediaResolution?: "low" | "medium" | "high",
+  disableThinking?: boolean
 ) {
   const resolutionMap = {
     low: "MEDIA_RESOLUTION_LOW",
@@ -33,6 +34,7 @@ export function buildImageProviderOptions(
         ...(imageSize ? { imageSize } : {}),
       },
       ...(mediaResolution ? { mediaResolution: resolutionMap[mediaResolution] } : {}),
+      ...(disableThinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
     },
   };
 }

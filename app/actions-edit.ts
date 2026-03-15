@@ -66,7 +66,7 @@ export async function editDesignAction(
       model,
       // Menu images are A4 with many small text elements — use a larger input size
       // so the model can read item names, prices, and descriptions accurately.
-      inputMaxPx: format === "menu" ? 1024 : 512,
+      inputMaxPx: format === "menu" ? 1024 : 768,
     });
     try {
       await persistExactAiUsageEvent({

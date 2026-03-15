@@ -114,6 +114,31 @@ export default function AdminSubscriptionsPage() {
         <SummaryCard label="ملغي" value={summary.canceled} color="text-destructive" bgColor="bg-destructive/10" />
       </div>
 
+      {/* Plan Breakdown */}
+      {summary.planBreakdown && Object.keys(summary.planBreakdown).length > 0 && (
+        <div className="bg-surface-1 border border-card-border rounded-2xl p-5 mb-8">
+          <h2 className="text-sm font-bold mb-3 text-muted">توزيع الخطط</h2>
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(summary.planBreakdown as Record<string, number>)
+              .sort(([, a], [, b]) => b - a)
+              .map(([plan, count]) => (
+                <div key={plan} className="flex items-center gap-2">
+                  <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                    plan === "dominant" ? "bg-accent/20 text-accent" :
+                    plan === "growth" ? "bg-primary/20 text-primary" :
+                    plan === "starter" ? "bg-success/20 text-success" :
+                    "bg-muted/20 text-muted"
+                  }`}>
+                    {PLAN_LABELS[plan] ?? plan}
+                  </span>
+                  <span className="text-sm font-black">{count}</span>
+                  <span className="text-xs text-muted">مستخدم</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Subscriptions List */}
       {subscriptions.length > 0 ? (
         <div className="bg-surface-1 border border-card-border rounded-2xl overflow-hidden">

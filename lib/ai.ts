@@ -17,10 +17,10 @@ const gateway = createGateway({
   baseURL: process.env.AI_GATEWAY_URL,
 });
 
-/** Primary image model — Gemini 3 Pro Image via direct Google API */
-export const primaryImageModel = google("gemini-3-pro-image-preview");
+/** Primary image model — Gemini 3.1 Flash Image (Nano Banana 2) via direct Google API */
+export const primaryImageModel = google("gemini-3.1-flash-image-preview");
 
-/** Fallback image model — same model routed through Vercel AI Gateway */
+/** Fallback image model — Gemini 3 Pro Image routed through Vercel AI Gateway */
 export const gatewayImageModel = gateway("google/gemini-3-pro-image-preview");
 
 /** Free image model — Gemini 2.5 Flash Image */

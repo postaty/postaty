@@ -53,7 +53,7 @@ export async function editDesign(input: {
   const sharp = await getSharp();
   const compressedInput = await sharp(imageBuffer)
     .resize(inputMaxPx, inputMaxPx, { fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 75 })
+    .jpeg({ quality: 90 })
     .toBuffer();
 
   const contentParts: Array<
@@ -69,7 +69,7 @@ export async function editDesign(input: {
 
   const startTime = Date.now();
   const editRequest = {
-    providerOptions: buildImageProviderOptions(aspectRatio, "1K", "low"),
+    providerOptions: buildImageProviderOptions(aspectRatio, "1K"),
     system: EDIT_SYSTEM_PROMPT,
     messages: [{ role: "user" as const, content: contentParts }],
   };

@@ -39,11 +39,45 @@ export async function GET(request: Request) {
       billingByAuthId[b.user_auth_id] = b;
     }
 
+    // Fetch total credits consumed per user from credit_ledger
+    const { data: creditLedgerRecords } = await admin
+      .from("credit_ledger")
+      .select("user_auth_id, amount")
+      .lt("amount", 0); // negative amounts = consumption
+
+    const totalCreditsUsedByAuthId: Record<string, number> = {};
+    for (const entry of creditLedgerRecords || []) {
+      const key = entry.user_auth_id;
+      totalCreditsUsedByAuthId[key] = (totalCreditsUsedByAuthId[key] || 0) + Math.abs(entry.amount);
+    }
+
+    // Fetch generation stats per user from ai_usage_events
+    const { data: aiUsageRecords } = await admin
+      .from("ai_usage_events")
+      .select("user_auth_id, total_cost_usd, success")
+      .eq("cost_mode", "exact");
+
+    const generationsByAuthId: Record<string, { count: number; cost: number }> = {};
+    for (const event of aiUsageRecords || []) {
+      const key = event.user_auth_id;
+      if (!generationsByAuthId[key]) {
+        generationsByAuthId[key] = { count: 0, cost: 0 };
+      }
+      if (event.success !== false) {
+        generationsByAuthId[key].count += 1;
+      }
+      generationsByAuthId[key].cost += Number(event.total_cost_usd) || 0;
+    }
+
     const enrichedUsers = (users || []).map((u) => {
       const billing = billingByAuthId[u.auth_id] || null;
+      const genStats = generationsByAuthId[u.auth_id];
       return {
         ...u,
         billing,
+        totalCreditsUsed: totalCreditsUsedByAuthId[u.auth_id] || 0,
+        totalGenerations: genStats?.count ?? 0,
+        totalCostUsd: genStats?.cost ?? 0,
       };
     });
 
