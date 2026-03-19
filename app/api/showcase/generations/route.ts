@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
     let query = admin
       .from("generations")
-      .select("id, business_name, product_name, category, outputs, created_at", { count: "exact" })
+      .select("id, business_name, product_name, category, outputs, created_at, user_id", { count: "exact" })
       .eq("status", "complete")
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -40,12 +40,26 @@ export async function GET(request: Request) {
 
     const showcaseUrls = new Set((showcaseRows ?? []).map((r) => r.storage_path));
 
+    // Fetch user emails for all unique user_ids
+    const userIds = [...new Set((generations ?? []).map((g) => g.user_id).filter(Boolean))];
+    const userEmailMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: users } = await admin
+        .from("users")
+        .select("id, email")
+        .in("id", userIds);
+      for (const u of users ?? []) {
+        if (u.email) userEmailMap.set(u.id, u.email);
+      }
+    }
+
     const result = (generations ?? []).map((gen) => ({
       id: gen.id,
       businessName: gen.business_name,
       productName: gen.product_name,
       category: gen.category,
       created_at: gen.created_at,
+      userEmail: gen.user_id ? userEmailMap.get(gen.user_id) ?? null : null,
       outputs: ((gen.outputs as any[]) ?? []).map((o) => ({
         ...o,
         alreadyInShowcase: !!o.url && showcaseUrls.has(o.url),

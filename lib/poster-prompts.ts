@@ -90,10 +90,12 @@ ${brandKit ? `Color palette (from Brand Kit — MUST use these colors):
 - Primary: ${brandKit.palette.primary} | Secondary: ${brandKit.palette.secondary} | Accent: ${brandKit.palette.accent}
 - Background: ${brandKit.palette.background} | Text: ${brandKit.palette.text}
 These brand colors OVERRIDE the default category palette. Build the entire design around these colors.` : `${CATEGORY_COLOR_PALETTES[data.category]}
-## Logo-Driven Color Theme
-- Extract the dominant colors from the provided logo and build the ENTIRE poster palette around them.
-- The design must feel like an official brand extension of the logo.
-- The category palette above is a LAST RESORT fallback only if the logo has no extractable colors.`}
+## Color Theme — STRICT RULES (in order of priority)
+1. **Logo colors FIRST**: Extract the dominant colors from the provided logo and build the ENTIRE poster palette around them. The background, shapes, badges, and accents must complement the logo's actual colors.
+2. **Product colors SECOND**: The design should also harmonize with the product image colors — do NOT use a color scheme that clashes with the product.
+3. **Category palette is a LAST RESORT** — only use the category palette above if the logo has no extractable colors AND the product has no dominant colors.
+- The poster must look like an official brand extension — as if the same designer made both the logo and the poster.
+- NEVER default to generic pink/blush/neutral tones unless the logo or product actually contains those colors.`}
 ${CAMPAIGN_STYLE_GUIDANCE[data.campaignType] ? `\n${CAMPAIGN_STYLE_GUIDANCE[data.campaignType]}\n` : `\nThis is a STANDARD (non-seasonal) campaign. No religious, seasonal, or holiday motifs (no crescents, lanterns, Islamic arches, Ramadan/Eid elements). Keep the design modern, commercial, and seasonally neutral.
 `}
 ## Language & Text Direction
@@ -103,6 +105,12 @@ ${preTranslated
   : `- If inventory text is in a different language than the target, translate it accurately — but NEVER add extra text beyond what's in the inventory`}
 - Business/brand names are proper nouns — keep them exactly as given, do NOT translate
 - ${resolvedLanguage === "ar" || resolvedLanguage === "he" ? "RTL" : "LTR"} text direction
+
+## NUMERALS — CRITICAL
+- ALL numbers on the poster MUST use Western/English digits: 0 1 2 3 4 5 6 7 8 9
+- NEVER use Arabic-Indic (Eastern) digits: ٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩
+- This applies to ALL numbers: prices, phone numbers, percentages, quantities — regardless of the poster language
+- Even when the poster language is Arabic, numbers must be Western: "20 د.أ" NOT "٢٠ د.أ"
 
 ## Text Placement Rules
 - Place ONLY text from the EXACT TEXT INVENTORY — zero additional words

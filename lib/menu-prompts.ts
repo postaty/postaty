@@ -86,7 +86,14 @@ ${getGridLayoutGuidance(data.items.length)}
 - Do NOT replace the provided logo with any icon, cart symbol, or generated brand mark
 
 ${MENU_CATEGORY_STYLES[data.menuCategory]}
-${MENU_CAMPAIGN_GUIDANCE[data.campaignType] ? `\n${MENU_CAMPAIGN_GUIDANCE[data.campaignType]}\n` : `\nIMPORTANT: This is a STANDARD (non-seasonal) campaign. Do NOT use any religious, seasonal, or holiday motifs.
+${brandKit ? "" : `
+## Color Theme — STRICT RULES (in order of priority)
+1. **Logo colors FIRST**: Extract the dominant colors from the provided logo and build the ENTIRE menu palette around them.
+2. **Product colors SECOND**: The design should harmonize with the product image colors — do NOT use colors that clash with the products.
+3. **Category palette is a LAST RESORT** — only use it if the logo has no extractable colors.
+- The menu must look like an official brand extension of the logo.
+- NEVER default to generic pink/blush/neutral tones unless the logo or products actually contain those colors.
+`}${MENU_CAMPAIGN_GUIDANCE[data.campaignType] ? `\n${MENU_CAMPAIGN_GUIDANCE[data.campaignType]}\n` : `\nIMPORTANT: This is a STANDARD (non-seasonal) campaign. Do NOT use any religious, seasonal, or holiday motifs.
 - No Ramadan elements: no crescents, no lanterns, no Islamic arches
 - No Eid elements: no festive confetti, no starbursts
 - Keep the design modern, commercial, and seasonally neutral
@@ -97,6 +104,12 @@ ${MENU_CAMPAIGN_GUIDANCE[data.campaignType] ? `\n${MENU_CAMPAIGN_GUIDANCE[data.c
 - Do NOT mix languages
 - For RTL languages (Arabic, Hebrew): use RTL text direction
 - For LTR languages (English, French, Turkish, etc.): use LTR text direction
+
+## NUMERALS — CRITICAL
+- ALL numbers on the menu MUST use Western/English digits: 0 1 2 3 4 5 6 7 8 9
+- NEVER use Arabic-Indic (Eastern) digits: ٠ ١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩
+- This applies to ALL numbers: prices, phone numbers, quantities — regardless of the menu language
+- Even when the menu language is Arabic, numbers must be Western: "20 ر.س" NOT "٢٠ ر.س"
 
 ## CRITICAL: You are a LAYOUT ENGINE — Do NOT Invent Any Text Content
 - You are a LAYOUT ENGINE, not a copywriter. Your job is to PLACE the given text strings on the menu — NEVER write or create text yourself

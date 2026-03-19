@@ -12,6 +12,7 @@ import {
   Check,
   Plus,
   Filter,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -381,7 +382,12 @@ export default function AdminShowcasePage() {
                   {/* Info overlay */}
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-3 pt-8">
                     <p className="text-white text-xs font-bold truncate">{gen.businessName}</p>
-                    <p className="text-white/70 text-[10px] truncate">{gen.productName}</p>
+                    {gen.userEmail && (
+                      <a href={`mailto:${gen.userEmail}`} className="flex items-center gap-1 text-white/70 text-[10px] truncate hover:text-white/90 transition-colors" title={gen.userEmail}>
+                        <Mail size={10} className="flex-shrink-0" />
+                        <span className="truncate">{gen.userEmail}</span>
+                      </a>
+                    )}
                   </div>
 
                   {/* Add / Already added button */}

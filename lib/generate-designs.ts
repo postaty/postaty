@@ -219,9 +219,10 @@ export async function generatePoster(
   }
   if (logoPart) {
     contextText += `The last image is the business logo — embed it as-is like pasting a sticker. Do NOT redraw, recreate, or re-render the logo. If the logo has text in it, that text is part of the image — do NOT re-type it. Place the logo EXACTLY ONCE.\n`;
-    contextText += `CRITICAL COLOR RULE: Extract the dominant colors from this logo image and build the ENTIRE poster palette around them. The background, shapes, badges, and text colors must all match and complement the logo's actual colors. The poster must look like it belongs to the same brand as the logo.\n`;
+    contextText += `CRITICAL COLOR RULE: Extract the dominant colors from this logo image and build the ENTIRE poster palette around them. The background, shapes, badges, and text colors must all match and complement the logo's actual colors. The poster must look like it belongs to the same brand as the logo. Also harmonize with the product image colors — NEVER use a color scheme that clashes with the product.\n`;
   }
   contextText += `\nCRITICAL REMINDER: Render ONLY text from the EXACT TEXT INVENTORY below — nothing else. Translate inventory text to the target poster language if needed. Do NOT invent any text, slogans, taglines, or promotional phrases. Do NOT add text to the product image. Show the product EXACTLY once. Show the logo EXACTLY once.\n`;
+  contextText += `CRITICAL NUMERALS: ALL numbers must use Western digits (0123456789). NEVER use Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩). This applies to prices, phone numbers, percentages — everything.\n`;
   contextText += `\n${userMessage}`;
 
   contentParts.push({ type: "text" as const, text: contextText });
