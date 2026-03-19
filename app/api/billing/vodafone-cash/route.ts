@@ -8,13 +8,21 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
 
     const formData = await request.formData();
-    const phoneNumber = formData.get("phoneNumber") as string;
+    const phoneNumber = (formData.get("phoneNumber") as string) || "";
     const amountEgp = Number(formData.get("amountEgp"));
     const receiptFile = formData.get("receipt") as File | null;
+    const paymentMethod = (formData.get("paymentMethod") as string) || "vodafone_cash";
 
-    if (!phoneNumber || !amountEgp || !receiptFile) {
+    if (!amountEgp || !receiptFile) {
       return NextResponse.json(
-        { error: "phoneNumber, amountEgp, and receipt are required" },
+        { error: "amountEgp and receipt are required" },
+        { status: 400 }
+      );
+    }
+
+    if (paymentMethod === "vodafone_cash" && !phoneNumber) {
+      return NextResponse.json(
+        { error: "phoneNumber is required for Vodafone Cash" },
         { status: 400 }
       );
     }
@@ -82,6 +90,7 @@ export async function POST(request: Request) {
         phone_number: phoneNumber,
         amount_egp: amountEgp,
         receipt_url: urlData.publicUrl,
+        payment_method: paymentMethod,
         status: "pending",
         created_at: Date.now(),
         updated_at: Date.now(),
@@ -100,9 +109,11 @@ export async function POST(request: Request) {
       user_auth_id: user.id,
       type: "info",
       title: "تم استلام طلب الدفع | Payment request received",
-      body: "طلب الدفع عبر فودافون كاش قيد المراجعة. سنرسل لك إشعار عند الموافقة. | Your Vodafone Cash payment is under review. We'll notify you when approved.",
+      body: paymentMethod === "instapay"
+        ? "طلب الدفع عبر InstaPay قيد المراجعة. سنرسل لك إشعار عند الموافقة. | Your InstaPay payment is under review. We'll notify you when approved."
+        : "طلب الدفع عبر فودافون كاش قيد المراجعة. سنرسل لك إشعار عند الموافقة. | Your Vodafone Cash payment is under review. We'll notify you when approved.",
       is_read: false,
-      metadata: JSON.stringify({ type: "vodafone_cash_submitted" }),
+      metadata: JSON.stringify({ type: `${paymentMethod}_submitted` }),
       created_at: Date.now(),
     });
 

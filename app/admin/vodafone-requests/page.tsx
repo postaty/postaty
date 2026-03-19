@@ -25,6 +25,7 @@ interface VodafoneRequest {
   user_email: string;
   user_name: string;
   phone_number: string;
+  payment_method: string;
   plan_key: string | null;
   addon_key: string | null;
   amount_egp: number;
@@ -138,14 +139,14 @@ export default function AdminVodafoneRequestsPage() {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <Smartphone size={28} className="text-red-500" />
-          <h1 className="text-2xl font-black text-foreground">طلبات فودافون كاش</h1>
+          <h1 className="text-2xl font-black text-foreground">طلبات الدفع المحلية</h1>
           {data?.summary?.pending ? (
             <span className="px-2.5 py-1 bg-yellow-500/10 text-yellow-500 rounded-full text-xs font-bold">
               {data.summary.pending} معلق
             </span>
           ) : null}
         </div>
-        <p className="text-muted text-sm">مراجعة طلبات الدفع عبر فودافون كاش والموافقة عليها</p>
+        <p className="text-muted text-sm">مراجعة طلبات الدفع عبر فودافون كاش و InstaPay والموافقة عليها</p>
       </div>
 
       {/* Summary Cards */}
@@ -222,6 +223,7 @@ export default function AdminVodafoneRequestsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-bold">{req.user_name || "—"}</span>
+                    <PaymentMethodBadge method={req.payment_method} />
                     <StatusBadge status={req.status} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-muted">
@@ -378,6 +380,21 @@ export default function AdminVodafoneRequestsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function PaymentMethodBadge({ method }: { method: string }) {
+  if (method === "instapay") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-500">
+        InstaPay
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500">
+      فودافون كاش
+    </span>
   );
 }
 
