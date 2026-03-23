@@ -162,6 +162,7 @@ export function PosterModal({
   const [selectedFormat, setSelectedFormat] = useState<OutputFormat>(result?.format ?? "instagram-square");
   const [previousFormat, setPreviousFormat] = useState<OutputFormat | null>(null);
   const [isResizing, setIsResizing] = useState(false);
+  const [firstEditUsed, setFirstEditUsed] = useState(false);
   const prevOpenRef = useRef(false);
   useEffect(() => { setMounted(true); }, []);
 
@@ -220,6 +221,7 @@ export function PosterModal({
     setSelectedFormat(result?.format ?? "instagram-square");
     setPreviousFormat(null);
     setIsResizing(false);
+    setFirstEditUsed(false);
   }, [result, isOpen, defaultGiftLabel]);
 
   useEffect(() => {
@@ -353,9 +355,12 @@ export function PosterModal({
     }
   };
 
+  const isFirstEditFree = !firstEditUsed;
+
   const handleEditDesign = async () => {
     if (!editPrompt.trim() || !currentImage || isEditing) return;
-    if ((creditState?.totalRemaining ?? 0) < POSTER_CONFIG.creditsPerEdit) {
+    // Skip credit check if first edit is free
+    if (!isFirstEditFree && (creditState?.totalRemaining ?? 0) < POSTER_CONFIG.creditsPerEdit) {
       setEditError(
         t(
           `تحتاج ${POSTER_CONFIG.creditsPerEdit} أرصدة على الأقل للتعديل.`,
@@ -368,6 +373,7 @@ export function PosterModal({
     setEditError(null);
 
     const format: OutputFormat | "menu" = generationType === "menu" ? "menu" : result.format;
+    const wasFreeEdit = isFirstEditFree;
 
     try {
       // Pass generationId so upload+DB update happens server-side (no extra round-trip)
@@ -379,16 +385,19 @@ export function PosterModal({
         setEditHistory((prev) => [...prev, editPrompt.trim()]);
         setEditPrompt("");
         onEditComplete?.(editResult.imageBase64, editResult.publicUrl);
+        setFirstEditUsed(true);
 
-        // Consume credit (fire-and-forget, don't block UI)
-        const idempotencyKey = `edit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-        fetch("/api/billing/consume-credit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
-        })
-          .catch((err) => console.error("[handleEditDesign] credit error", err))
-          .finally(() => onCreditConsumed?.());
+        // Skip credit consumption for the first free edit
+        if (!wasFreeEdit) {
+          const idempotencyKey = `edit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+          fetch("/api/billing/consume-credit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
+          })
+            .catch((err) => console.error("[handleEditDesign] credit error", err))
+            .finally(() => onCreditConsumed?.());
+        }
       } else {
         setEditError(editResult.error);
       }
@@ -403,6 +412,7 @@ export function PosterModal({
   const handleUndoEdit = () => {
     if (!previousImage) return;
     setDisplayImage(previousImage);
+    onEditComplete?.(previousImage);
     setPreviousImage(null);
     if (previousFormat) {
       setSelectedFormat(previousFormat);
@@ -413,7 +423,8 @@ export function PosterModal({
 
   const handleFormatChange = async (fmt: OutputFormat) => {
     if (fmt === selectedFormat || isResizing || !currentImage) return;
-    if ((creditState?.totalRemaining ?? 0) < POSTER_CONFIG.creditsPerEdit) {
+    // Skip credit check if first edit is free
+    if (!isFirstEditFree && (creditState?.totalRemaining ?? 0) < POSTER_CONFIG.creditsPerEdit) {
       setEditError(
         t(
           `تحتاج ${POSTER_CONFIG.creditsPerEdit} أرصدة على الأقل لتغيير المقاس.`,
@@ -423,6 +434,7 @@ export function PosterModal({
       return;
     }
     setIsResizing(true);
+    const wasFreeEdit = isFirstEditFree;
     try {
       const cfg = FORMAT_CONFIGS[fmt];
       const reframePrompt = locale === "ar"
@@ -437,16 +449,19 @@ export function PosterModal({
         setDisplayImage(editResult.imageBase64);
         setSelectedFormat(fmt);
         onEditComplete?.(editResult.imageBase64, editResult.publicUrl);
+        setFirstEditUsed(true);
 
-        // Consume credit (fire-and-forget, don't block UI)
-        const idempotencyKey = `reframe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-        fetch("/api/billing/consume-credit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
-        })
-          .catch((err) => console.error("[handleFormatChange] credit error", err))
-          .finally(() => onCreditConsumed?.());
+        // Skip credit consumption for the first free edit
+        if (!wasFreeEdit) {
+          const idempotencyKey = `reframe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+          fetch("/api/billing/consume-credit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
+          })
+            .catch((err) => console.error("[handleFormatChange] credit error", err))
+            .finally(() => onCreditConsumed?.());
+        }
       }
     } catch (err) {
       console.error("[handleFormatChange] failed", err);
@@ -584,9 +599,15 @@ export function PosterModal({
                           <div className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5 flex-wrap">
                             <WandSparkles size={14} className="text-primary animate-pulse" />
                             <span>{t("تعديل بواسطة Postaty AI", "Edit with Postaty AI")}</span>
-                            <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">
-                              ({t(`التعديل يستهلك ${POSTER_CONFIG.creditsPerEdit} أرصدة`, `Edit costs ${POSTER_CONFIG.creditsPerEdit} credits`)})
-                            </span>
+                            {isFirstEditFree ? (
+                              <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md font-bold border border-emerald-500/25 animate-pulse">
+                                {t("التعديل الأول مجاناً!", "First edit is free!")}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">
+                                ({t(`التعديل يستهلك ${POSTER_CONFIG.creditsPerEdit} أرصدة`, `Edit costs ${POSTER_CONFIG.creditsPerEdit} credits`)})
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1 text-[11px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-200 dark:border-amber-500/20 shrink-0">
@@ -702,9 +723,15 @@ export function PosterModal({
                       <div className="text-[11px] font-semibold text-foreground/80 flex items-center gap-1.5 flex-wrap">
                         <WandSparkles size={13} className="text-primary animate-pulse" />
                         <span>{t("تعديل بواسطة Postaty AI", "Edit with Postaty AI")}</span>
-                        <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">
-                          ({t(`يستهلك ${POSTER_CONFIG.creditsPerEdit} أرصدة`, `costs ${POSTER_CONFIG.creditsPerEdit} credits`)})
-                        </span>
+                        {isFirstEditFree ? (
+                          <span className="text-[9px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold border border-emerald-500/25 animate-pulse">
+                            {t("الأول مجاناً!", "First free!")}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">
+                            ({t(`يستهلك ${POSTER_CONFIG.creditsPerEdit} أرصدة`, `costs ${POSTER_CONFIG.creditsPerEdit} credits`)})
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1 text-[10px] font-bold text-amber-500 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-lg border border-amber-200 dark:border-amber-500/20 shrink-0">
@@ -833,7 +860,9 @@ export function PosterModal({
                           <div className="text-sm font-medium text-muted">{t("الأبعاد", "Dimensions")}</div>
                           {isResizing
                             ? <Loader2 size={13} className="animate-spin text-primary" />
-                            : <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">{POSTER_CONFIG.creditsPerEdit} {t("أرصدة", "credits")}</span>
+                            : isFirstEditFree
+                              ? <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded-md font-bold border border-emerald-500/25">{t("مجاناً", "Free")}</span>
+                              : <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-bold border border-primary/20">{POSTER_CONFIG.creditsPerEdit} {t("أرصدة", "credits")}</span>
                           }
                         </div>
                         <div className="grid grid-cols-2 gap-1.5">

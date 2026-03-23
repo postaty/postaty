@@ -34,7 +34,6 @@ import type { PricingSet } from "@/lib/country-pricing";
 import { formatPrice } from "@/lib/country-pricing";
 import type { AppLocale } from "@/lib/i18n";
 import { ShowcaseCarousel } from "./showcase-carousel";
-import VodafoneCashSection from "@/app/pricing/vodafone-cash-section";
 import InstapaySection from "@/app/pricing/instapay-section";
 
 const fetcher = (url: string) => fetch(url).then(r => {
@@ -669,12 +668,7 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
             </p>
           </AnimateOnScroll>
 
-          {countryCode === "EG" && (
-            <>
-              <VodafoneCashSection />
-              <InstapaySection />
-            </>
-          )}
+          {countryCode === "EG" && <InstapaySection />}
 
           <StaggerOnScroll className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Starter Plan */}

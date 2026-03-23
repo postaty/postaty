@@ -43,10 +43,10 @@ export type GenerationUsage = {
 
 // ── Model IDs ───────────────────────────────────────────────────────
 
-const PRIMARY_MODEL_ID = "gemini-3.1-flash-image-preview";
+const PRIMARY_MODEL_ID = "gemini-3-pro-image-preview";
 const FALLBACK_MODEL_ID = "gemini-3-pro-image-preview (gateway)";
 const FREE_MODEL_ID = "gemini-2.5-flash-image";
-const PRIMARY_PROVIDER_MODEL_ID = "gemini-3.1-flash-image-preview";
+const PRIMARY_PROVIDER_MODEL_ID = "gemini-3-pro-image-preview";
 const FALLBACK_PROVIDER_MODEL_ID = "google/gemini-3-pro-image-preview";
 const FREE_PROVIDER_MODEL_ID = "gemini-2.5-flash-image";
 const MARKETING_PROVIDER_MODEL_ID = "gemini-3-flash-preview";

@@ -11,7 +11,6 @@ import {
 import { useLocale } from "@/hooks/use-locale";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import VodafoneCashSection from "@/app/pricing/vodafone-cash-section";
 import InstapaySection from "@/app/pricing/instapay-section";
 
 const stripePromise = loadStripe(
@@ -153,13 +152,8 @@ export default function CheckoutClient() {
           </p>
         </div>
 
-        {/* Local payment options for Egyptian users */}
-        {isEgypt && (
-          <>
-            <VodafoneCashSection />
-            <InstapaySection />
-          </>
-        )}
+        {/* Local payment option for Egyptian users */}
+        {isEgypt && <InstapaySection />}
 
         {/* Embedded Checkout */}
         <div id="checkout" className="bg-surface-1 border border-card-border rounded-2xl overflow-hidden">

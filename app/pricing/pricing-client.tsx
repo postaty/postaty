@@ -8,7 +8,6 @@ import { ArrowLeft, Zap } from "lucide-react";
 import Link from "next/link";
 import { useLocale } from "@/hooks/use-locale";
 import type { AppLocale } from "@/lib/i18n";
-import VodafoneCashSection from "./vodafone-cash-section";
 import InstapaySection from "./instapay-section";
 
 type PlanKey = "starter" | "growth" | "dominant";
@@ -45,12 +44,7 @@ export default function PricingClient({ countryCode, fallbackPricing, isEgypt }:
           </p>
         </div>
 
-        {isEgypt && (
-          <>
-            <VodafoneCashSection />
-            <InstapaySection />
-          </>
-        )}
+        {isEgypt && <InstapaySection />}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
           {(["starter", "growth", "dominant"] as const).map((planKey) => (
