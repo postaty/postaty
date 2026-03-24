@@ -433,7 +433,7 @@ function extractMenuTranslatableFields(data: MenuFormData): Record<string, strin
   const fields: Record<string, string> = {};
   data.items.forEach((item, i) => {
     fields[`item_${i}_name`] = item.name;
-    fields[`item_${i}_price`] = item.price;
+    if (item.price) fields[`item_${i}_price`] = item.price;
     if (item.oldPrice) fields[`item_${i}_oldPrice`] = item.oldPrice;
   });
   if (data.address) fields["address"] = data.address;
