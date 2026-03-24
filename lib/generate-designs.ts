@@ -372,7 +372,7 @@ export async function generateGiftImage(
   data: PostFormData
 ): Promise<GeneratedDesign & { usage: GenerationUsage }> {
   const systemPrompt = getGiftImageSystemPrompt(data);
-  const userMessage = getGiftImageUserMessage(data);
+  const userMessage = getGiftImageUserMessage();
 
   const formImages = extractFormImages(data);
   const formatConfig = FORMAT_CONFIGS[data.format];
