@@ -263,6 +263,26 @@ export function PosterModal({
 
   const currentImage = (isViewingOriginal && previousImage) ? previousImage : (displayImage || result.imageBase64);
 
+  // Convert a base64 data URL to a Blob for FormData (avoids server action serialization limit)
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [header, data] = dataUrl.split(",");
+    const mimeType = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+    const bytes = atob(data);
+    const arr = new Uint8Array(bytes.length);
+    for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mimeType });
+  };
+
+  const buildEditFormData = (image: string, prompt: string, fmt: OutputFormat | "menu", mdl: "edit" | "free", genId?: string): FormData => {
+    const fd = new FormData();
+    fd.append("image", dataUrlToBlob(image), "image.jpg");
+    fd.append("editPrompt", prompt);
+    fd.append("format", fmt);
+    fd.append("model", mdl);
+    if (genId) fd.append("generationId", genId);
+    return fd;
+  };
+
   const getExportBlob = async (): Promise<Blob | null> => {
     if (!currentImage) return null;
     if (isGift && tab === "edit" && result.imageBase64) {
@@ -380,7 +400,7 @@ export function PosterModal({
 
     try {
       // Pass generationId so upload+DB update happens server-side (no extra round-trip)
-      const editResult = await editDesignAction(currentImage, editPrompt.trim(), format, "edit", generationId);
+      const editResult = await editDesignAction(buildEditFormData(currentImage, editPrompt.trim(), format, "edit", generationId));
 
       if (editResult.status === "complete") {
         setPreviousImage(currentImage);
@@ -445,7 +465,7 @@ export function PosterModal({
         : `Reframe this design to ${cfg.aspectRatio} ratio. Keep all content, text, and colors.`;
 
       // Pass generationId so upload+DB update happens server-side (no extra round-trip)
-      const editResult = await editDesignAction(currentImage, reframePrompt, generationType === "menu" ? "menu" : fmt, "edit", generationId);
+      const editResult = await editDesignAction(buildEditFormData(currentImage, reframePrompt, generationType === "menu" ? "menu" : fmt, "edit", generationId));
       if (editResult.status === "complete") {
         setPreviousImage(currentImage);
         setPreviousFormat(selectedFormat);

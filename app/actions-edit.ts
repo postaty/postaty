@@ -16,12 +16,23 @@ export type EditDesignResult =
   | { status: "error"; error: string; errorType: "auth" | "rate_limit" | "validation" | "quota" | "capacity" | "generation" };
 
 export async function editDesignAction(
-  imageBase64: string,
-  editPrompt: string,
-  format: OutputFormat | "menu",
-  model: "edit" | "free" = "edit",
-  generationId?: string
+  formData: FormData
 ): Promise<EditDesignResult> {
+  // Extract fields from FormData (avoids Next.js serialization limit on large base64 strings)
+  const imageFile = formData.get("image") as File | null;
+  const editPrompt = (formData.get("editPrompt") as string | null) ?? "";
+  const format = (formData.get("format") as OutputFormat | "menu" | null) ?? "instagram-square";
+  const model: "edit" | "free" = (formData.get("model") as "edit" | "free" | null) ?? "edit";
+  const generationId = (formData.get("generationId") as string | null) ?? undefined;
+
+  // Convert File → base64 data URL
+  let imageBase64 = "";
+  if (imageFile && imageFile.size > 0) {
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    imageBase64 = `data:${imageFile.type || "image/jpeg"};base64,${buffer.toString("base64")}`;
+  }
+
   // Auth gate
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
