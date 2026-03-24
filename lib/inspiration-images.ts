@@ -36,7 +36,7 @@ const SEASONAL_DIRS: Partial<Record<Category, Partial<Record<CampaignType, strin
 };
 
 const INSPIRATIONS_ROOT = join(process.cwd(), "public", "inspirations");
-const MAX_IMAGES = 1;
+const MAX_IMAGES = 2;
 const RESIZE_WIDTH = 384;
 const RESIZE_HEIGHT = 480;
 const JPEG_QUALITY = 65;

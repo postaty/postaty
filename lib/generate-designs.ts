@@ -2,7 +2,7 @@
 
 import { generateText } from "ai";
 import { randomUUID } from "node:crypto";
-import { primaryImageModel, gatewayImageModel, freeImageModel, marketingContentModel, google } from "@/lib/ai";
+import { gatewayImageModel, editImageModel, gatewayEditImageModel, freeImageModel, marketingContentModel, google } from "@/lib/ai";
 import {
   getImageDesignSystemPrompt,
   getImageDesignUserMessage,
@@ -15,7 +15,7 @@ import { formatRecipeForPrompt } from "./design-recipes";
 import { selectRecipes } from "./design-recipes";
 import { getInspirationImages } from "./inspiration-images";
 import { FORMAT_CONFIGS } from "./constants";
-import { buildImageProviderOptions, compressImageFromDataUrl, compressLogoFromDataUrl, getSharp } from "./image-helpers";
+import { buildImageProviderOptions, compressImageFromDataUrl, compressLogoFromDataUrl } from "./image-helpers";
 import { resolvePosterLanguage } from "./resolved-language";
 import type { PostFormData, MarketingContentHub, SocialPlatform, PlatformContent } from "./types";
 import type { BrandKitPromptData } from "./prompts";
@@ -43,11 +43,13 @@ export type GenerationUsage = {
 
 // ── Model IDs ───────────────────────────────────────────────────────
 
-const PRIMARY_MODEL_ID = "gemini-3-pro-image-preview";
-const FALLBACK_MODEL_ID = "gemini-3-pro-image-preview (gateway)";
+const MODEL_1_ID = "gemini-3-pro-image-preview (gateway)";
+const MODEL_2_ID = "gemini-3.1-flash-image-preview (direct)";
+const MODEL_3_ID = "gemini-3.1-flash-image-preview (gateway)";
+const MODEL_1_PROVIDER_ID = "google/gemini-3-pro-image-preview";
+const MODEL_2_PROVIDER_ID = "gemini-3.1-flash-image-preview";
+const MODEL_3_PROVIDER_ID = "google/gemini-3.1-flash-image-preview";
 const FREE_MODEL_ID = "gemini-2.5-flash-image";
-const PRIMARY_PROVIDER_MODEL_ID = "gemini-3-pro-image-preview";
-const FALLBACK_PROVIDER_MODEL_ID = "google/gemini-3-pro-image-preview";
 const FREE_PROVIDER_MODEL_ID = "gemini-2.5-flash-image";
 const MARKETING_PROVIDER_MODEL_ID = "gemini-3-flash-preview";
 
@@ -147,7 +149,7 @@ export async function generatePoster(
 
   console.info("[generatePoster] start", {
     requestId,
-    model: PRIMARY_MODEL_ID,
+    model: MODEL_1_ID,
     recipe: recipe?.id ?? "none",
     inspirationCount: inspirationImages.length,
     format: data.format,
@@ -230,7 +232,7 @@ export async function generatePoster(
   const startTime = Date.now();
   let aiCallMs = 0;
   let result;
-  let usedModelId = PRIMARY_MODEL_ID;
+  let usedModelId = MODEL_1_ID;
 
   const generateRequest = {
     providerOptions: buildImageProviderOptions(formatConfig.aspectRatio, "1K", undefined, true),
@@ -241,43 +243,56 @@ export async function generatePoster(
   try {
     const aiStart = Date.now();
     result = await generateText({
-      model: primaryImageModel,
+      model: gatewayImageModel,
       maxRetries: 0,
       abortSignal: AbortSignal.timeout(POSTER_PRIMARY_TIMEOUT_MS),
       ...generateRequest,
     });
     aiCallMs = Date.now() - aiStart;
-  } catch (primaryErr) {
-    console.warn("[generatePoster] primary model failed, falling back to gateway", primaryErr instanceof Error ? primaryErr.message : primaryErr);
+  } catch (err1) {
+    console.warn("[generatePoster] model 1 failed, trying model 2", err1 instanceof Error ? err1.message : err1);
     try {
-      usedModelId = FALLBACK_MODEL_ID;
+      usedModelId = MODEL_2_ID;
       const aiStart = Date.now();
       result = await generateText({
-        model: gatewayImageModel,
+        model: editImageModel,
         maxRetries: 0,
         abortSignal: AbortSignal.timeout(POSTER_FALLBACK_TIMEOUT_MS),
         ...generateRequest,
       });
       aiCallMs = Date.now() - aiStart;
-    } catch (fallbackErr) {
-      const durationMs = Date.now() - startTime;
-      console.error("[generatePoster] gateway fallback also failed", fallbackErr);
-      const usage: GenerationUsage = {
-        route: "poster",
-        model: FALLBACK_MODEL_ID,
-        provider: "vercel_gateway",
-        providerModelId: FALLBACK_PROVIDER_MODEL_ID,
-        inputTokens: 0,
-        outputTokens: 0,
-        imagesGenerated: 0,
-        durationMs,
-        success: false,
-        error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
-      };
-      throw Object.assign(
-        new Error(`Image generation failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`),
-        { usage }
-      );
+    } catch (err2) {
+      console.warn("[generatePoster] model 2 failed, trying model 3", err2 instanceof Error ? err2.message : err2);
+      try {
+        usedModelId = MODEL_3_ID;
+        const aiStart = Date.now();
+        result = await generateText({
+          model: gatewayEditImageModel,
+          maxRetries: 0,
+          abortSignal: AbortSignal.timeout(POSTER_FALLBACK_TIMEOUT_MS),
+          ...generateRequest,
+        });
+        aiCallMs = Date.now() - aiStart;
+      } catch (err3) {
+        const durationMs = Date.now() - startTime;
+        console.error("[generatePoster] all models failed", err3);
+        const usage: GenerationUsage = {
+          route: "poster",
+          model: MODEL_3_ID,
+          provider: "vercel_gateway",
+          providerModelId: MODEL_3_PROVIDER_ID,
+          inputTokens: 0,
+          outputTokens: 0,
+          imagesGenerated: 0,
+          durationMs,
+          success: false,
+          error: err3 instanceof Error ? err3.message : String(err3),
+        };
+        throw Object.assign(
+          new Error(`Image generation failed: ${err3 instanceof Error ? err3.message : String(err3)}`),
+          { usage }
+        );
+      }
     }
   }
 
@@ -294,11 +309,13 @@ export async function generatePoster(
     const usage: GenerationUsage = {
       route: "poster",
       model: usedModelId,
-      provider: usedModelId === FALLBACK_MODEL_ID ? "vercel_gateway" : "google_direct",
+      provider: usedModelId === MODEL_2_ID ? "google_direct" : "vercel_gateway",
       providerModelId:
-        usedModelId === FALLBACK_MODEL_ID
-          ? FALLBACK_PROVIDER_MODEL_ID
-          : PRIMARY_PROVIDER_MODEL_ID,
+        usedModelId === MODEL_1_ID
+          ? MODEL_1_PROVIDER_ID
+          : usedModelId === MODEL_2_ID
+          ? MODEL_2_PROVIDER_ID
+          : MODEL_3_PROVIDER_ID,
       inputTokens: result.usage?.inputTokens ?? 0,
       outputTokens: result.usage?.outputTokens ?? 0,
       imagesGenerated: 0,
@@ -309,26 +326,21 @@ export async function generatePoster(
     throw Object.assign(new Error("Image model did not return an image"), { usage });
   }
 
-  // Resize to exact target dimensions for the selected format
-  const resizeStart = Date.now();
-  const sharp = await getSharp();
-  const resizedBuffer = await sharp(Buffer.from(imageFile.uint8Array))
-    .resize(formatConfig.width, formatConfig.height, { fit: "fill" })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-  const postprocessResizeMs = Date.now() - resizeStart;
-
-  const base64 = resizedBuffer.toString("base64");
-  const base64DataUrl = `data:image/jpeg;base64,${base64}`;
+  const outputBuffer = Buffer.from(imageFile.uint8Array);
+  const outputMediaType = imageFile.mediaType || "image/png";
+  const base64 = outputBuffer.toString("base64");
+  const base64DataUrl = `data:${outputMediaType};base64,${base64}`;
 
   const usage: GenerationUsage = {
     route: "poster",
     model: usedModelId,
-    provider: usedModelId === FALLBACK_MODEL_ID ? "vercel_gateway" : "google_direct",
+    provider: usedModelId === MODEL_2_ID ? "google_direct" : "vercel_gateway",
     providerModelId:
-      usedModelId === FALLBACK_MODEL_ID
-        ? FALLBACK_PROVIDER_MODEL_ID
-        : PRIMARY_PROVIDER_MODEL_ID,
+      usedModelId === MODEL_1_ID
+        ? MODEL_1_PROVIDER_ID
+        : usedModelId === MODEL_2_ID
+        ? MODEL_2_PROVIDER_ID
+        : MODEL_3_PROVIDER_ID,
     inputTokens: result.usage?.inputTokens ?? 0,
     outputTokens: result.usage?.outputTokens ?? 0,
     imagesGenerated: 1,
@@ -344,7 +356,6 @@ export async function generatePoster(
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     aiCallMs,
-    postprocessResizeMs,
   });
 
   return {
@@ -453,15 +464,10 @@ export async function generateGiftImage(
     throw Object.assign(new Error("Gift image model did not return an image"), { usage });
   }
 
-  // Resize to exact target dimensions for the selected format
-  const sharpGift = await getSharp();
-  const resizedGiftBuffer = await sharpGift(Buffer.from(imageFile.uint8Array))
-    .resize(formatConfig.width, formatConfig.height, { fit: "fill" })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-
-  const base64 = resizedGiftBuffer.toString("base64");
-  const base64DataUrl = `data:image/jpeg;base64,${base64}`;
+  const outputBuffer = Buffer.from(imageFile.uint8Array);
+  const outputMediaType = imageFile.mediaType || "image/png";
+  const base64 = outputBuffer.toString("base64");
+  const base64DataUrl = `data:${outputMediaType};base64,${base64}`;
 
   const usage: GenerationUsage = {
     route: "gift",
@@ -629,7 +635,12 @@ export async function generateMenuMarketingContent(
 
   const categoryLabel = data.menuCategory === "restaurant" ? "Restaurant / Cafe" : "Supermarket";
   const itemSummary = data.items
-    .map((item) => item.oldPrice ? `${item.name} (${item.price}, was ${item.oldPrice})` : `${item.name} (${item.price})`)
+    .map((item) => {
+      if (item.price && item.oldPrice) return `${item.name} (${item.price}, was ${item.oldPrice})`;
+      if (item.price) return `${item.name} (${item.price})`;
+      if (item.oldPrice) return `${item.name} (was ${item.oldPrice})`;
+      return item.name;
+    })
     .join(", ");
 
   const systemPrompt = `You are an expert social media marketing strategist specializing in MENA region businesses.

@@ -79,14 +79,12 @@ export function BeautyForm({ onSubmit, onPrewarmHint, isLoading, defaultValues }
 
     const salonName = (fd.get("salonName") as string)?.trim();
     const serviceName = (fd.get("serviceName") as string)?.trim();
-    const newPrice = (fd.get("newPrice") as string)?.trim();
-    const oldPrice = (fd.get("oldPrice") as string)?.trim();
+    const newPrice = (fd.get("newPrice") as string)?.trim() || undefined;
+    const oldPrice = (fd.get("oldPrice") as string)?.trim() || undefined;
     const whatsapp = (fd.get("whatsapp") as string)?.trim();
 
     if (!salonName) newErrors.salonName = t("اسم الصالون مطلوب", "Salon name is required");
     if (!serviceName) newErrors.serviceName = t("اسم الخدمة مطلوب", "Service name is required");
-    if (!newPrice) newErrors.newPrice = t("السعر الجديد مطلوب", "New price is required");
-    if (!oldPrice) newErrors.oldPrice = t("السعر القديم مطلوب", "Old price is required");
     if (!whatsapp) newErrors.whatsapp = t("رقم الواتساب مطلوب", "WhatsApp number is required");
     if (!logo) newErrors.logo = t("اللوجو مطلوب", "Logo is required");
     if (!serviceImage) newErrors.serviceImage = t("صورة الخدمة مطلوبة", "Service image is required");
@@ -110,8 +108,8 @@ export function BeautyForm({ onSubmit, onPrewarmHint, isLoading, defaultValues }
       postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as BeautyFormData["postType"]) ?? "salon-service",
       serviceName: serviceName!,
       benefit: (fd.get("benefit") as string) || undefined,
-      newPrice: newPrice!,
-      oldPrice: oldPrice!,
+      newPrice,
+      oldPrice,
       sessionDuration: (fd.get("sessionDuration") as string) || undefined,
       suitableFor: (fd.get("suitableFor") as string) || undefined,
       bookingCondition: (bookingConditionMap[bookingConditionLabel as keyof typeof bookingConditionMap] as BeautyFormData["bookingCondition"]) ?? "advance",
@@ -177,18 +175,16 @@ export function BeautyForm({ onSubmit, onPrewarmHint, isLoading, defaultValues }
 
             <div className="grid grid-cols-2 gap-4">
                 <FormInput
-                    label={t("السعر الجديد", "New price")}
+                    label={t("السعر الجديد (اختياري)", "New price (optional)")}
                     name="newPrice"
                     placeholder={t("299 ر.س", "$299")}
-                    required
                     icon={Tag}
                     error={errors.newPrice}
                 />
                 <FormInput
-                    label={t("السعر القديم", "Old price")}
+                    label={t("السعر القديم (اختياري)", "Old price (optional)")}
                     name="oldPrice"
                     placeholder={t("500 ر.س", "$500")}
-                    required
                     icon={Tag}
                     error={errors.oldPrice}
                 />

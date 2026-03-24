@@ -60,6 +60,8 @@ interface PosterModalProps {
   generationType?: "poster" | "menu";
   onCreditConsumed?: () => void;
   onEditComplete?: (newImageBase64: string, publicUrl?: string) => void;
+  /** When true, the first edit in this modal session is free (no credit charge). */
+  freeFirstEdit?: boolean;
 }
 
 type ModalTab = "preview" | "edit";
@@ -130,6 +132,7 @@ export function PosterModal({
   generationType = "poster",
   onCreditConsumed,
   onEditComplete,
+  freeFirstEdit = false,
 }: PosterModalProps) {
   const { locale, t } = useLocale();
   const [isExporting, setIsExporting] = useState(false);
@@ -355,7 +358,7 @@ export function PosterModal({
     }
   };
 
-  const isFirstEditFree = !firstEditUsed;
+  const isFirstEditFree = freeFirstEdit && !firstEditUsed;
 
   const handleEditDesign = async () => {
     if (!editPrompt.trim() || !currentImage || isEditing) return;

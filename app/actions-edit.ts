@@ -61,8 +61,6 @@ export async function editDesignAction(
       imageBase64,
       editPrompt: editPrompt.trim(),
       aspectRatio: formatConfig.aspectRatio,
-      width: formatConfig.width,
-      height: formatConfig.height,
       model,
       // Menu images are A4 with many small text elements — use a larger input size
       // so the model can read item names, prices, and descriptions accurately.

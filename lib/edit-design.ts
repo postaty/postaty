@@ -27,12 +27,10 @@ export async function editDesign(input: {
   imageBase64: string;
   editPrompt: string;
   aspectRatio: string;
-  width: number;
-  height: number;
   model?: "edit" | "free";
   inputMaxPx?: number;
 }): Promise<{ imageBase64: string; usage: GenerationUsage }> {
-  const { imageBase64, editPrompt, aspectRatio, width, height, model = "edit", inputMaxPx = 512 } = input;
+  const { imageBase64, editPrompt, aspectRatio, model = "edit", inputMaxPx = 512 } = input;
   const aiModel = model === "free" ? freeImageModel : gatewayEditImageModel;
   let usedModel = model === "free" ? FREE_MODEL_ID : EDIT_GATEWAY_MODEL_ID;
   let usedProvider: GenerationUsage["provider"] =
@@ -49,7 +47,6 @@ export async function editDesign(input: {
 
   // Compress input image before sending to the model.
   // Larger images (e.g. A4 menu) need a higher limit so small text stays readable.
-  // Output is always re-generated at 1K by Gemini, then resized to target by Sharp.
   const sharp = await getSharp();
   const compressedInput = await sharp(imageBuffer)
     .resize(inputMaxPx, inputMaxPx, { fit: "inside", withoutEnlargement: true })
@@ -83,7 +80,7 @@ export async function editDesign(input: {
     usedModel = EDIT_MODEL_ID;
     usedProvider = "google_direct";
     usedProviderModelId = EDIT_PROVIDER_MODEL_ID;
-    result = await generateText({ model: editImageModel, ...editRequest });
+    result = await generateText({ model: editImageModel, maxRetries: 0, abortSignal: AbortSignal.timeout(90_000), ...editRequest });
   }
 
   const durationMs = Date.now() - startTime;
@@ -109,14 +106,10 @@ export async function editDesign(input: {
     throw Object.assign(new Error("Edit model did not return an image"), { usage });
   }
 
-  // Resize to exact target dimensions
-  const resizedBuffer = await sharp(Buffer.from(imageFile.uint8Array))
-    .resize(width, height, { fit: "fill" })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-
-  const base64 = resizedBuffer.toString("base64");
-  const base64DataUrl = `data:image/jpeg;base64,${base64}`;
+  const outputBuffer = Buffer.from(imageFile.uint8Array);
+  const outputMediaType = imageFile.mediaType || "image/png";
+  const base64 = outputBuffer.toString("base64");
+  const base64DataUrl = `data:${outputMediaType};base64,${base64}`;
 
   const usage: GenerationUsage = {
     route: "edit",

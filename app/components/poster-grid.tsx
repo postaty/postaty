@@ -633,6 +633,7 @@ export const PosterGrid = memo(function PosterGrid({
         generationType={generationType}
         onCreditConsumed={onCreditConsumed}
         generationId={generationId}
+        freeFirstEdit
         onEditComplete={(newBase64) => {
           if (selectedResult) {
             pendingEditRef.current = { designIndex: selectedResult.designIndex, base64: newBase64 };

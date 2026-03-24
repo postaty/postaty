@@ -36,8 +36,8 @@ export interface RestaurantFormData {
   postType: "menu" | "meal-offer" | "delivery";
   mealName: string;
   description?: string;
-  newPrice: string;
-  oldPrice: string;
+  newPrice?: string;
+  oldPrice?: string;
   offerBadge?: "discount" | "new" | "bestseller";
   deliveryType?: "free" | "paid";
   deliveryTime?: string;
@@ -59,8 +59,8 @@ export interface SupermarketFormData {
   postType: "product" | "daily-offers" | "section-sales";
   productName: string;
   quantity?: string;
-  newPrice: string;
-  oldPrice: string;
+  newPrice?: string;
+  oldPrice?: string;
   discountPercentage?: string;
   offerLimit?: string;
   offerDuration?: string;
@@ -81,8 +81,8 @@ export interface EcommerceFormData {
   postType: "product" | "sales" | "new-arrival";
   productName: string;
   features?: string;
-  newPrice: string;
-  oldPrice: string;
+  newPrice?: string;
+  oldPrice?: string;
   colorSize?: string;
   availability: "in-stock" | "out-of-stock" | "preorder";
   shippingDuration?: string;
@@ -103,7 +103,7 @@ export interface ServicesFormData {
   serviceType: string;
   serviceName: string;
   serviceDetails?: string;
-  price: string;
+  price?: string;
   priceType: "fixed" | "starting-from";
   executionTime?: string;
   coverageArea?: string;
@@ -126,8 +126,8 @@ export interface FashionFormData {
   postType: "product" | "discount" | "collection";
   itemName: string;
   description?: string;
-  newPrice: string;
-  oldPrice: string;
+  newPrice?: string;
+  oldPrice?: string;
   availableSizes?: string;
   availableColors?: string;
   offerNote?: string;
@@ -148,8 +148,8 @@ export interface BeautyFormData {
   postType: "salon-service" | "spa-session" | "beauty-product";
   serviceName: string;
   benefit?: string;
-  newPrice: string;
-  oldPrice: string;
+  newPrice?: string;
+  oldPrice?: string;
   sessionDuration?: string;
   suitableFor?: string;
   bookingCondition: "advance" | "available-now";
@@ -172,7 +172,7 @@ export type PostFormData =
 export interface MenuItemData {
   image: string;    // base64
   name: string;
-  price: string;
+  price?: string;
   oldPrice?: string;
 }
 

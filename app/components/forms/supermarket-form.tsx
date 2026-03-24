@@ -61,14 +61,12 @@ export function SupermarketForm({ onSubmit, onPrewarmHint, isLoading, defaultVal
 
     const supermarketName = (fd.get("supermarketName") as string)?.trim();
     const productName = (fd.get("productName") as string)?.trim();
-    const newPrice = (fd.get("newPrice") as string)?.trim();
-    const oldPrice = (fd.get("oldPrice") as string)?.trim();
+    const newPrice = (fd.get("newPrice") as string)?.trim() || undefined;
+    const oldPrice = (fd.get("oldPrice") as string)?.trim() || undefined;
     const whatsapp = (fd.get("whatsapp") as string)?.trim();
 
     if (!supermarketName) newErrors.supermarketName = t("اسم السوبر ماركت مطلوب", "Supermarket name is required");
     if (!productName) newErrors.productName = t("اسم المنتج مطلوب", "Product name is required");
-    if (!newPrice) newErrors.newPrice = t("السعر الجديد مطلوب", "New price is required");
-    if (!oldPrice) newErrors.oldPrice = t("السعر القديم مطلوب", "Old price is required");
     if (!whatsapp) newErrors.whatsapp = t("رقم الواتساب مطلوب", "WhatsApp number is required");
     if (!logo) newErrors.logo = t("اللوجو مطلوب", "Logo is required");
     if (!productImage) newErrors.productImages = t("صورة المنتج مطلوبة", "Product image is required");
@@ -91,8 +89,8 @@ export function SupermarketForm({ onSubmit, onPrewarmHint, isLoading, defaultVal
       postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as SupermarketFormData["postType"]) ?? "product",
       productName: productName!,
       quantity: (fd.get("quantity") as string) || undefined,
-      newPrice: newPrice!,
-      oldPrice: oldPrice!,
+      newPrice,
+      oldPrice,
       discountPercentage: (fd.get("discountPercentage") as string) || undefined,
       offerLimit: (fd.get("offerLimit") as string) || undefined,
       offerDuration: (fd.get("offerDuration") as string) || undefined,
@@ -126,8 +124,8 @@ export function SupermarketForm({ onSubmit, onPrewarmHint, isLoading, defaultVal
             <FormInput label={t("اسم المنتج", "Product name")} name="productName" placeholder={t("مثال: شيبسي ليز", "Example: Chips")} required icon={ShoppingBasket} error={errors.productName} />
             <FormInput label={t("الكمية / الوزن (اختياري)", "Quantity / weight (optional)")} name="quantity" placeholder={t("مثال: 200 جرام أو 6 حبات", "Example: 200g or 6 pieces")} icon={Scale} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput label={t("السعر الجديد", "New price")} name="newPrice" placeholder={t("15 ر.س", "$15")} required icon={Tag} error={errors.newPrice} />
-                <FormInput label={t("السعر القديم", "Old price")} name="oldPrice" placeholder={t("25 ر.س", "$25")} required icon={Tag} error={errors.oldPrice} />
+                <FormInput label={t("السعر الجديد (اختياري)", "New price (optional)")} name="newPrice" placeholder={t("15 ر.س", "$15")} icon={Tag} error={errors.newPrice} />
+                <FormInput label={t("السعر القديم (اختياري)", "Old price (optional)")} name="oldPrice" placeholder={t("25 ر.س", "$25")} icon={Tag} error={errors.oldPrice} />
             </div>
             <FormInput label={t("نسبة الخصم (اختياري)", "Discount percentage (optional)")} name="discountPercentage" placeholder={t("مثال: 40", "Example: 40")} icon={Percent} />
             <FormInput label={t("حد العرض (اختياري)", "Offer limit (optional)")} name="offerLimit" placeholder={t("مثال: 3 قطع لكل عميل", "Example: 3 units per customer")} icon={Package} />

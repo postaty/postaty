@@ -16,8 +16,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
-const INSTAPAY_LINK = "https://ipn.eg/S/hadeereltlawy/instapay/7btx4F";
-const INSTAPAY_USERNAME = "hadeereltlawy@instapay";
+const INSTAPAY_LINK = "https://ipn.eg/S/hadeer.eltlawy95/instapay/0hU5Gq";
+const INSTAPAY_USERNAME = "hadeer.eltlawy95@instapay";
 
 const EGP_PLANS = [
   { key: "starter", label: "Starter", labelAr: "المبتدئ", credits: 150, egp: 499 },
@@ -238,8 +238,17 @@ export default function InstapaySection() {
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition-colors"
                     >
                       <ExternalLink size={16} />
-                      {t("اضغط هنا للتحويل عبر InstaPay", "Click here to transfer via InstaPay")}
+                      {t("اضغط الرابط لإرسال نقود", "Open the InstaPay payment link")}
                     </a>
+                    <div className="text-center space-y-1">
+                      <p className="text-sm text-muted">
+                        {t("اضغط الرابط لارسال نقود الى", "Tap the link to send money to")}
+                      </p>
+                      <p className="font-mono font-bold text-sm text-purple-500" dir="ltr">
+                        {INSTAPAY_USERNAME}
+                      </p>
+                      <p className="text-xs text-muted">Powered by InstaPay</p>
+                    </div>
                   </div>
                 </div>
               </div>

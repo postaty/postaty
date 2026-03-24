@@ -10,7 +10,6 @@ import {
   buildImageProviderOptions,
   compressImageFromDataUrl,
   compressLogoFromDataUrl,
-  getSharp,
 } from "./image-helpers";
 
 import type { MenuFormData } from "./types";
@@ -123,7 +122,12 @@ export async function generateMenu(
 
   contextText += `The next ${translatedData.items.length} images are the product/item photos (in order):\n`;
   translatedData.items.forEach((item, i) => {
-    contextText += `  Image ${inspirationImages.length + i + 1}: "${item.name}" — Price: ${item.price}\n`;
+    const priceSummary = item.price
+      ? `Price: ${item.price}${item.oldPrice ? ` (was ${item.oldPrice})` : ""}`
+      : item.oldPrice
+      ? `Original price: ${item.oldPrice}`
+      : "No price provided";
+    contextText += `  Image ${inspirationImages.length + i + 1}: "${item.name}" — ${priceSummary}\n`;
   });
   contextText += `Display each product photo EXACTLY as provided. Do NOT redraw or stylize them.\n`;
   contextText += `You MUST render EXACTLY ${translatedData.items.length} menu items (no more, no less), and each listed item must appear exactly once.\n\n`;
@@ -226,15 +230,10 @@ export async function generateMenu(
     throw Object.assign(new Error("Menu image model did not return an image"), { usage });
   }
 
-  // Resize to A4 dimensions and output as JPEG to keep file size under 10MB
-  const sharp = await getSharp();
-  const resizedBuffer = await sharp(Buffer.from(imageFile.uint8Array))
-    .resize(formatConfig.width, formatConfig.height, { fit: "fill" })
-    .jpeg({ quality: 92 })
-    .toBuffer();
-
-  const base64 = resizedBuffer.toString("base64");
-  const base64DataUrl = `data:image/jpeg;base64,${base64}`;
+  const outputBuffer = Buffer.from(imageFile.uint8Array);
+  const outputMediaType = imageFile.mediaType || "image/png";
+  const base64 = outputBuffer.toString("base64");
+  const base64DataUrl = `data:${outputMediaType};base64,${base64}`;
 
   const usage: GenerationUsage = {
     route: "menu",

@@ -68,14 +68,12 @@ export function EcommerceForm({ onSubmit, onPrewarmHint, isLoading, defaultValue
 
     const shopName = (fd.get("shopName") as string)?.trim();
     const productName = (fd.get("productName") as string)?.trim();
-    const newPrice = (fd.get("newPrice") as string)?.trim();
-    const oldPrice = (fd.get("oldPrice") as string)?.trim();
+    const newPrice = (fd.get("newPrice") as string)?.trim() || undefined;
+    const oldPrice = (fd.get("oldPrice") as string)?.trim() || undefined;
     const whatsapp = (fd.get("whatsapp") as string)?.trim();
 
     if (!shopName) newErrors.shopName = t("اسم المتجر مطلوب", "Store name is required");
     if (!productName) newErrors.productName = t("اسم المنتج مطلوب", "Product name is required");
-    if (!newPrice) newErrors.newPrice = t("السعر الجديد مطلوب", "New price is required");
-    if (!oldPrice) newErrors.oldPrice = t("السعر القديم مطلوب", "Old price is required");
     if (!whatsapp) newErrors.whatsapp = t("رقم الواتساب مطلوب", "WhatsApp number is required");
     if (!logo) newErrors.logo = t("اللوجو مطلوب", "Logo is required");
     if (!productImage) newErrors.productImage = t("صورة المنتج مطلوبة", "Product image is required");
@@ -99,8 +97,8 @@ export function EcommerceForm({ onSubmit, onPrewarmHint, isLoading, defaultValue
       postType: (postTypeMap[postTypeLabel as keyof typeof postTypeMap] as EcommerceFormData["postType"]) ?? "product",
       productName: productName!,
       features: (fd.get("features") as string) || undefined,
-      newPrice: newPrice!,
-      oldPrice: oldPrice!,
+      newPrice,
+      oldPrice,
       colorSize: (fd.get("colorSize") as string) || undefined,
       availability: (availabilityMap[availabilityLabel as keyof typeof availabilityMap] as EcommerceFormData["availability"]) ?? "in-stock",
       shippingDuration: (fd.get("shippingDuration") as string) || undefined,
@@ -134,8 +132,8 @@ export function EcommerceForm({ onSubmit, onPrewarmHint, isLoading, defaultValue
             <FormInput label={t("اسم المنتج", "Product name")} name="productName" placeholder={t("مثال: سماعات أيربودز", "Example: AirPods")} required icon={ShoppingBag} error={errors.productName} />
             <FormInput label={t("المميزات (اختياري)", "Features (optional)")} name="features" placeholder={t("مثال: بلوتوث 5.0 - عزل ضوضاء - شحن لاسلكي", "Example: Bluetooth 5.0 - Noise cancelling - Wireless charging")} icon={FileText} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput label={t("السعر الجديد", "New price")} name="newPrice" placeholder={t("199 ر.س", "$199")} required icon={Tag} error={errors.newPrice} />
-                <FormInput label={t("السعر القديم", "Old price")} name="oldPrice" placeholder={t("350 ر.س", "$350")} required icon={Tag} error={errors.oldPrice} />
+                <FormInput label={t("السعر الجديد (اختياري)", "New price (optional)")} name="newPrice" placeholder={t("199 ر.س", "$199")} icon={Tag} error={errors.newPrice} />
+                <FormInput label={t("السعر القديم (اختياري)", "Old price (optional)")} name="oldPrice" placeholder={t("350 ر.س", "$350")} icon={Tag} error={errors.oldPrice} />
             </div>
             <FormInput label={t("اللون / المقاس (اختياري)", "Color / size (optional)")} name="colorSize" placeholder={t("مثال: أبيض - أسود / مقاس M", "Example: White - Black / Size M")} icon={Palette} />
             <FormSelect label={t("التوفر", "Availability")} name="availability" options={availabilityOptions} required icon={Package} />

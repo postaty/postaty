@@ -52,6 +52,27 @@ Motifs: minimal sparkles, starbursts, confetti dots (small and tasteful).
 Tone: joyful, premium, modern. Keep the layout clean and balanced.`,
 };
 
+function formatPriceContext(newPrice?: string, oldPrice?: string): string {
+  if (newPrice && oldPrice) return `Prices: ${newPrice} / ${oldPrice}`;
+  if (newPrice) return `Price: ${newPrice}`;
+  if (oldPrice) return `Original price: ${oldPrice}`;
+  return "Prices: not provided";
+}
+
+function posterPriceInventoryLines(input: {
+  newPrice?: string;
+  oldPrice?: string;
+  price?: string;
+  priceTypeText?: string | null;
+}): string {
+  const lines: string[] = [];
+  if (input.newPrice) lines.push(`- New price: "${input.newPrice}"`);
+  if (input.oldPrice) lines.push(`- Old price: "${input.oldPrice}"`);
+  if (input.priceTypeText && input.price) lines.push(`- Price type: "${input.priceTypeText}"`);
+  if (input.price) lines.push(`- Price: "${input.price}"`);
+  return lines.length > 0 ? `${lines.join("\n")}\n` : "";
+}
+
 // ── Image Generation System Prompt ───────────────────────────────
 
 export function getImageDesignSystemPrompt(
@@ -305,7 +326,7 @@ export function getImageDesignUserMessage(
       return `Create a professional poster image for this restaurant offer.
 
 (The following is CONTEXT ONLY for understanding the business — do NOT render these labels or field names on the poster)
-Restaurant: ${data.restaurantName} | Meal: ${data.mealName} | Prices: ${data.newPrice} / ${data.oldPrice}
+Restaurant: ${data.restaurantName} | Meal: ${data.mealName} | ${formatPriceContext(data.newPrice, data.oldPrice)}
 ${data.description ? `Description: ${data.description}` : ""}
 ${campaignLine}
 
@@ -314,8 +335,7 @@ The meal photo and restaurant logo are provided as images in this message.
 ${inventoryHeader}
 - Business name: "${data.restaurantName}" (proper noun — do NOT translate)
 ${fieldLine("Product name", data.mealName, langName, preTranslated)}
-${data.description ? `${fieldLine("Description", data.description, langName, preTranslated)}\n` : ""}- New price: "${data.newPrice}"
-- Old price: "${data.oldPrice}"
+${data.description ? `${fieldLine("Description", data.description, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ newPrice: data.newPrice, oldPrice: data.oldPrice })}
 ${badgeText ? `- Offer badge: "${badgeText}"\n` : ""}${deliveryText ? `- Delivery: "${deliveryText}"\n` : ""}${data.deliveryTime ? `${fieldLine("Delivery time", data.deliveryTime, langName, preTranslated)}\n` : ""}${data.coverageAreas ? `${fieldLine("Coverage areas", data.coverageAreas, langName, preTranslated)}\n` : ""}${data.offerDuration ? `${fieldLine("Offer duration", data.offerDuration, langName, preTranslated)}\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No "menu", no extra labels, no decorative text.`;
@@ -324,7 +344,7 @@ NOTHING else. No "menu", no extra labels, no decorative text.`;
       return `Create a professional poster image for this supermarket offer.
 
 (CONTEXT ONLY — do NOT render these labels on the poster)
-Supermarket: ${data.supermarketName} | Product: ${data.productName} | Prices: ${data.newPrice} / ${data.oldPrice}
+Supermarket: ${data.supermarketName} | Product: ${data.productName} | ${formatPriceContext(data.newPrice, data.oldPrice)}
 ${campaignLine}
 
 The product photo and supermarket logo are provided as images in this message.
@@ -332,8 +352,7 @@ The product photo and supermarket logo are provided as images in this message.
 ${inventoryHeader}
 - Business name: "${data.supermarketName}" (proper noun — do NOT translate)
 ${fieldLine("Product name", data.productName, langName, preTranslated)}
-${data.quantity ? `${fieldLine("Quantity", data.quantity, langName, preTranslated)}\n` : ""}- New price: "${data.newPrice}"
-- Old price: "${data.oldPrice}"
+${data.quantity ? `${fieldLine("Quantity", data.quantity, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ newPrice: data.newPrice, oldPrice: data.oldPrice })}
 ${data.discountPercentage ? `- Discount: "${data.discountPercentage}%"\n` : ""}${data.offerDuration ? `${fieldLine("Offer duration", data.offerDuration, langName, preTranslated)}\n` : ""}${data.offerLimit ? `${fieldLine("Offer limit", data.offerLimit, langName, preTranslated)}\n` : ""}${data.expiryDate ? `- Expiry date: "${data.expiryDate}"\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No extra labels, no decorative text.`;
@@ -342,7 +361,7 @@ NOTHING else. No extra labels, no decorative text.`;
       return `Create a professional poster image for this e-commerce product.
 
 (CONTEXT ONLY — do NOT render these labels on the poster)
-Shop: ${data.shopName} | Product: ${data.productName} | Prices: ${data.newPrice} / ${data.oldPrice}
+Shop: ${data.shopName} | Product: ${data.productName} | ${formatPriceContext(data.newPrice, data.oldPrice)}
 ${campaignLine}
 
 The product photo and shop logo are provided as images in this message.
@@ -350,8 +369,7 @@ The product photo and shop logo are provided as images in this message.
 ${inventoryHeader}
 - Business name: "${data.shopName}" (proper noun — do NOT translate)
 ${fieldLine("Product name", data.productName, langName, preTranslated)}
-${data.features ? `${fieldLine("Features", data.features, langName, preTranslated)}\n` : ""}- New price: "${data.newPrice}"
-- Old price: "${data.oldPrice}"
+${data.features ? `${fieldLine("Features", data.features, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ newPrice: data.newPrice, oldPrice: data.oldPrice })}
 ${data.colorSize ? `${fieldLine("Color/Size", data.colorSize, langName, preTranslated)}\n` : ""}${availabilityText ? `- Availability: "${availabilityText}"\n` : ""}${data.shippingDuration ? `${fieldLine("Shipping", data.shippingDuration, langName, preTranslated)}\n` : ""}${data.purchaseLink ? `- Purchase link: "${data.purchaseLink}"\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No extra labels, no decorative text.`;
@@ -360,7 +378,7 @@ NOTHING else. No extra labels, no decorative text.`;
       return `Create a professional poster image for this service offer.
 
 (CONTEXT ONLY — do NOT render these labels on the poster)
-Business: ${data.businessName} | Service: ${data.serviceName} | Price: ${data.price}
+Business: ${data.businessName} | Service: ${data.serviceName} | ${data.price ? `Price: ${data.price}` : "Price: not provided"}
 ${campaignLine}
 
 The business logo is provided as an image in this message.
@@ -369,7 +387,7 @@ ${data.serviceImage ? `A service image is also provided — use it as the hero e
 ${inventoryHeader}
 - Business name: "${data.businessName}" (proper noun — do NOT translate)
 ${fieldLine("Service name", data.serviceName, langName, preTranslated)}
-${data.serviceDetails ? `${fieldLine("Details", data.serviceDetails, langName, preTranslated)}\n` : ""}${priceTypeText ? `- Price type: "${priceTypeText}"\n` : ""}- Price: "${data.price}"
+${data.serviceDetails ? `${fieldLine("Details", data.serviceDetails, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ price: data.price, priceTypeText })}
 ${data.executionTime ? `${fieldLine("Execution time", data.executionTime, langName, preTranslated)}\n` : ""}${data.coverageArea ? `${fieldLine("Coverage", data.coverageArea, langName, preTranslated)}\n` : ""}${data.warranty ? `${fieldLine("Warranty", data.warranty, langName, preTranslated)}\n` : ""}${data.quickFeatures ? `${fieldLine("Features", data.quickFeatures, langName, preTranslated)}\n` : ""}${data.offerDuration ? `${fieldLine("Offer duration", data.offerDuration, langName, preTranslated)}\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No extra labels, no decorative text.`;
@@ -378,7 +396,7 @@ NOTHING else. No extra labels, no decorative text.`;
       return `Create a professional poster image for this fashion brand.
 
 (CONTEXT ONLY — do NOT render these labels on the poster)
-Brand: ${data.brandName} | Item: ${data.itemName} | Prices: ${data.newPrice} / ${data.oldPrice}
+Brand: ${data.brandName} | Item: ${data.itemName} | ${formatPriceContext(data.newPrice, data.oldPrice)}
 ${campaignLine}
 
 The product photo and brand logo are provided as images in this message.
@@ -386,8 +404,7 @@ The product photo and brand logo are provided as images in this message.
 ${inventoryHeader}
 - Brand name: "${data.brandName}" (proper noun — do NOT translate)
 ${fieldLine("Item name", data.itemName, langName, preTranslated)}
-${data.description ? `${fieldLine("Description", data.description, langName, preTranslated)}\n` : ""}- New price: "${data.newPrice}"
-- Old price: "${data.oldPrice}"
+${data.description ? `${fieldLine("Description", data.description, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ newPrice: data.newPrice, oldPrice: data.oldPrice })}
 ${data.availableSizes ? `${fieldLine("Sizes", data.availableSizes, langName, preTranslated)}\n` : ""}${data.availableColors ? `${fieldLine("Colors", data.availableColors, langName, preTranslated)}\n` : ""}${data.offerNote ? `${fieldLine("Offer note", data.offerNote, langName, preTranslated)}\n` : ""}${data.offerDuration ? `${fieldLine("Offer duration", data.offerDuration, langName, preTranslated)}\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No extra labels, no decorative text.`;
@@ -396,7 +413,7 @@ NOTHING else. No extra labels, no decorative text.`;
       return `Create a professional poster image for this beauty/salon offer.
 
 (CONTEXT ONLY — do NOT render these labels on the poster)
-Salon: ${data.salonName} | Service: ${data.serviceName} | Prices: ${data.newPrice} / ${data.oldPrice}
+Salon: ${data.salonName} | Service: ${data.serviceName} | ${formatPriceContext(data.newPrice, data.oldPrice)}
 ${campaignLine}
 
 The service/product image and salon logo are provided as images in this message.
@@ -404,8 +421,7 @@ The service/product image and salon logo are provided as images in this message.
 ${inventoryHeader}
 - Salon name: "${data.salonName}" (proper noun — do NOT translate)
 ${fieldLine("Service name", data.serviceName, langName, preTranslated)}
-${data.benefit ? `${fieldLine("Benefit", data.benefit, langName, preTranslated)}\n` : ""}- New price: "${data.newPrice}"
-- Old price: "${data.oldPrice}"
+${data.benefit ? `${fieldLine("Benefit", data.benefit, langName, preTranslated)}\n` : ""}${posterPriceInventoryLines({ newPrice: data.newPrice, oldPrice: data.oldPrice })}
 ${data.sessionDuration ? `${fieldLine("Duration", data.sessionDuration, langName, preTranslated)}\n` : ""}${data.suitableFor ? `${fieldLine("Suitable for", data.suitableFor, langName, preTranslated)}\n` : ""}${bookingConditionText ? `- Booking: "${bookingConditionText}"\n` : ""}${data.offerDuration ? `${fieldLine("Offer duration", data.offerDuration, langName, preTranslated)}\n` : ""}- CTA: "${cta}"
 - WhatsApp: "${data.whatsapp}"
 NOTHING else. No extra labels, no decorative text.`;
@@ -447,7 +463,7 @@ Visual mood: ${GIFT_CATEGORY_VIBES[data.category]}
 Output: A single ${fmt.width}x${fmt.height} (${fmt.aspectRatio}) image. Pure visual art — zero text.`;
 }
 
-export function getGiftImageUserMessage(data: PostFormData): string {
+export function getGiftImageUserMessage(): string {
   return `Create a visually stunning promotional image with NO TEXT whatsoever.
 
 The first image is the product/meal — make it the hero of the composition.

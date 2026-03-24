@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Store, ShoppingCart, UtensilsCrossed, Tag, Phone, MapPin, Plus, Trash2, Percent } from "lucide-react";
+import { Store, Tag, Phone, MapPin, Plus, Trash2, Percent } from "lucide-react";
 import type { MenuFormData, MenuCategory, CampaignType, MenuItemData } from "@/lib/types";
 import { MENU_CONFIG } from "@/lib/constants";
 import { ImageUpload } from "../image-upload";
@@ -21,7 +21,7 @@ function createEmptyItem(): MenuItemData {
 }
 
 export function MenuForm({ menuCategory, onSubmit, isLoading, defaultValues }: MenuFormProps) {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const [campaignType, setCampaignType] = useState<CampaignType>("standard");
   const [logoOverride, setLogoOverride] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<MenuItemData[]>([
@@ -66,7 +66,6 @@ export function MenuForm({ menuCategory, onSubmit, isLoading, defaultValues }: M
     items.forEach((item, i) => {
       if (!item.image) newErrors[`item_${i}_image`] = t("صورة المنتج مطلوبة", "Product image is required");
       if (!item.name.trim()) newErrors[`item_${i}_name`] = t("اسم المنتج مطلوب", "Product name is required");
-      if (!item.price.trim()) newErrors[`item_${i}_price`] = t("السعر مطلوب", "Price is required");
     });
 
     if (Object.keys(newErrors).length > 0) {
@@ -85,7 +84,7 @@ export function MenuForm({ menuCategory, onSubmit, isLoading, defaultValues }: M
       items: items.map((item) => ({
         image: item.image,
         name: item.name.trim(),
-        price: item.price.trim(),
+        price: item.price?.trim() || undefined,
         oldPrice: item.oldPrice?.trim() || undefined,
       })),
     });
@@ -205,7 +204,7 @@ export function MenuForm({ menuCategory, onSubmit, isLoading, defaultValues }: M
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-foreground mb-1 block">
-                        {t("السعر", "Price")}
+                        {t("السعر (اختياري)", "Price (optional)")}
                       </label>
                       <div className="relative">
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -213,7 +212,7 @@ export function MenuForm({ menuCategory, onSubmit, isLoading, defaultValues }: M
                         </div>
                         <input
                           type="text"
-                          value={item.price}
+                          value={item.price ?? ""}
                           onChange={(e) => updateItem(index, "price", e.target.value)}
                           placeholder={t("مثال: 5.99$", "Example: $5.99")}
                           className={`w-full pr-10 pl-4 py-3 bg-surface-1 border rounded-xl outline-none text-foreground placeholder:text-muted-foreground font-medium transition-all focus:bg-surface-2 focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-primary/30 ${

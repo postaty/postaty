@@ -78,14 +78,12 @@ export function RestaurantForm({ onSubmit, onPrewarmHint, isLoading, defaultValu
 
     const restaurantName = (fd.get("restaurantName") as string)?.trim();
     const mealName = (fd.get("mealName") as string)?.trim();
-    const newPrice = (fd.get("newPrice") as string)?.trim();
-    const oldPrice = (fd.get("oldPrice") as string)?.trim();
+    const newPrice = (fd.get("newPrice") as string)?.trim() || undefined;
+    const oldPrice = (fd.get("oldPrice") as string)?.trim() || undefined;
     const whatsapp = (fd.get("whatsapp") as string)?.trim();
 
     if (!restaurantName) newErrors.restaurantName = t("اسم المطعم مطلوب", "Restaurant name is required");
     if (!mealName) newErrors.mealName = t("اسم الوجبة مطلوب", "Meal name is required");
-    if (!newPrice) newErrors.newPrice = t("السعر الجديد مطلوب", "New price is required");
-    if (!oldPrice) newErrors.oldPrice = t("السعر القديم مطلوب", "Old price is required");
     if (!whatsapp) newErrors.whatsapp = t("رقم الواتساب مطلوب", "WhatsApp number is required");
     if (!logo) newErrors.logo = t("اللوجو مطلوب", "Logo is required");
     if (!mealImage) newErrors.mealImage = t("صورة الوجبة مطلوبة", "Meal image is required");
@@ -110,8 +108,8 @@ export function RestaurantForm({ onSubmit, onPrewarmHint, isLoading, defaultValu
       postType: (postTypeValueMap[postTypeLabel as keyof typeof postTypeValueMap] as RestaurantFormData["postType"]) ?? "meal-offer",
       mealName: mealName!,
       description: (fd.get("description") as string) || undefined,
-      newPrice: newPrice!,
-      oldPrice: oldPrice!,
+      newPrice,
+      oldPrice,
       offerBadge: offerBadgeLabel ? (offerBadgeValueMap[offerBadgeLabel as keyof typeof offerBadgeValueMap] as NonNullable<RestaurantFormData["offerBadge"]>) : undefined,
       deliveryType: deliveryLabel ? (deliveryValueMap[deliveryLabel as keyof typeof deliveryValueMap] as NonNullable<RestaurantFormData["deliveryType"]>) : undefined,
       deliveryTime: (fd.get("deliveryTime") as string) || undefined,
@@ -150,8 +148,8 @@ export function RestaurantForm({ onSubmit, onPrewarmHint, isLoading, defaultValu
             <FormInput label={t("اسم الوجبة", "Meal name")} name="mealName" placeholder={t("مثال: شاورما دجاج", "Example: Chicken Shawarma")} required icon={Utensils} error={errors.mealName} />
             <FormInput label={t("وصف سريع (اختياري)", "Quick description (optional)")} name="description" placeholder={t("مثال: برجر + بطاطس + مشروب", "Example: Burger + Fries + Drink")} icon={FileText} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput label={t("السعر الجديد", "New price")} name="newPrice" placeholder={t("25 ر.س", "$25")} required icon={Tag} error={errors.newPrice} />
-                <FormInput label={t("السعر القديم", "Old price")} name="oldPrice" placeholder={t("40 ر.س", "$40")} required icon={Tag} error={errors.oldPrice} />
+                <FormInput label={t("السعر الجديد (اختياري)", "New price (optional)")} name="newPrice" placeholder={t("25 ر.س", "$25")} icon={Tag} error={errors.newPrice} />
+                <FormInput label={t("السعر القديم (اختياري)", "Old price (optional)")} name="oldPrice" placeholder={t("40 ر.س", "$40")} icon={Tag} error={errors.oldPrice} />
             </div>
             <FormSelect label={t("شارة العرض (اختياري)", "Offer badge (optional)")} name="offerBadge" options={badges} icon={Award} />
             <div className="grid grid-cols-2 gap-4">

@@ -15,20 +15,29 @@ function getGridLayoutGuidance(itemCount: number): string {
   return `  - Use a 3×3 grid (3 rows, 3 columns)`;
 }
 
+function formatMenuItemPrice(item: MenuFormData["items"][number]): string {
+  if (item.price && item.oldPrice) {
+    return `Price: ${item.price} (was ${item.oldPrice} — show as crossed-out original price with discount)`;
+  }
+  if (item.price) return `Price: ${item.price}`;
+  if (item.oldPrice) return `Original price: ${item.oldPrice}`;
+  return "No price provided";
+}
+
 // ── Menu Category Style Guidance ─────────────────────────────────
 
 const MENU_CATEGORY_STYLES: Record<MenuCategory, string> = {
   restaurant: `Category: Restaurant / Cafe Menu
 Color palette: warm appetizing tones — deep reds, golds, cream, warm browns, or dark wood textures.
-Style: Professional menu layout. Each item gets a dedicated section with its photo prominently displayed alongside name and price.
+Style: Professional menu layout. Each item gets a dedicated section with its photo prominently displayed alongside name and any provided price.
 Layout inspiration: Think restaurant menu boards, cafe chalkboard menus, or printed menu cards.
 Products should look appetizing and well-presented.`,
 
   supermarket: `Category: Supermarket Product Catalog / Flyer
 Color palette: energetic retail — bright reds, yellows, greens on white or cream backgrounds.
-Style: Bold product catalog with prominent price tags and eye-catching borders.
+Style: Bold product catalog with prominent product cards and eye-catching borders.
 Layout inspiration: Think grocery store product catalogs, organized product displays.
-Products should be clear and identifiable with prices as the focal point.
+Products should be clear and identifiable. When prices are provided, make them a focal point.
 IMPORTANT: Do NOT add sale/offer/discount elements unless the user explicitly provided old prices.`,
 };
 
@@ -57,16 +66,18 @@ export function getMenuSystemPrompt(
 Generate a SINGLE high-quality A4 portrait menu image (${fmt.width}x${fmt.height} pixels).
 
 ## CRITICAL: This is a MULTI-ITEM MENU/CATALOG — NOT a single-product poster
-- You will receive ${data.items.length} product/item images, each with a name and price
+- You will receive ${data.items.length} product/item images, each with a name and optionally a price
 - You MUST display ALL ${data.items.length} items on the page
-- Each item MUST show: its product photo, its name, and its price
+- Each item MUST show: its product photo and its name
+- Show prices only for items where the user provided a price
 - Do NOT omit any item — every single one must appear
 
 ## Layout Structure (A4 Portrait)
 - **Top section**: Business name + logo prominently displayed
 - **Main section**: All ${data.items.length} items arranged in an organized grid
 ${getGridLayoutGuidance(data.items.length)}
-  - Each item gets: product photo (prominent) + name (clear text) + price (bold, visible)
+  - Each item gets: product photo (prominent) + name (clear text)
+  - If a price is provided, show it clearly and prominently
   - Items should have equal visual weight — no item should dominate over others
 - **Bottom section**: WhatsApp contact number (no invented CTA or tagline text)
 
@@ -114,7 +125,7 @@ ${brandKit ? "" : `
 ## CRITICAL: You are a LAYOUT ENGINE — Do NOT Invent Any Text Content
 - You are a LAYOUT ENGINE, not a copywriter. Your job is to PLACE the given text strings on the menu — NEVER write or create text yourself
 - Treat each text string as a pre-rendered label you paste into the design
-- Display ONLY the exact text the user gave you: business name, item names, prices, WhatsApp number, and address
+- Display ONLY the exact text the user gave you: business name, item names, any provided prices, WhatsApp number, and address
 - Do NOT invent, add, or generate ANY text that the user did not provide, including:
   - Headlines or titles (e.g. "Weekly Offers", "Our Menu", "عروض الأسبوع", "قائمة الطعام")
   - Promotional text (e.g. "Sale", "Limited Time", "خصم", "عرض ساخن")
@@ -122,13 +133,14 @@ ${brandKit ? "" : `
   - Old/crossed-out prices or discount percentages — ONLY show if the user explicitly provided an old price
   - CTA phrases, hashtags, or any decorative text
   - Website URLs, social media handles, usernames, or account names (e.g., www.example.com, @brandname) — NEVER fabricate these
-- If no old prices are given, treat ALL prices as regular prices with clean styling — no discount formatting
+- If no old prices are given, treat all provided prices as regular prices with clean styling — no discount formatting
+- If an item has no price, do NOT invent one and do NOT add a placeholder label
 - The design should be visually rich and professional using colors, shapes, borders, and layout — NOT invented text
 
 ## Design Requirements
 - Fill the entire A4 page — no large empty areas
-- Prices must be LARGE, bold, and easy to read
-- Clear visual hierarchy: business name > item photos > prices > item names > contact
+- When prices are provided, they must be LARGE, bold, and easy to read
+- Clear visual hierarchy: business name > item photos > provided prices > item names > contact
 - Professional print-quality composition
 - Limit palette to 3-4 colors (plus white/black)
 - Each item should be clearly separated from others (cards, borders, or spacing)
@@ -162,10 +174,7 @@ You will receive reference menu/flyer designs for STYLE ONLY.
 export function getMenuUserMessage(data: MenuFormData): string {
   const itemsList = data.items
     .map((item, i) => {
-      const priceStr = item.oldPrice
-        ? `Price: ${item.price} (was ${item.oldPrice} — show as crossed-out original price with discount)`
-        : `Price: ${item.price}`;
-      return `  ${i + 1}. "${item.name}" — ${priceStr}`;
+      return `  ${i + 1}. "${item.name}" — ${formatMenuItemPrice(item)}`;
     })
     .join("\n");
 
@@ -181,7 +190,7 @@ ${itemsList}
 The user has uploaded:
 - ${data.items.length} product/item photos (one per item, in the same order as the list above)
 
-Arrange ALL items in a clean, organized grid layout. Each item must clearly show its photo, name, and price. Make the design professional and visually appealing.
+Arrange ALL items in a clean, organized grid layout. Each item must clearly show its photo and name, plus its price only when one was provided. Make the design professional and visually appealing.
 
 REMINDER: Only display the text provided above. Do NOT add any headlines, taglines, slogans, promotional text, or CTA phrases that are not in the data above.`;
 }

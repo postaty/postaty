@@ -31,10 +31,10 @@ const phoneSchema = z
   .max(20, "Phone number too long")
   .regex(/^[\d+\-\s()]+$/, "Invalid phone number format");
 
-const priceSchema = z
-  .string()
-  .min(1, "Price is required")
-  .max(20, "Price too long");
+const optionalPriceSchema = z.preprocess(
+  (val) => (typeof val === "string" && val.trim() === "" ? undefined : val),
+  z.string().max(20, "Price too long").optional()
+);
 
 const textFieldSchema = (name: string, maxLen = 100) =>
   z
@@ -57,8 +57,8 @@ export const restaurantFormSchema = z.object({
   postType: z.enum(["menu", "meal-offer", "delivery"]),
   mealName: textFieldSchema("Meal name"),
   description: z.string().max(200).optional(),
-  newPrice: priceSchema,
-  oldPrice: priceSchema,
+  newPrice: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
   offerBadge: z.enum(["discount", "new", "bestseller"]).optional(),
   deliveryType: z.enum(["free", "paid"]).optional(),
   deliveryTime: z.string().max(50).optional(),
@@ -82,8 +82,8 @@ export const supermarketFormSchema = z.object({
   postType: z.enum(["product", "daily-offers", "section-sales"]),
   productName: textFieldSchema("Product name"),
   quantity: z.string().max(50).optional(),
-  newPrice: priceSchema,
-  oldPrice: priceSchema,
+  newPrice: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
   discountPercentage: z.string().max(10).optional(),
   offerLimit: z.string().max(100).optional(),
   offerDuration: z.string().max(50).optional(),
@@ -103,8 +103,8 @@ export const ecommerceFormSchema = z.object({
   postType: z.enum(["product", "sales", "new-arrival"]),
   productName: textFieldSchema("Product name"),
   features: z.string().max(200).optional(),
-  newPrice: priceSchema,
-  oldPrice: priceSchema,
+  newPrice: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
   colorSize: z.string().max(100).optional(),
   availability: z.enum(["in-stock", "out-of-stock", "preorder"]),
   shippingDuration: z.string().max(50).optional(),
@@ -124,7 +124,7 @@ export const servicesFormSchema = z.object({
   serviceType: z.string().min(1, "Service type is required").max(50),
   serviceName: textFieldSchema("Service name"),
   serviceDetails: z.string().max(200).optional(),
-  price: priceSchema,
+  price: optionalPriceSchema,
   priceType: z.enum(["fixed", "starting-from"]),
   executionTime: z.string().max(50).optional(),
   coverageArea: z.string().max(200).optional(),
@@ -146,8 +146,8 @@ export const fashionFormSchema = z.object({
   postType: z.enum(["product", "discount", "collection"]),
   itemName: textFieldSchema("Item name"),
   description: z.string().max(200).optional(),
-  newPrice: priceSchema,
-  oldPrice: priceSchema,
+  newPrice: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
   availableSizes: z.string().max(100).optional(),
   availableColors: z.string().max(100).optional(),
   offerNote: z.string().max(200).optional(),
@@ -167,8 +167,8 @@ export const beautyFormSchema = z.object({
   postType: z.enum(["salon-service", "spa-session", "beauty-product"]),
   serviceName: textFieldSchema("Service name"),
   benefit: z.string().max(200).optional(),
-  newPrice: priceSchema,
-  oldPrice: priceSchema,
+  newPrice: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
   sessionDuration: z.string().max(50).optional(),
   suitableFor: z.string().max(200).optional(),
   bookingCondition: z.enum(["advance", "available-now"]),
@@ -236,8 +236,8 @@ export const brandKitSchema = z.object({
 const menuItemSchema = z.object({
   image: base64ImageSchema,
   name: textFieldSchema("Item name"),
-  price: priceSchema,
-  oldPrice: z.string().max(50).optional(),
+  price: optionalPriceSchema,
+  oldPrice: optionalPriceSchema,
 });
 
 export const menuFormDataSchema = z.object({

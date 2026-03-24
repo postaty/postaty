@@ -112,7 +112,7 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
 
     const businessName = (fd.get("businessName") as string)?.trim();
     const serviceName = (fd.get("serviceName") as string)?.trim();
-    const price = (fd.get("price") as string)?.trim();
+    const price = (fd.get("price") as string)?.trim() || undefined;
     const whatsapp = (fd.get("whatsapp") as string)?.trim();
     const priceTypeLabel = fd.get("priceType") as string;
     const priceTypeValue = priceTypeMap[priceTypeLabel as keyof typeof priceTypeMap];
@@ -120,7 +120,6 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
     if (!businessName) newErrors.businessName = t("اسم الشركة مطلوب", "Business name is required");
     if (!serviceType.trim()) newErrors.serviceType = t("نوع الخدمة مطلوب", "Service type is required");
     if (!serviceName) newErrors.serviceName = t("اسم الخدمة مطلوب", "Service name is required");
-    if (!price) newErrors.price = t("السعر مطلوب", "Price is required");
     if (!priceTypeValue) newErrors.priceType = t("نوع السعر مطلوب", "Price type is required");
     if (!whatsapp) newErrors.whatsapp = t("رقم الواتساب مطلوب", "WhatsApp number is required");
     if (!logo) newErrors.logo = t("اللوجو مطلوب", "Logo is required");
@@ -141,7 +140,7 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
       serviceType: serviceType.trim(),
       serviceName: serviceName!,
       serviceDetails: (fd.get("serviceDetails") as string) || undefined,
-      price: price!,
+      price,
       priceType: priceTypeValue as ServicesFormData["priceType"],
       executionTime: (fd.get("executionTime") as string) || undefined,
       coverageArea: (fd.get("coverageArea") as string) || undefined,
@@ -214,7 +213,7 @@ export function ServicesForm({ onSubmit, onPrewarmHint, isLoading, defaultValues
             <FormInput label={t("اسم الخدمة", "Service name")} name="serviceName" placeholder={t("مثال: صيانة تكييفات", "Example: AC maintenance")} required icon={Wrench} error={errors.serviceName} />
             <FormInput label={t("تفاصيل الخدمة (اختياري)", "Service details (optional)")} name="serviceDetails" placeholder={t("مثال: فحص شامل + تنظيف + تعبئة فريون", "Example: Inspection + Cleaning + Gas refill")} icon={FileText} />
             <div className="grid grid-cols-2 gap-4">
-                <FormInput label={t("السعر", "Price")} name="price" placeholder={t("150 ر.س", "$150")} required icon={Tag} error={errors.price} />
+                <FormInput label={t("السعر (اختياري)", "Price (optional)")} name="price" placeholder={t("150 ر.س", "$150")} icon={Tag} error={errors.price} />
                 <FormSelect label={t("نوع السعر", "Price type")} name="priceType" options={priceTypes} required icon={Tag} error={errors.priceType} />
             </div>
             <FormInput label={t("مدة التنفيذ (اختياري)", "Execution time (optional)")} name="executionTime" placeholder={t("مثال: خلال 24 ساعة", "Example: Within 24 hours")} icon={Clock} />
