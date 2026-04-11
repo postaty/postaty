@@ -31,6 +31,7 @@ import { useLocale } from "@/hooks/use-locale";
 
 const FORMAT_LABELS: Record<OutputFormat, { ar: string; en: string }> = {
   "instagram-square": { ar: "انستجرام بوست", en: "Instagram Post" },
+  "instagram-portrait": { ar: "انستجرام بورتريت", en: "Instagram Portrait" },
   "instagram-story":  { ar: "انستجرام ستوري", en: "Instagram Story" },
   "facebook-post":    { ar: "فيسبوك بوست", en: "Facebook Post" },
   "facebook-cover":   { ar: "غلاف فيسبوك", en: "Facebook Cover" },
