@@ -18,6 +18,12 @@ export const FORMAT_CONFIGS: Record<OutputFormat, FormatConfig> = {
     width: 1080,
     height: 1440,
   },
+  "instagram-portrait": {
+    label: "انستقرام بورتريت",
+    aspectRatio: "4:5",
+    width: 1080,
+    height: 1350,
+  },
   "instagram-story": {
     label: "انستقرام ستوري",
     aspectRatio: "9:16",
@@ -53,6 +59,7 @@ export const FORMAT_CONFIGS: Record<OutputFormat, FormatConfig> = {
 // Formats available per AI generation (aspect ratios the model supports)
 export const AI_GENERATION_FORMATS: OutputFormat[] = [
   "instagram-square",
+  "instagram-portrait",
   "instagram-story",
   "facebook-post",
 ];
@@ -60,6 +67,7 @@ export const AI_GENERATION_FORMATS: OutputFormat[] = [
 // All formats available for poster (HTML-to-image) generation
 export const POSTER_GENERATION_FORMATS: OutputFormat[] = [
   "instagram-square",
+  "instagram-portrait",
   "instagram-story",
   "facebook-post",
   "facebook-cover",

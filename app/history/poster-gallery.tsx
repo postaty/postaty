@@ -13,6 +13,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
+
 const fetcher = (url: string) => fetch(url).then(r => {
   if (!r.ok) throw new Error('API error');
   return r.json();

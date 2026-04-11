@@ -13,12 +13,13 @@ interface FormatSelectorProps {
 
 // Visual aspect ratio dimensions (fit inside ~40x34 space)
 const RATIO_SHAPES: Record<OutputFormat, { w: number; h: number; label: string }> = {
-  "instagram-square": { w: 26, h: 34, label: "3:4" },
-  "instagram-story":  { w: 19, h: 34, label: "9:16" },
-  "facebook-post":    { w: 27, h: 34, label: "4:5" },
-  "facebook-cover":   { w: 40, h: 22, label: "16:9" },
-  "twitter-post":     { w: 40, h: 22, label: "16:9" },
-  "whatsapp-status":  { w: 19, h: 34, label: "9:16" },
+  "instagram-square":   { w: 26, h: 34, label: "3:4" },
+  "instagram-portrait": { w: 27, h: 34, label: "4:5" },
+  "instagram-story":    { w: 19, h: 34, label: "9:16" },
+  "facebook-post":      { w: 27, h: 34, label: "4:5" },
+  "facebook-cover":     { w: 40, h: 22, label: "16:9" },
+  "twitter-post":       { w: 40, h: 22, label: "16:9" },
+  "whatsapp-status":    { w: 19, h: 34, label: "9:16" },
 };
 
 

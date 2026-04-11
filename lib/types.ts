@@ -10,6 +10,7 @@ export type GenerationType = "poster" | "reel" | "menu";
 
 export type OutputFormat =
   | "instagram-square"
+  | "instagram-portrait"
   | "instagram-story"
   | "facebook-post"
   | "facebook-cover"
