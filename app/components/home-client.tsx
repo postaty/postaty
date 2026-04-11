@@ -663,9 +663,15 @@ export default function HomeClient({ pricing, countryCode, locale }: HomeClientP
             <h2 className="text-3xl md:text-4xl font-black mb-4">
               {t("اختر خطتك —", "Choose your plan -")} <span className="text-gradient">{t("الشهر الأول مخفض", "first month discounted")}</span>
             </h2>
-            <p className="text-muted text-lg">
+            <p className="text-muted text-lg mb-4">
               {t("جميع الخطط مع ضمان استرجاع الأموال 30 يوم", "All plans include a 30-day money-back guarantee")}
             </p>
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 text-accent text-sm font-bold px-4 py-1.5 rounded-full">
+                <span>✦</span>
+                {t("صلاحية استخدم 60 يوم من الإبداع", "60 days of creativity — free credits validity")}
+              </span>
+            </div>
           </AnimateOnScroll>
 
           {countryCode === "EG" && <InstapaySection />}
