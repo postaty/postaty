@@ -9,7 +9,7 @@ import { Scan, Sparkles, Wand2, Maximize2, Palette, Type } from "lucide-react";
 const themes = [
   {
     id: "burger",
-    image: "/showcase/burger-stack.jpeg",
+    image: "/showcase/chicken-offer.jpeg",
     type: "Food & Beverage",
     stats: { color: "98%", layout: "100%", copy: "AI Gen" },
     accent: "text-orange-500",

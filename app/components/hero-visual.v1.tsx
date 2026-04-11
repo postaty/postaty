@@ -8,8 +8,8 @@ import { Sparkles, Zap, Layers, Share2, MousePointer2 } from "lucide-react";
 const themes = [
   {
     id: "burger",
-    image: "/showcase/burger-stack.jpeg",
-    title: "MEGA BURGER",
+    image: "/showcase/chicken-offer.jpeg",
+    title: "CRISPY FRIES COMBO",
     subtitle: "TASTE THE FIRE",
     cta: "ORDER NOW",
     color: "from-orange-500 to-red-600",

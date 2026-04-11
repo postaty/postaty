@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 const showcaseImages = [
-  { src: "/showcase/burger-stack.jpeg", alt: "Burger ad design" },
+  { src: "/showcase/chicken-offer.jpeg", alt: "Chicken ad design" },
   { src: "/showcase/chicken-offer.jpeg", alt: "Chicken offer ad design" },
   { src: "/showcase/book-promo.jpeg", alt: "Book promo ad design" },
   { src: "/showcase/supermarket-fruits.jpeg", alt: "Supermarket fruits ad design" },
