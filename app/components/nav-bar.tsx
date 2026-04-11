@@ -195,6 +195,12 @@ const CreditsBadge = memo(function CreditsBadge({ locale, user, initialCreditSta
     !!creditState &&
     "planKey" in creditState &&
     creditState.planKey === "none";
+
+  const freeCreditsExpiresAt = creditState?.freeCreditsExpiresAt ?? null;
+  const freeCreditsExpired = creditState?.freeCreditsExpired ?? false;
+  const daysUntilExpiry = freeCreditsExpiresAt && !freeCreditsExpired
+    ? Math.max(0, Math.ceil((freeCreditsExpiresAt - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
   const href = requiresSubscription ? "/pricing" : "/top-up";
   const copy = COPY[locale];
 
@@ -223,6 +229,11 @@ const CreditsBadge = memo(function CreditsBadge({ locale, user, initialCreditSta
         ) : (
           <span className="text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mr-1">
             {copy.topUp}
+          </span>
+        )}
+        {daysUntilExpiry !== null && daysUntilExpiry <= 14 && (
+          <span className="text-[10px] font-bold text-amber-500 mr-1">
+            {locale === "ar" ? `${daysUntilExpiry}ي` : `${daysUntilExpiry}d`}
           </span>
         )}
       </Link>

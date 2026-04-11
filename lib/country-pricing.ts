@@ -14,9 +14,9 @@ export type PricingSet = {
 const USD_PRICING: PricingSet = {
   currency: "USD",
   symbol: "$",
-  starter: { monthly: 7 },
-  growth: { monthly: 14 },
-  dominant: { monthly: 27 },
+  starter: { monthly: 9.99 },
+  growth: { monthly: 16.99 },
+  dominant: { monthly: 29.99 },
 };
 
 /**
@@ -78,7 +78,7 @@ export function getPricingForCountry(country?: string | null): PricingSet {
 }
 
 export function formatPrice(value: number, symbol = "$") {
-  const formatted = Number.isInteger(value) ? `${value}` : `${value.toFixed(1)}`;
+  const formatted = Number.isInteger(value) ? `${value}` : `${value.toFixed(2)}`;
   if (symbol === "$") return `$${formatted}`;
   return `${formatted} ${symbol}`;
 }

@@ -12,10 +12,10 @@ export async function GET(request: Request) {
       500
     );
 
-    // Fetch users
-    const { data: users, error: usersError } = await admin
+    // Fetch users with total count
+    const { data: users, count: totalCount, error: usersError } = await admin
       .from("users")
-      .select("*")
+      .select("*", { count: "exact" })
       .order("created_at", { ascending: false })
       .limit(limit);
 
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({ users: enrichedUsers });
+    return NextResponse.json({ users: enrichedUsers, total: totalCount ?? enrichedUsers.length });
   } catch (error) {
     if (error instanceof Error && error.message === "Not authenticated") {
       return NextResponse.json(

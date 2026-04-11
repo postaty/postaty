@@ -184,6 +184,17 @@ function getProductName(data: PostFormData): string {
   }
 }
 
+function withBusinessName(result: PosterResult, data: PostFormData): PosterResult {
+  const businessName = getBusinessName(data).trim();
+  if (!businessName) return result;
+
+  return {
+    ...result,
+    designName: businessName,
+    designNameAr: businessName,
+  };
+}
+
 // ── Generation + marketing state reducer ──────────────────────────────
 type GenState = {
   isGenerating: boolean;
@@ -572,10 +583,11 @@ function CreatePageContent() {
         brandKitPromptData,
         generationId
       );
+      const displayResult = withBusinessName(posterResult, data);
       logTimeline(requestId, "server.generate.end");
 
       // Only consume credit if generation succeeded
-      if (posterResult.status === "complete" && posterResult.imageBase64) {
+      if (displayResult.status === "complete" && displayResult.imageBase64) {
         logTimeline(requestId, "credit.consume.start");
         try {
           const creditRes = await fetchWithTimeout('/api/billing/consume-credit', {
@@ -595,33 +607,33 @@ function CreatePageContent() {
           mutateCreditState();
         }
 
-        void saveToSupabase(data, posterResult, startTime, requestId, generationId);
+        void saveToSupabase(data, displayResult, startTime, requestId, generationId);
       }
 
-      logTimeline(requestId, "ui.result.rendered", { status: posterResult.status });
+      logTimeline(requestId, "ui.result.rendered", { status: displayResult.status });
 
       let errorMsg: string | undefined;
-      if (posterResult.status === "error") {
+      if (displayResult.status === "error") {
         if (generationId) {
           void patchGenerationStatus(generationId, {
             status: "failed",
-            error: posterResult.error ?? "Generation failed",
+            error: displayResult.error ?? "Generation failed",
             duration_ms: getNowMs() - startTime,
           });
         }
-        if (posterResult.errorType === "quota") {
+        if (displayResult.errorType === "quota") {
           errorMsg = t("الخدمة مشغولة حالياً. حاول بعد دقيقة.", "Service is busy right now. Please try again in a minute.");
-        } else if (posterResult.errorType === "capacity") {
+        } else if (displayResult.errorType === "capacity") {
           errorMsg = t("الخوادم مزدحمة. حاول مرة أخرى.", "Servers are busy. Please try again.");
         } else {
-          errorMsg = toLocalizedErrorMessage(new Error(posterResult.error ?? "Generation failed"));
+          errorMsg = toLocalizedErrorMessage(new Error(displayResult.error ?? "Generation failed"));
         }
       }
 
       dispatch({
         type: "GENERATION_SUCCESS",
-        result: posterResult,
-        step: posterResult.status === "complete" ? "complete" : "error",
+        result: displayResult,
+        step: displayResult.status === "complete" ? "complete" : "error",
         error: errorMsg,
       });
       generatingRef.current = false;
@@ -642,8 +654,8 @@ function CreatePageContent() {
         html: "",
         status: "error",
         error: localizedMessage,
-        designName: "Design",
-        designNameAr: locale === "ar" ? "تصميم" : "Design",
+        designName: getBusinessName(data).trim() || "Design",
+        designNameAr: getBusinessName(data).trim() || (locale === "ar" ? "تصميم" : "Design"),
       };
       dispatch({ type: "GENERATION_ERROR", result: errorResult, error: localizedMessage });
       generatingRef.current = false;
@@ -1014,13 +1026,24 @@ function CreatePageContent() {
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400">
                     <AlertCircle size={20} className="shrink-0" />
                     <div className="flex-1">
-                      <p className="font-bold text-sm">{t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits")}</p>
-                      <p className="text-xs mt-0.5 opacity-80">
-                        {t(
-                          `تحتاج ${POSTER_CONFIG.creditsPerPoster} أرصدة على الأقل لكل تصميم. يرجى ترقية اشتراكك أو شراء رصيد إضافي للمتابعة`,
-                          `You need at least ${POSTER_CONFIG.creditsPerPoster} credits per poster. Please upgrade your plan or buy additional credits to continue`
-                        )}
-                      </p>
+                      {creditState?.freeCreditsExpired ? (
+                        <>
+                          <p className="font-bold text-sm">{t("انتهت صلاحية أرصدتك المجانية", "Your free credits have expired")}</p>
+                          <p className="text-xs mt-0.5 opacity-80">
+                            {t("صلاحية الـ 60 يوم من الإبداع انتهت. اشترك الآن لتستمر في إنشاء المحتوى", "Your 60-day creativity period has ended. Subscribe now to keep creating")}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-bold text-sm">{t("لا يوجد لديك رصيد كافٍ", "You don't have enough credits")}</p>
+                          <p className="text-xs mt-0.5 opacity-80">
+                            {t(
+                              `تحتاج ${POSTER_CONFIG.creditsPerPoster} أرصدة على الأقل لكل تصميم. يرجى ترقية اشتراكك أو شراء رصيد إضافي للمتابعة`,
+                              `You need at least ${POSTER_CONFIG.creditsPerPoster} credits per poster. Please upgrade your plan or buy additional credits to continue`
+                            )}
+                          </p>
+                        </>
+                      )}
                     </div>
                     <Link
                       href="/pricing"

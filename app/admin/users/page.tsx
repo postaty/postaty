@@ -629,8 +629,9 @@ function ActionsDropdown({ user, currentUserId, onMutate }: { user: ModalUser; c
 // ── Main Page ─────────────────────────────────────────────────────
 
 export default function AdminUsersPage() {
-  const { data: usersData, mutate: mutateUsers } = useSWR('/api/admin/users?limit=200', fetcher);
+  const { data: usersData, mutate: mutateUsers } = useSWR('/api/admin/users?limit=500', fetcher);
   const users = usersData?.users;
+  const totalUsersCount = usersData?.total ?? users?.length ?? 0;
   const { data: currentUserData } = useSWR('/api/users/me', fetcher);
   const currentUser = currentUserData?.user;
   const [search, setSearch] = useState("");
@@ -699,7 +700,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black mb-2">المستخدمون</h1>
-          <p className="text-muted">{users.length} مستخدم مسجل</p>
+          <p className="text-muted">{totalUsersCount} مستخدم مسجل</p>
         </div>
       </div>
 

@@ -39,9 +39,15 @@ export default function PricingClient({ countryCode, fallbackPricing, isEgypt }:
           <h1 className="text-4xl md:text-5xl font-black mb-4 text-center">
             {t("اختر خطتك —", "Choose your plan -")} <span className="text-gradient">{t("10 أرصدة مجانية عند التسجيل", "10 free credits on sign up")}</span>
           </h1>
-          <p className="text-muted text-lg text-center">
+          <p className="text-muted text-lg text-center mb-3">
             {t("جميع الخطط مع ضمان استرجاع الأموال 30 يوم", "All plans include a 30-day money-back guarantee")}
           </p>
+          <div className="flex justify-center">
+            <span className="inline-flex items-center gap-2 bg-accent/10 border border-accent/20 text-accent text-sm font-bold px-4 py-1.5 rounded-full">
+              <span>✦</span>
+              {t("صلاحية استخدم 60 يوم من الإبداع", "60 days of creativity — free credits validity")}
+            </span>
+          </div>
         </div>
 
         {isEgypt && <InstapaySection />}

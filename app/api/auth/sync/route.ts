@@ -89,8 +89,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // Initialize billing with 10 free credits for new users
+    // Initialize billing with 10 free credits for new users (valid 60 days)
     const FREE_TIER_CREDITS = 10;
+    const FREE_TIER_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in ms
     const { data: billing } = await admin
       .from("billing")
       .insert({
@@ -100,6 +101,7 @@ export async function POST(request: Request) {
         monthly_credit_limit: 0,
         monthly_credits_used: 0,
         addon_credits_balance: FREE_TIER_CREDITS,
+        free_credits_expires_at: now + FREE_TIER_EXPIRY_MS,
         updated_at: now,
         created_at: now,
       })

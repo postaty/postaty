@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { requireAuth } from "@/lib/supabase/auth-helpers";
 
 const FREE_TIER_CREDITS = 10;
+const FREE_TIER_EXPIRY_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in ms
 
 export async function POST() {
   try {
@@ -64,6 +65,7 @@ export async function POST() {
         monthly_credit_limit: 0,
         monthly_credits_used: 0,
         addon_credits_balance: FREE_TIER_CREDITS,
+        free_credits_expires_at: now + FREE_TIER_EXPIRY_MS,
         created_at: now,
         updated_at: now,
       })

@@ -34,7 +34,14 @@ export async function GET() {
       billing.monthly_credit_limit - billing.monthly_credits_used,
       0
     );
-    const addonRemaining = billing.addon_credits_balance;
+
+    // Check if free credits have expired
+    const freeCreditsExpired =
+      billing.plan_key === "none" &&
+      billing.free_credits_expires_at != null &&
+      Date.now() > billing.free_credits_expires_at;
+
+    const addonRemaining = freeCreditsExpired ? 0 : billing.addon_credits_balance;
     const totalRemaining = monthlyRemaining + addonRemaining;
 
     const hasEligibleStatus = ![
@@ -55,6 +62,8 @@ export async function GET() {
       currentPeriodStart: billing.current_period_start,
       currentPeriodEnd: billing.current_period_end,
       addonCreditsBalance: billing.addon_credits_balance,
+      freeCreditsExpiresAt: billing.free_credits_expires_at ?? null,
+      freeCreditsExpired,
       monthlyRemaining,
       addonRemaining,
       totalRemaining,
