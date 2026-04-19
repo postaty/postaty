@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { generatePoster, generateMarketingContent } from "@/lib/generate-designs";
 import { getInspirationImages } from "@/lib/inspiration-images";
 import { removeBackgroundWithFallback } from "@/lib/gift-editor/remove-background";
@@ -10,6 +10,7 @@ import type { PostFormData, OutputFormat, GeneratePostersResult, MarketingConten
 import type { BrandKitPromptData } from "@/lib/prompts";
 import type { GenerationUsage } from "@/lib/generate-designs";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { POSTER_CONFIG } from "@/lib/constants";
 
 function extractUsageFromUnknown(value: unknown): GenerationUsage | undefined {
   if (!value || typeof value !== "object") return undefined;
@@ -75,6 +76,53 @@ export async function generatePosters(
 
   console.info("[generatePosters] start", { category: sanitized.category, userId });
 
+  // Server-side credit charge BEFORE calling the AI.
+  // This is the authoritative gate — the previous client-side post-hoc call
+  // was bypassable (users could block it and generate unlimited content).
+  const admin = createAdminClient();
+  const creditIdempotencyKey = `poster_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const creditAmount = POSTER_CONFIG.creditsPerPoster;
+
+  const { data: consumeResult, error: consumeErr } = await admin.rpc("consume_credits", {
+    p_user_auth_id: userId,
+    p_idempotency_key: creditIdempotencyKey,
+    p_amount: creditAmount,
+  });
+
+  if (consumeErr) {
+    console.error("[generatePosters] consume_credits RPC error", consumeErr);
+    throw new Error("فشل التحقق من الأرصدة. حاول مرة أخرى.");
+  }
+
+  if (!consumeResult?.ok) {
+    const code = consumeResult?.error_code;
+    if (code === 402) {
+      throw new Error("انتهت صلاحية الأرصدة المجانية. قم بالترقية للاستمرار.");
+    }
+    if (code === 403) {
+      throw new Error("لا يوجد رصيد كافٍ. قم بشراء أرصدة أو الترقية للاستمرار.");
+    }
+    if (code === 404) {
+      throw new Error("لم يتم تهيئة الأرصدة. حاول تسجيل الخروج والدخول مجدداً.");
+    }
+    throw new Error(consumeResult?.error ?? "تعذّر خصم الرصيد.");
+  }
+
+  const refundOnFailure = async () => {
+    try {
+      const { error: refundErr } = await admin.rpc("refund_credits", {
+        p_user_auth_id: userId,
+        p_consume_idempotency_key: creditIdempotencyKey,
+        p_amount: creditAmount,
+      });
+      if (refundErr) {
+        console.error("[generatePosters] refund_credits RPC error", refundErr);
+      }
+    } catch (err) {
+      console.error("[generatePosters] refund threw", err);
+    }
+  };
+
   const usages: GenerationUsage[] = [];
 
   // Generate main poster only (gift removed, marketing content generated separately)
@@ -115,6 +163,8 @@ export async function generatePosters(
     return { main, usages };
   } catch (err) {
     console.error("[generatePosters] main failed", err);
+    // Refund: generation failed, user should not lose credit
+    await refundOnFailure();
     const errUsage = extractUsageFromUnknown(err);
     if (errUsage) {
       usages.push(errUsage);

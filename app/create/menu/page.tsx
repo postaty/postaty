@@ -337,14 +337,13 @@ function MenuPageContent() {
     setMarketingContentError(undefined);
 
     const startTime = getNowMs();
-    const idempotencyKey = `menu_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
     const generationId = await createGenerationRecord(data);
     if (generationId) {
       setCurrentGenerationId(generationId);
     }
 
-    // Generate first, consume credits only on success.
-    // This prevents users from losing credits when Gemini API fails.
+    // Credits are charged server-side inside generateMenuAction (before the AI call),
+    // with automatic refund if generation fails.
     try {
       const { main: menuResult } = await generateMenuAction(
         data,
@@ -352,24 +351,12 @@ function MenuPageContent() {
         generationId
       );
 
-      // Only consume credits if generation succeeded
       if (menuResult.status === "complete" && menuResult.imageBase64) {
-        try {
-          const creditRes = await fetch("/api/billing/consume-credit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idempotencyKey, amount: MENU_CONFIG.creditsPerMenu }),
-          });
-          const creditBody = await creditRes.json();
-          if (!creditRes.ok || !creditBody.ok) {
-            console.error("[runGeneration:menu] credit consumption failed after successful generation");
-          }
-          mutateCreditState();
-        } catch (creditErr) {
-          console.error("[runGeneration:menu] credit consumption error", creditErr);
-          mutateCreditState();
-        }
+        mutateCreditState();
         saveToSupabase(data, menuResult, startTime, generationId);
+      } else {
+        // Refresh after refund-on-failure so the UI reflects the restored balance.
+        mutateCreditState();
       }
 
       setResults([menuResult]);

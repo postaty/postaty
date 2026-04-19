@@ -2,7 +2,7 @@
 
 import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { editDesign } from "@/lib/edit-design";
-import { FORMAT_CONFIGS, MENU_FORMAT_CONFIG } from "@/lib/constants";
+import { FORMAT_CONFIGS, MENU_FORMAT_CONFIG, POSTER_CONFIG } from "@/lib/constants";
 import { getSharp } from "@/lib/image-helpers";
 import { uploadBase64ToStorage, getPublicUrl } from "@/lib/supabase-upload";
 import { persistExactAiUsageEvent } from "@/lib/ai-cost";
@@ -67,6 +67,64 @@ export async function editDesignAction(
 
   console.info("[editDesignAction] start", { userId, format, promptLength: editPrompt.length });
 
+  // Server-side credit charge BEFORE calling the AI (authoritative gate).
+  // "First edit per generation is free" is enforced here by checking whether a prior
+  // edit event already exists for this generationId. The previous client-side
+  // implementation (a local React state flag) was bypassable.
+  const admin = createAdminClient();
+  const creditAmount = POSTER_CONFIG.creditsPerEdit;
+  const creditIdempotencyKey = `edit_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+  let isFirstFreeEdit = false;
+  if (generationId) {
+    const { data: priorEdits } = await admin
+      .from("ai_usage_events")
+      .select("id")
+      .eq("generation_id", generationId)
+      .eq("route", "edit")
+      .limit(1);
+    isFirstFreeEdit = !priorEdits || priorEdits.length === 0;
+  }
+
+  if (!isFirstFreeEdit) {
+    const { data: consumeResult, error: consumeErr } = await admin.rpc("consume_credits", {
+      p_user_auth_id: userId,
+      p_idempotency_key: creditIdempotencyKey,
+      p_amount: creditAmount,
+    });
+
+    if (consumeErr) {
+      console.error("[editDesignAction] consume_credits RPC error", consumeErr);
+      return { status: "error", error: "فشل التحقق من الأرصدة. حاول مرة أخرى.", errorType: "generation" };
+    }
+
+    if (!consumeResult?.ok) {
+      const code = consumeResult?.error_code;
+      let msg: string;
+      if (code === 402) msg = "انتهت صلاحية الأرصدة المجانية. قم بالترقية للاستمرار.";
+      else if (code === 403) msg = "لا يوجد رصيد كافٍ. قم بشراء أرصدة أو الترقية للاستمرار.";
+      else if (code === 404) msg = "لم يتم تهيئة الأرصدة. حاول تسجيل الخروج والدخول مجدداً.";
+      else msg = consumeResult?.error ?? "تعذّر خصم الرصيد.";
+      return { status: "error", error: msg, errorType: "generation" };
+    }
+  }
+
+  const refundOnFailure = async () => {
+    if (isFirstFreeEdit) return; // nothing to refund
+    try {
+      const { error: refundErr } = await admin.rpc("refund_credits", {
+        p_user_auth_id: userId,
+        p_consume_idempotency_key: creditIdempotencyKey,
+        p_amount: creditAmount,
+      });
+      if (refundErr) {
+        console.error("[editDesignAction] refund_credits RPC error", refundErr);
+      }
+    } catch (err) {
+      console.error("[editDesignAction] refund threw", err);
+    }
+  };
+
   try {
     const result = await editDesign({
       imageBase64,
@@ -105,7 +163,6 @@ export async function editDesignAction(
         const storagePath = await uploadBase64ToStorage(result.imageBase64, "generations", path);
         publicUrl = getPublicUrl("generations", storagePath);
 
-        const admin = createAdminClient();
         await admin
           .from("generations")
           .update({ outputs: [{ format, url: publicUrl }] })
@@ -118,6 +175,8 @@ export async function editDesignAction(
     return { status: "complete", imageBase64: result.imageBase64, publicUrl };
   } catch (err) {
     console.error("[editDesignAction] failed", err);
+    // Refund: edit failed, user should not lose credit
+    await refundOnFailure();
     const usage = extractUsageFromUnknown(err);
     if (usage) {
       try {

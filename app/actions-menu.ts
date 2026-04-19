@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { generateMenu } from "@/lib/generate-menu";
 import { generateMenuMarketingContent } from "@/lib/generate-designs";
 import { menuFormDataSchema } from "@/lib/validation";
@@ -9,6 +9,7 @@ import type { MenuFormData, PosterResult, MarketingContentHub } from "@/lib/type
 import type { BrandKitPromptData } from "@/lib/prompts";
 import type { GenerationUsage } from "@/lib/generate-designs";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { MENU_CONFIG } from "@/lib/constants";
 
 function extractUsageFromUnknown(value: unknown): GenerationUsage | undefined {
   if (!value || typeof value !== "object") return undefined;
@@ -76,6 +77,51 @@ export async function generateMenuAction(
     userId,
   });
 
+  // Server-side credit charge BEFORE calling the AI (authoritative gate).
+  const admin = createAdminClient();
+  const creditIdempotencyKey = `menu_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const creditAmount = MENU_CONFIG.creditsPerMenu;
+
+  const { data: consumeResult, error: consumeErr } = await admin.rpc("consume_credits", {
+    p_user_auth_id: userId,
+    p_idempotency_key: creditIdempotencyKey,
+    p_amount: creditAmount,
+  });
+
+  if (consumeErr) {
+    console.error("[generateMenuAction] consume_credits RPC error", consumeErr);
+    throw new Error("فشل التحقق من الأرصدة. حاول مرة أخرى.");
+  }
+
+  if (!consumeResult?.ok) {
+    const code = consumeResult?.error_code;
+    if (code === 402) {
+      throw new Error("انتهت صلاحية الأرصدة المجانية. قم بالترقية للاستمرار.");
+    }
+    if (code === 403) {
+      throw new Error("لا يوجد رصيد كافٍ. قم بشراء أرصدة أو الترقية للاستمرار.");
+    }
+    if (code === 404) {
+      throw new Error("لم يتم تهيئة الأرصدة. حاول تسجيل الخروج والدخول مجدداً.");
+    }
+    throw new Error(consumeResult?.error ?? "تعذّر خصم الرصيد.");
+  }
+
+  const refundOnFailure = async () => {
+    try {
+      const { error: refundErr } = await admin.rpc("refund_credits", {
+        p_user_auth_id: userId,
+        p_consume_idempotency_key: creditIdempotencyKey,
+        p_amount: creditAmount,
+      });
+      if (refundErr) {
+        console.error("[generateMenuAction] refund_credits RPC error", refundErr);
+      }
+    } catch (err) {
+      console.error("[generateMenuAction] refund threw", err);
+    }
+  };
+
   const usages: GenerationUsage[] = [];
 
   try {
@@ -115,6 +161,8 @@ export async function generateMenuAction(
     return { main, usages };
   } catch (err) {
     console.error("[generateMenuAction] failed", err);
+    // Refund: generation failed, user should not lose credit
+    await refundOnFailure();
     const errUsage = extractUsageFromUnknown(err);
     if (errUsage) {
       usages.push(errUsage);

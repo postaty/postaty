@@ -397,10 +397,10 @@ export function PosterModal({
     setEditError(null);
 
     const format: OutputFormat | "menu" = generationType === "menu" ? "menu" : result.format;
-    const wasFreeEdit = isFirstEditFree;
 
     try {
-      // Pass generationId so upload+DB update happens server-side (no extra round-trip)
+      // Pass generationId so upload+DB update happens server-side (no extra round-trip).
+      // Credits are charged server-side inside editDesignAction (with first-edit-per-generation free).
       const editResult = await editDesignAction(buildEditFormData(currentImage, editPrompt.trim(), format, "edit", generationId));
 
       if (editResult.status === "complete") {
@@ -410,18 +410,7 @@ export function PosterModal({
         setEditPrompt("");
         onEditComplete?.(editResult.imageBase64, editResult.publicUrl);
         setFirstEditUsed(true);
-
-        // Skip credit consumption for the first free edit
-        if (!wasFreeEdit) {
-          const idempotencyKey = `edit_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-          fetch("/api/billing/consume-credit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
-          })
-            .catch((err) => console.error("[handleEditDesign] credit error", err))
-            .finally(() => onCreditConsumed?.());
-        }
+        onCreditConsumed?.();
       } else {
         setEditError(editResult.error);
       }
@@ -458,14 +447,14 @@ export function PosterModal({
       return;
     }
     setIsResizing(true);
-    const wasFreeEdit = isFirstEditFree;
     try {
       const cfg = FORMAT_CONFIGS[fmt];
       const reframePrompt = locale === "ar"
         ? `أعد تأطير التصميم لتنسيق ${cfg.aspectRatio}. حافظ على كل المحتوى والألوان.`
         : `Reframe this design to ${cfg.aspectRatio} ratio. Keep all content, text, and colors.`;
 
-      // Pass generationId so upload+DB update happens server-side (no extra round-trip)
+      // Pass generationId so upload+DB update happens server-side (no extra round-trip).
+      // Credits are charged server-side inside editDesignAction (with first-edit-per-generation free).
       const editResult = await editDesignAction(buildEditFormData(currentImage, reframePrompt, generationType === "menu" ? "menu" : fmt, "edit", generationId));
       if (editResult.status === "complete") {
         setPreviousImage(currentImage);
@@ -474,18 +463,7 @@ export function PosterModal({
         setSelectedFormat(fmt);
         onEditComplete?.(editResult.imageBase64, editResult.publicUrl);
         setFirstEditUsed(true);
-
-        // Skip credit consumption for the first free edit
-        if (!wasFreeEdit) {
-          const idempotencyKey = `reframe_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-          fetch("/api/billing/consume-credit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerEdit }),
-          })
-            .catch((err) => console.error("[handleFormatChange] credit error", err))
-            .finally(() => onCreditConsumed?.());
-        }
+        onCreditConsumed?.();
       }
     } catch (err) {
       console.error("[handleFormatChange] failed", err);

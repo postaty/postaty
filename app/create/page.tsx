@@ -564,7 +564,6 @@ function CreatePageContent() {
 
     const startTime = getNowMs();
     const requestId = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-    const idempotencyKey = `gen_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
     let generationId: string | undefined;
     if (GEN_EARLY_PERSIST_ENABLED) {
@@ -574,8 +573,8 @@ function CreatePageContent() {
       }
     }
 
-    // Generate first, consume credit only on success.
-    // This prevents users from losing credits when Gemini API fails.
+    // Credits are charged server-side inside generatePosters (before the AI call),
+    // with automatic refund if generation fails.
     logTimeline(requestId, "server.generate.start");
     try {
       const { main: posterResult } = await generatePosters(
@@ -586,28 +585,14 @@ function CreatePageContent() {
       const displayResult = withBusinessName(posterResult, data);
       logTimeline(requestId, "server.generate.end");
 
-      // Only consume credit if generation succeeded
+      // Credits are now charged server-side inside generatePosters (before the AI call),
+      // with an automatic refund if generation fails. The client only refreshes UI state.
       if (displayResult.status === "complete" && displayResult.imageBase64) {
-        logTimeline(requestId, "credit.consume.start");
-        try {
-          const creditRes = await fetchWithTimeout('/api/billing/consume-credit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idempotencyKey, amount: POSTER_CONFIG.creditsPerPoster }),
-          });
-          const creditBody = await creditRes.json();
-          if (!creditRes.ok || !creditBody.ok) {
-            console.error("[runGeneration] credit consumption failed after successful generation");
-          }
-          logTimeline(requestId, "credit.consume.end");
-          mutateCreditState();
-        } catch (creditErr) {
-          // Show result anyway — under-charge is better than losing the user's work
-          console.error("[runGeneration] credit consumption error", creditErr);
-          mutateCreditState();
-        }
-
+        mutateCreditState();
         void saveToSupabase(data, displayResult, startTime, requestId, generationId);
+      } else {
+        // Refresh after refund-on-failure so the UI reflects the restored balance.
+        mutateCreditState();
       }
 
       logTimeline(requestId, "ui.result.rendered", { status: displayResult.status });
