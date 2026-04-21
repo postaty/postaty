@@ -42,7 +42,7 @@ export async function GET() {
       "incomplete_expired",
     ].includes(billing.status);
 
-    const canGenerate = hasEligibleStatus && totalRemaining > 0;
+    const canGenerate = addonRemaining > 0 || (hasEligibleStatus && monthlyRemaining > 0);
 
     return NextResponse.json({
       planKey: billing.plan_key,

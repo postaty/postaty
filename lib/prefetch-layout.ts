@@ -71,7 +71,7 @@ export async function prefetchLayoutData(): Promise<LayoutData> {
         planKey: billing.plan_key,
         status: billing.status,
         totalRemaining,
-        canGenerate: hasEligibleStatus && totalRemaining > 0,
+        canGenerate: addonRemaining > 0 || (hasEligibleStatus && monthlyRemaining > 0),
       };
     } else {
       creditState = {
